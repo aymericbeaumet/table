@@ -11,29 +11,29 @@ function initRoom(name) {
   const peers = {};
 
   ws.onmessage = (event) => {
-    const { HANDSHAKE, PEER } = JSON.parse(event.data);
+    const { EXISTING_PEER, SIGNAL_RECEIVED } = JSON.parse(event.data);
 
-    if (HANDSHAKE) {
-      const peer =
-        peers[HANDSHAKE.peerID] ||
-        newPeer({
-          initiator: false,
-          peerID: HANDSHAKE.peerID,
-          ws,
-        });
-      peer.signal(HANDSHAKE.signal);
-      peers[HANDSHAKE.peerID] = peer;
+    // Bootstrap a connection to an existing peer
+    if (EXISTING_PEER) {
+      const peer = newPeer({
+        initiator: true,
+        peerID: EXISTING_PEER.peerID,
+        ws,
+      });
+      peers[EXISTING_PEER.peerID] = peer;
     }
 
-    if (PEER) {
+    // Accept a signal (offer/answer) from another user
+    if (SIGNAL_RECEIVED) {
       const peer =
-        peers[PEER.peerID] ||
+        peers[SIGNAL_RECEIVED.peerID] ||
         newPeer({
-          initiator: true,
-          peerID: PEER.peerID,
+          initiator: false,
+          peerID: SIGNAL_RECEIVED.peerID,
           ws,
         });
-      peers[PEER.peerID] = peer;
+      peer.signal(SIGNAL_RECEIVED.signal);
+      peers[SIGNAL_RECEIVED.peerID] = peer;
     }
   };
 }
@@ -48,7 +48,7 @@ function newPeer({ initiator, peerID, ws }) {
   peer.once("signal", (data) => {
     ws.send(
       JSON.stringify({
-        HANDSHAKE: { peerID, signal: data },
+        OFFER: { peerID, signal: data },
       })
     );
   });

@@ -10,19 +10,32 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type WebRTCSignal struct {
+	Type string `json:"type"`
+	Sdp  string `json:"sdp"`
+}
+
 type InboundMessage struct {
-	Handshake *struct {
-		PeerID uuid.UUID `json:"peerID"`
-		Signal *struct {
-			Type string `json:"type"`
-			Sdp  string `json:"sdp"`
-		} `json:"signal,omitempty"`
-	} `json:"HANDSHAKE,omitempty"`
+	Offer *InboundMessageOffer `json:"OFFER,omitempty"`
+}
+
+type InboundMessageOffer struct {
+	PeerID uuid.UUID    `json:"peerID"`
+	Signal WebRTCSignal `json:"signal"`
 }
 
 type OutboundMessage struct {
-	Handshake map[string]interface{} `json:"HANDSHAKE,omitempty"`
-	Peer      map[string]interface{} `json:"PEER,omitempty"`
+	ExistingPeer   *OutboundMessageExistingPeer   `json:"EXISTING_PEER,omitempty"`
+	SignalReceived *OutboundMessageSignalReceived `json:"SIGNAL_RECEIVED,omitempty"`
+}
+
+type OutboundMessageExistingPeer struct {
+	PeerID uuid.UUID `json:"peerID"`
+}
+
+type OutboundMessageSignalReceived struct {
+	PeerID uuid.UUID    `json:"peerID"`
+	Signal WebRTCSignal `json:"signal"`
 }
 
 func main() {
@@ -53,8 +66,8 @@ func main() {
 		// Send all the existing peers to the new peer
 		room.EachPeer(func(p *Peer) {
 			peer.Write(&OutboundMessage{
-				Peer: map[string]interface{}{
-					"peerID": p.ID,
+				ExistingPeer: &OutboundMessageExistingPeer{
+					PeerID: p.ID,
 				},
 			})
 		})
@@ -70,14 +83,16 @@ func main() {
 				continue
 			}
 
-			// Forward the handshake request to the corresponding peer
-			if m := message.Handshake; m != nil {
-				room.GetPeer(m.PeerID).Write(&OutboundMessage{
-					Handshake: map[string]interface{}{
-						"peerID": peer.ID,
-						"signal": m.Signal,
-					},
-				})
+			// Forward the offer request to the corresponding peer
+			if m := message.Offer; m != nil {
+				if p := room.GetPeer(m.PeerID); p != nil {
+					p.Write(&OutboundMessage{
+						SignalReceived: &OutboundMessageSignalReceived{
+							PeerID: peer.ID,
+							Signal: m.Signal,
+						},
+					})
+				}
 			}
 		}
 	})
