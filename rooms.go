@@ -6,8 +6,8 @@ import (
 )
 
 type Rooms struct {
-	mu          sync.Mutex
 	roomsByName map[string]*Room
+	mu          sync.Mutex
 }
 
 func NewRooms() *Rooms {
@@ -19,6 +19,8 @@ func NewRooms() *Rooms {
 func (r *Rooms) Upsert(name string) *Room {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	name = NormalizeRoomName(name)
 
 	room, ok := r.roomsByName[name]
 	if !ok {

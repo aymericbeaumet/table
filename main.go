@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -49,6 +50,12 @@ func main() {
 	r := gin.Default()
 
 	r.GET("/rooms/:name", func(c *gin.Context) {
+		name, err := url.QueryUnescape(c.Param("name"))
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -61,7 +68,7 @@ func main() {
 		defer peer.Close()
 		go peer.Loop()
 
-		room := rooms.Upsert(c.Param("name"))
+		room := rooms.Upsert(name)
 
 		// Send all the existing peers to the new peer
 		room.EachPeer(func(p *Peer) {

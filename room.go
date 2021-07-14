@@ -1,21 +1,23 @@
 package main
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/gosimple/slug"
 )
 
 type Room struct {
-	ID    string              `json:"id"`
+	ID    uuid.UUID           `json:"id"`
+	Name  string              `json:"name"`
 	Peers map[uuid.UUID]*Peer `json:"peers"`
 	mu    sync.Mutex
 }
 
 func NewRoom(name string) *Room {
 	return &Room{
-		ID:    slug.Make(name),
+		ID:    uuid.New(),
+		Name:  NormalizeRoomName(name),
 		Peers: map[uuid.UUID]*Peer{},
 	}
 }
@@ -45,4 +47,8 @@ func (r *Room) DelPeer(peer *Peer) {
 	defer r.mu.Unlock()
 
 	delete(r.Peers, peer.ID)
+}
+
+func NormalizeRoomName(name string) string {
+	return strings.ToLower(strings.TrimSpace(name))
 }
