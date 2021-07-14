@@ -11,27 +11,29 @@ function initRoom(name) {
   const peers = {};
 
   ws.onmessage = (event) => {
-    const { type, payload } = JSON.parse(event.data);
+    const { HANDSHAKE, PEER } = JSON.parse(event.data);
 
-    if (type === "PEER") {
-      const peer = newPeer({
-        initiator: true,
-        peerID: payload.peerID,
-        ws,
-      });
-      peers[payload.peerID] = peer;
-    }
-
-    if (type === "HANDSHAKE") {
+    if (HANDSHAKE) {
       const peer =
-        peers[payload.peerID] ||
+        peers[HANDSHAKE.peerID] ||
         newPeer({
           initiator: false,
-          peerID: payload.peerID,
+          peerID: HANDSHAKE.peerID,
           ws,
         });
-      peer.signal(payload.signal);
-      peers[payload.peerID] = peer;
+      peer.signal(HANDSHAKE.signal);
+      peers[HANDSHAKE.peerID] = peer;
+    }
+
+    if (PEER) {
+      const peer =
+        peers[PEER.peerID] ||
+        newPeer({
+          initiator: true,
+          peerID: PEER.peerID,
+          ws,
+        });
+      peers[PEER.peerID] = peer;
     }
   };
 }
@@ -53,10 +55,11 @@ function newPeer({ initiator, peerID, ws }) {
 
   peer.on("connect", () => {
     console.log("CONNECT");
+    peer.send("Hello, World!");
   });
 
   peer.on("data", (data) => {
-    console.log("DATA", data);
+    console.log("DATA", data.toString());
   });
 
   return peer;

@@ -1,63 +1,48 @@
 package main
 
 import (
-	"encoding/json"
 	"sync"
 
-	"github.com/gorilla/websocket"
+	"github.com/google/uuid"
+	"github.com/gosimple/slug"
 )
 
 type Room struct {
-	name string
-
+	ID    string              `json:"id"`
+	Peers map[uuid.UUID]*Peer `json:"peers"`
 	mu    sync.Mutex
-	count int
-	conns map[int]*websocket.Conn
 }
 
 func NewRoom(name string) *Room {
 	return &Room{
-		name:  name,
-		conns: map[int]*websocket.Conn{},
+		ID:    slug.Make(name),
+		Peers: map[uuid.UUID]*Peer{},
 	}
 }
 
-func (r *Room) GetConn(id int) (*websocket.Conn, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	v, ok := r.conns[id]
-	return v, ok
+func (r *Room) GetPeer(id uuid.UUID) *Peer {
+	return r.Peers[id]
 }
 
-func (r *Room) EachConn(cb func(int, *websocket.Conn)) {
+func (r *Room) EachPeer(cb func(*Peer)) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	for k, v := range r.conns {
-		cb(k, v)
+	for _, peer := range r.Peers {
+		cb(peer)
 	}
 }
 
-func (r *Room) AddConn(conn *websocket.Conn) int {
+func (r *Room) AddPeer(peer *Peer) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.count += 1
-	r.conns[r.count] = conn
-	return r.count
+	r.Peers[peer.ID] = peer
 }
 
-func (r *Room) DelConn(id int) {
+func (r *Room) DelPeer(peer *Peer) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	delete(r.conns, id)
-}
-
-func (r *Room) MarshalJSON() ([]byte, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	return json.Marshal(r.conns)
+	delete(r.Peers, peer.ID)
 }

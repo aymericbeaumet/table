@@ -6,31 +6,31 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
-type Message struct {
+type InboundMessage struct {
 	Handshake *struct {
-		PeerID int `json:"peerID"`
-		Signal struct {
+		PeerID uuid.UUID `json:"peerID"`
+		Signal *struct {
 			Type string `json:"type"`
 			Sdp  string `json:"sdp"`
-		} `json:"signal"`
-	} `json:"HANDSHAKE"`
+		} `json:"signal,omitempty"`
+	} `json:"HANDSHAKE,omitempty"`
 }
 
-type Reply struct {
-	Type    string      `json:"type"`
-	Payload interface{} `json:"payload"`
+type OutboundMessage struct {
+	Handshake map[string]interface{} `json:"HANDSHAKE,omitempty"`
+	Peer      map[string]interface{} `json:"PEER,omitempty"`
 }
 
 func main() {
 	rooms := NewRooms()
 
 	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
+		CheckOrigin:       func(r *http.Request) bool { return true },
+		EnableCompression: true,
 	}
 
 	r := gin.Default()
@@ -42,41 +42,39 @@ func main() {
 			return
 		}
 		defer conn.Close()
+		conn.EnableWriteCompression(true)
+
+		peer := NewPeer(conn, c.Request.Header.Get("user-agent"), c.ClientIP())
+		defer peer.Close()
+		go peer.Loop()
 
 		room := rooms.Upsert(c.Param("name"))
 
 		// Send all the existing peers to the new peer
-		room.EachConn(func(i int, c *websocket.Conn) {
-			conn.WriteJSON(&Reply{
-				Type: "PEER",
-				Payload: map[string]interface{}{
-					"peerID": i,
+		room.EachPeer(func(p *Peer) {
+			peer.Write(&OutboundMessage{
+				Peer: map[string]interface{}{
+					"peerID": p.ID,
 				},
 			})
 		})
 
 		// Append the new peer
-		id := room.AddConn(conn)
-		defer room.DelConn(id)
+		room.AddPeer(peer)
+		defer room.DelPeer(peer)
 
 		for {
-			var message Message
-			if err := conn.ReadJSON(&message); err != nil {
+			var message InboundMessage
+			if err := peer.Read(&message); err != nil {
 				fmt.Println("error reading message:", err)
 				continue
 			}
 
+			// Forward the handshake request to the corresponding peer
 			if m := message.Handshake; m != nil {
-				c, ok := room.GetConn(m.PeerID)
-				if !ok {
-					fmt.Println("error missing peer")
-					continue
-				}
-
-				c.WriteJSON(&Reply{
-					Type: "HANDSHAKE",
-					Payload: map[string]interface{}{
-						"peerID": id,
+				room.GetPeer(m.PeerID).Write(&OutboundMessage{
+					Handshake: map[string]interface{}{
+						"peerID": peer.ID,
 						"signal": m.Signal,
 					},
 				})
@@ -85,7 +83,9 @@ func main() {
 	})
 
 	r.GET("/debug", func(c *gin.Context) {
-		c.JSON(http.StatusOK, rooms)
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"rooms": rooms,
+		})
 	})
 
 	log.Fatal(r.Run())
