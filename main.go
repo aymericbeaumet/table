@@ -97,7 +97,7 @@ func main() {
 			message, err := peer.Read(conn)
 			if err != nil {
 				fmt.Println("error:", err)
-				continue
+				return
 			}
 
 			// Forward any signal to the corresponding peer
