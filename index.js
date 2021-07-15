@@ -68,7 +68,6 @@ function newPeer(ws, peerID, { initiator, stream }) {
     console.log(`[${peerID}] Incoming stream`);
 
     const cancel = newVideoDOM(peerID, stream);
-    peer.once("error", cancel);
     peer.once("close", cancel);
   });
 
