@@ -25,7 +25,7 @@ if (window.location.pathname !== "/") {
       },
     })
     .then((stream) => {
-      newVideoDOM(stream, "me", { muted: true });
+      newVideoDOM(stream, { muted: true });
       initRoom(window.location.pathname.substring(1), stream);
     })
     .catch((error) => {
@@ -97,14 +97,14 @@ function newPeer(ws, peerID, { initiator, stream }) {
   peer.on("stream", (stream) => {
     console.log(`[${peerID}] Incoming stream`);
 
-    const cancel = newVideoDOM(stream, peerID);
+    const cancel = newVideoDOM(stream);
     peer.once("close", cancel);
   });
 
   return peer;
 }
 
-function newVideoDOM(stream, label, opts = {}) {
+function newVideoDOM(stream, opts = {}) {
   const container = document.createElement("div");
   container.classList.add("container");
   document.body.appendChild(container);
@@ -112,10 +112,6 @@ function newVideoDOM(stream, label, opts = {}) {
   const video = document.createElement("video");
   video.muted = !!opts.muted;
   container.appendChild(video);
-
-  const legend = document.createElement("legend");
-  legend.innerText = label;
-  container.appendChild(legend);
 
   if ("srcObject" in video) {
     video.srcObject = stream;
@@ -129,3 +125,50 @@ function newVideoDOM(stream, label, opts = {}) {
     document.body.removeChild(container);
   };
 }
+
+/* Context menu */
+
+const contextMenuElement = document.getElementById("context-menu");
+
+document.body.addEventListener(
+  "contextmenu",
+  function (event) {
+    event.preventDefault();
+
+    let x = event.clientX;
+    const clientXDelta =
+      x + contextMenuElement.offsetWidth - document.body.offsetWidth;
+    if (clientXDelta > 0) {
+      x -= clientXDelta;
+    }
+
+    let y = event.clientY;
+    const clientYDelta =
+      y + contextMenuElement.offsetHeight - document.body.offsetHeight;
+    if (clientYDelta > 0) {
+      y -= clientYDelta;
+    }
+
+    contextMenuElement.style.top = `${y}px`;
+    contextMenuElement.style.left = `${x}px`;
+    contextMenuElement.classList.add("visible");
+  },
+  false
+);
+
+document.body.addEventListener("mousedown", function (event) {
+  event.preventDefault();
+
+  if (event.target.offsetParent === contextMenuElement) {
+    switch (event.target.getAttribute("data-action")) {
+      case "embed":
+        console.log("embed (youtube, twitch, google maps, ...)");
+        break;
+      case "text":
+        console.log("text");
+        break;
+    }
+  }
+
+  contextMenuElement.classList.remove("visible");
+});

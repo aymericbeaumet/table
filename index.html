@@ -31,6 +31,31 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
+      #context-menu {
+        position: fixed;
+        z-index: 100;
+        width: 150px;
+        background: #1b1a1a;
+        border-radius: 5px;
+        display: none;
+      }
+
+      #context-menu.visible {
+        display: block;
+      }
+
+      #context-menu .item {
+        padding: 8px 10px;
+        font-size: 15px;
+        color: #eee;
+        cursor: pointer;
+        border-radius: inherit;
+      }
+
+      #context-menu .item:hover {
+        background: #343434;
+      }
     </style>
   </head>
   <body>
@@ -42,6 +67,11 @@
       <button>Disable Camera</button>
       <select id="videoinput"></select>
     </header>
+
+    <div id="context-menu">
+      <div class="item" data-action="embed">Embed</div>
+      <div class="item" data-action="text">Text</div>
+    </div>
 
     <script src="./index.js"></script>
   </body>
