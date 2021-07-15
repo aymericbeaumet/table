@@ -1,5 +1,6 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
 import SimplePeer from "simple-peer";
+import getVideoId from "get-video-id";
 
 const WEBSOCKET_BASE_URL =
   process.env.WEBSOCKET_BASE_URL || "ws://localhost:8080";
@@ -137,6 +138,23 @@ function newTextDOM(text) {
   return () => document.body.removeChild(container);
 }
 
+function newYouTubeEmded(id) {
+  const container = document.createElement("div");
+  container.classList.add("container");
+
+  const iframe = document.createElement("iframe");
+  iframe.width = "1440";
+  iframe.height = "762";
+  iframe.src = `https://www.youtube-nocookie.com/embed/${id}&autoplay=1`;
+  iframe.frameborder = "0";
+  iframe.allow = "autoplay; encrypted-media";
+  iframe.allowfullscreen = true;
+  container.appendChild(iframe);
+
+  document.body.appendChild(container);
+  return () => document.body.removeChild(container);
+}
+
 /* Modal */
 
 const modalElement = document.getElementById("modal");
@@ -145,7 +163,14 @@ const inputTextElement = formElement.querySelector('input[type="text"]');
 
 formElement.addEventListener("submit", function (event) {
   event.preventDefault();
+
   newTextDOM(inputTextElement.value);
+
+  const { service, id } = getVideoId(inputTextElement.value);
+  if (service === "youtube") {
+    newYouTubeEmded(id);
+  }
+
   modalElement.classList.remove("visible");
 });
 
