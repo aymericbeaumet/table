@@ -1,6 +1,6 @@
 module github.com/aymericbeaumet/coffee
 
-// +heroku goVersion go1.16.5
+// +heroku goVersion go1.16
 go 1.16
 
 require (
