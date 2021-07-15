@@ -13,6 +13,7 @@ type Peer struct {
 	ClientIP  string    `json:"clientIP"`
 	UserAgent string    `json:"userAgent"`
 
+	closed bool
 	writeC chan interface{} `json:"-"` // required to prevent concurrent writes
 }
 
@@ -23,7 +24,7 @@ func NewPeer(userAgent string, clientIP string) *Peer {
 		ClientIP:  clientIP,
 		UserAgent: userAgent,
 
-		writeC: make(chan interface{}),
+		writeC: make(chan interface{}, 16),
 	}
 }
 
@@ -36,7 +37,9 @@ func (p *Peer) Read(conn *websocket.Conn) (*InboundMessage, error) {
 }
 
 func (p *Peer) Write(message *OutboundMessage) {
-	p.writeC <- message
+	if !p.closed {
+		p.writeC <- message
+	}
 }
 
 func (p *Peer) WriteLoop(conn *websocket.Conn) error {
@@ -49,5 +52,6 @@ func (p *Peer) WriteLoop(conn *websocket.Conn) error {
 }
 
 func (p *Peer) Close() {
+	p.closed = true
 	close(p.writeC)
 }

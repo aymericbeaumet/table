@@ -83,7 +83,7 @@ func main() {
 
 		// Send all the existing peers to the new peer
 		room.EachPeer(func(p *Peer) {
-			if p.ID != peer.ID {
+			if p.ID == peer.ID {
 				return
 			}
 			peer.Write(&OutboundMessage{
@@ -115,7 +115,7 @@ func main() {
 	})
 
 	r.GET("/debug", func(c *gin.Context) {
-		c.JSON(http.StatusOK, map[string]interface{}{
+		c.JSON(http.StatusOK, gin.H{
 			"roomsByName": rooms,
 		})
 	})
