@@ -1,6 +1,7 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
 import SimplePeer from "simple-peer";
 import getVideoId from "get-video-id";
+import { throttle } from "lodash";
 
 const HOSTNAME = process.env.HOSTNAME || "localhost";
 const WEBSOCKET_BASE_URL =
@@ -35,11 +36,11 @@ if (window.location.pathname !== "/") {
     });
 }
 
+const peers = {};
+
 function initRoom(name, stream) {
   const url = `${WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(name)}`;
   const ws = new ReconnectingWebSocket(url);
-
-  const peers = {};
 
   ws.onmessage = (event) => {
     const { PEER_STATUS, PEER_SIGNAL } = JSON.parse(event.data);
@@ -94,6 +95,10 @@ function newPeer(ws, peerID, { initiator, stream }) {
         SIGNAL: { peerID, signal: data },
       })
     );
+  });
+
+  peer.on("data", (data) => {
+    console.log(peerID, JSON.parse(data));
   });
 
   peer.on("stream", (stream) => {
@@ -249,3 +254,16 @@ function extractVideoID(text) {
 
   return {};
 }
+
+document.body.addEventListener(
+  "mousemove",
+  throttle(function (event) {
+    for (const peer of Object.values(peers)) {
+      peer.write(
+        JSON.stringify({
+          MOUSE_MOVE: { x: event.screenX, y: event.screenY },
+        })
+      );
+    }
+  }, 1000 / 30)
+);
