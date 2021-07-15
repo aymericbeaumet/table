@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -132,12 +132,13 @@ func main() {
 		})
 	})
 
-	// dev only
-	u, _ := url.Parse("http://localhost:1234")
-	rp := httputil.NewSingleHostReverseProxy(u)
-	r.NoRoute(func(c *gin.Context) {
-		rp.ServeHTTP(c.Writer, c.Request)
-	})
-
-	log.Fatal(r.Run("0.0.0.0:8080"))
+	hostname := os.Getenv("HOSTNAME")
+	if len(hostname) == 0 {
+		hostname = "0.0.0.0"
+	}
+	port := os.Getenv("PORT")
+	if len(port) == 0 {
+		port = "8080"
+	}
+	log.Fatal(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
 }
