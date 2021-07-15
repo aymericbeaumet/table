@@ -2,7 +2,15 @@ import SimplePeer from "simple-peer";
 
 if (window.location.pathname !== "/") {
   navigator.mediaDevices
-    .getUserMedia({ audio: true, video: true })
+    .getUserMedia({
+      audio: true,
+      video: {
+        width: { ideal: 360, max: 360 },
+        height: { ideal: 360, max: 360 },
+        facingMode: { ideal: "user" },
+        frameRate: { ideal: 30, max: 30 },
+      },
+    })
     .then((stream) => {
       newVideoDOM("me", stream);
       initRoom(window.location.pathname.substring(1), stream);
