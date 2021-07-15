@@ -17,10 +17,10 @@ type WebRTCSignal struct {
 }
 
 type InboundMessage struct {
-	Offer *InboundMessageOffer `json:"OFFER,omitempty"`
+	Signal *InboundMessageSignal `json:"SIGNAL,omitempty"`
 }
 
-type InboundMessageOffer struct {
+type InboundMessageSignal struct {
 	PeerID uuid.UUID    `json:"peerID"`
 	Signal WebRTCSignal `json:"signal"`
 }
@@ -90,8 +90,8 @@ func main() {
 				continue
 			}
 
-			// Forward the offer request to the corresponding peer
-			if m := message.Offer; m != nil {
+			// Forward any signal to the corresponding peer
+			if m := message.Signal; m != nil {
 				if p := room.GetPeer(m.PeerID); p != nil {
 					p.Write(&OutboundMessage{
 						SignalReceived: &OutboundMessageSignalReceived{
@@ -106,7 +106,7 @@ func main() {
 
 	r.GET("/debug", func(c *gin.Context) {
 		c.JSON(http.StatusOK, map[string]interface{}{
-			"rooms": rooms,
+			"roomsByName": rooms,
 		})
 	})
 

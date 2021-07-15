@@ -48,7 +48,7 @@ function newPeer({ initiator, peerID, ws }) {
   peer.once("signal", (data) => {
     ws.send(
       JSON.stringify({
-        OFFER: { peerID, signal: data },
+        SIGNAL: { peerID, signal: data },
       })
     );
   });
