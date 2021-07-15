@@ -14,7 +14,7 @@ type Peer struct {
 	UserAgent string    `json:"userAgent"`
 
 	closed bool
-	writeC chan interface{} `json:"-"` // required to prevent concurrent writes
+	writeC chan interface{} // required to prevent concurrent writes
 }
 
 func NewPeer(userAgent string, clientIP string) *Peer {

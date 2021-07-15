@@ -3,6 +3,16 @@ import SimplePeer from "simple-peer";
 const WEBSOCKET_BASE_URL =
   process.env.WEBSOCKET_BASE_URL || "ws://localhost:8080";
 
+navigator.mediaDevices.enumerateDevices().then((devices) => {
+  for (const d of devices) {
+    const select = document.getElementById(d.kind);
+
+    const option = document.createElement("option");
+    option.innerText = d.label;
+    select.appendChild(option);
+  }
+});
+
 if (window.location.pathname !== "/") {
   navigator.mediaDevices
     .getUserMedia({
