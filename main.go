@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
@@ -131,5 +132,12 @@ func main() {
 		})
 	})
 
-	log.Fatal(r.Run())
+	// dev only
+	u, _ := url.Parse("http://localhost:1234")
+	rp := httputil.NewSingleHostReverseProxy(u)
+	r.NoRoute(func(c *gin.Context) {
+		rp.ServeHTTP(c.Writer, c.Request)
+	})
+
+	log.Fatal(r.Run("0.0.0.0:8080"))
 }
