@@ -40,9 +40,10 @@ function initRoom(name) {
 
 function newPeer({ initiator, peerID, ws }) {
   const peer = new SimplePeer({ initiator, trickle: false });
+  console.log(`New peer: ${peerID}`);
 
   peer.on("error", (err) => {
-    console.error(err);
+    console.error("error:", err);
   });
 
   peer.once("signal", (data) => {
@@ -54,12 +55,11 @@ function newPeer({ initiator, peerID, ws }) {
   });
 
   peer.on("connect", () => {
-    console.log("CONNECT");
-    peer.write("Hello, World!");
+    peer.write(`Hello, World!`);
   });
 
   peer.on("data", (data) => {
-    console.log("DATA", data.toString());
+    console.log(`Incoming data: "${data.toString()}" (from peer: ${peerID})`);
   });
 
   return peer;
