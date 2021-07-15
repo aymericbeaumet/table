@@ -107,7 +107,6 @@ function newPeer(ws, peerID, { initiator, stream }) {
 function newVideoDOM(stream, opts = {}) {
   const container = document.createElement("div");
   container.classList.add("container");
-  document.body.appendChild(container);
 
   const video = document.createElement("video");
   video.muted = !!opts.muted;
@@ -121,10 +120,34 @@ function newVideoDOM(stream, opts = {}) {
 
   video.play();
 
-  return () => {
-    document.body.removeChild(container);
-  };
+  document.body.appendChild(container);
+  return () => document.body.removeChild(container);
 }
+
+function newTextDOM(text) {
+  const container = document.createElement("div");
+  container.classList.add("container");
+
+  const p = document.createElement("p");
+  container.appendChild(p);
+
+  p.innerText = text;
+
+  document.body.appendChild(container);
+  return () => document.body.removeChild(container);
+}
+
+/* Modal */
+
+const modalElement = document.getElementById("modal");
+const formElement = modalElement.querySelector("form");
+const inputTextElement = formElement.querySelector('input[type="text"]');
+
+formElement.addEventListener("submit", function (event) {
+  event.preventDefault();
+  newTextDOM(inputTextElement.value);
+  modalElement.classList.remove("visible");
+});
 
 /* Context menu */
 
@@ -157,15 +180,19 @@ document.body.addEventListener(
 );
 
 document.body.addEventListener("mousedown", function (event) {
-  event.preventDefault();
+  if (contextMenuElement.classList.contains("visible")) {
+    event.preventDefault();
+  }
 
   if (event.target.offsetParent === contextMenuElement) {
     switch (event.target.getAttribute("data-action")) {
-      case "embed":
-        console.log("embed (youtube, twitch, google maps, ...)");
+      case "pinnote":
+        modal.classList.add("visible");
+        inputTextElement.value = "";
+        inputTextElement.focus();
         break;
-      case "text":
-        console.log("text");
+      case "copyroom":
+        navigator.clipboard.writeText(window.location.toString());
         break;
     }
   }

@@ -32,6 +32,27 @@
         white-space: nowrap;
       }
 
+      #modal {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+        background-color: rgb(43 32 32 / 40%);
+        z-index: 100;
+      }
+
+      #modal.visible {
+        display: block;
+      }
+
+      #modal > div {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
       #context-menu {
         position: fixed;
         z-index: 100;
@@ -68,9 +89,18 @@
       <select id="videoinput"></select>
     </header>
 
+    <div id="modal">
+      <div>
+        <form>
+          <input type="text" placeholder="Pin a message" />
+          <input type="submit" value="Pin" />
+        </form>
+      </div>
+    </div>
+
     <div id="context-menu">
-      <div class="item" data-action="embed">Embed</div>
-      <div class="item" data-action="text">Text</div>
+      <div class="item" data-action="pinnote">Pin a note</div>
+      <div class="item" data-action="copyroom">Copy room URL</div>
     </div>
 
     <script src="./index.js"></script>
