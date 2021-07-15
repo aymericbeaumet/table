@@ -26,15 +26,16 @@ type InboundMessageSignal struct {
 }
 
 type OutboundMessage struct {
-	ExistingPeer   *OutboundMessageExistingPeer   `json:"EXISTING_PEER,omitempty"`
-	SignalReceived *OutboundMessageSignalReceived `json:"SIGNAL_RECEIVED,omitempty"`
+	PeerStatus *OutboundMessagePeerStatus `json:"PEER_STATUS,omitempty"`
+	PeerSignal *OutboundMessagePeerSignal `json:"PEER_SIGNAL,omitempty"`
 }
 
-type OutboundMessageExistingPeer struct {
+type OutboundMessagePeerStatus struct {
 	PeerID uuid.UUID `json:"peerID"`
+	Status string    `json:"status"`
 }
 
-type OutboundMessageSignalReceived struct {
+type OutboundMessagePeerSignal struct {
 	PeerID uuid.UUID    `json:"peerID"`
 	Signal WebRTCSignal `json:"signal"`
 }
@@ -81,17 +82,27 @@ func main() {
 
 		go peer.WriteLoop(conn)
 
-		// Send all the existing peers to the new peer
+		// Notify the peer with the other online peers
 		room.EachPeer(func(p *Peer) {
 			if p.ID == peer.ID {
 				return
 			}
 			peer.Write(&OutboundMessage{
-				ExistingPeer: &OutboundMessageExistingPeer{
-					PeerID: p.ID,
-				},
+				PeerStatus: &OutboundMessagePeerStatus{PeerID: p.ID, Status: "online"},
 			})
 		})
+
+		// Notify the other peers when going offline
+		defer func() {
+			room.EachPeer(func(p *Peer) {
+				if p.ID == peer.ID {
+					return
+				}
+				p.Write(&OutboundMessage{
+					PeerStatus: &OutboundMessagePeerStatus{PeerID: peer.ID, Status: "offline"},
+				})
+			})
+		}()
 
 		for {
 			message, err := peer.Read(conn)
@@ -104,7 +115,7 @@ func main() {
 			if m := message.Signal; m != nil {
 				if p := room.GetPeer(m.PeerID); p != nil {
 					p.Write(&OutboundMessage{
-						SignalReceived: &OutboundMessageSignalReceived{
+						PeerSignal: &OutboundMessagePeerSignal{
 							PeerID: peer.ID,
 							Signal: m.Signal,
 						},

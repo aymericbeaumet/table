@@ -19,27 +19,36 @@ function initRoom(name, stream) {
   const peers = {};
 
   ws.onmessage = (event) => {
-    const { EXISTING_PEER, SIGNAL_RECEIVED } = JSON.parse(event.data);
+    const { PEER_STATUS, PEER_SIGNAL } = JSON.parse(event.data);
 
-    // Bootstrap a connection to an existing peer
-    if (EXISTING_PEER) {
-      const peer = newPeer(ws, EXISTING_PEER.peerID, {
-        initiator: true,
-        stream,
-      });
-      peers[EXISTING_PEER.peerID] = peer;
+    // Update the peer connection following a status update
+    if (PEER_STATUS) {
+      const { peerID, status } = PEER_STATUS;
+      switch (status) {
+        case "online": {
+          const peer =
+            peers[peerID] || newPeer(ws, peerID, { initiator: true, stream });
+          peers[peerID] = peer;
+          break;
+        }
+        case "offline": {
+          const peer = peers[peerID];
+          if (peer) {
+            peer.destroy();
+            delete peers[peerID];
+          }
+          break;
+        }
+      }
     }
 
     // Accept a signal (offer/answer) from another user
-    if (SIGNAL_RECEIVED) {
+    if (PEER_SIGNAL) {
+      const { peerID, signal } = PEER_SIGNAL;
       const peer =
-        peers[SIGNAL_RECEIVED.peerID] ||
-        newPeer(ws, SIGNAL_RECEIVED.peerID, {
-          initiator: false,
-          stream,
-        });
-      peer.signal(SIGNAL_RECEIVED.signal);
-      peers[SIGNAL_RECEIVED.peerID] = peer;
+        peers[peerID] || newPeer(ws, peerID, { initiator: false, stream });
+      peer.signal(signal);
+      peers[peerID] = peer;
     }
   };
 }
