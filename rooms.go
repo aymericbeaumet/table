@@ -7,7 +7,7 @@ import (
 
 type Rooms struct {
 	roomsByName map[string]*Room
-	mu          sync.Mutex
+	mu          sync.RWMutex
 }
 
 func NewRooms() *Rooms {
@@ -16,15 +16,28 @@ func NewRooms() *Rooms {
 	}
 }
 
-func (r *Rooms) Upsert(name string) *Room {
+func (r *Rooms) Get(name string) *Room {
+	name = NormalizeRoomName(name)
+
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.roomsByName[name]
+}
+
+func (r *Rooms) Upsert(name string, capacity int) *Room {
+	name = NormalizeRoomName(name)
+
+	if room := r.Get(name); room != nil {
+		return room
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	name = NormalizeRoomName(name)
-
 	room, ok := r.roomsByName[name]
 	if !ok {
-		room = NewRoom(name)
+		room = NewRoom(name, capacity)
 		r.roomsByName[name] = room
 	}
 

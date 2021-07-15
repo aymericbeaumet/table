@@ -56,6 +56,21 @@ func main() {
 			return
 		}
 
+		// Make sure the room exists
+		room := rooms.Upsert(name, 3)
+
+		// Create the peer
+		peer := NewPeer(c.Request.Header.Get("user-agent"), c.ClientIP())
+		defer peer.Close()
+
+		// Append the peer
+		if err := room.AddPeer(peer); err != nil {
+			c.AbortWithError(http.StatusServiceUnavailable, err)
+			return
+		}
+		defer room.DelPeer(peer)
+
+		// Upgrade HTTP to WebSocket
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -64,14 +79,13 @@ func main() {
 		defer conn.Close()
 		conn.EnableWriteCompression(true)
 
-		peer := NewPeer(conn, c.Request.Header.Get("user-agent"), c.ClientIP())
-		defer peer.Close()
-		go peer.Loop()
-
-		room := rooms.Upsert(name)
+		go peer.WriteLoop(conn)
 
 		// Send all the existing peers to the new peer
 		room.EachPeer(func(p *Peer) {
+			if p.ID != peer.ID {
+				return
+			}
 			peer.Write(&OutboundMessage{
 				ExistingPeer: &OutboundMessageExistingPeer{
 					PeerID: p.ID,
@@ -79,14 +93,10 @@ func main() {
 			})
 		})
 
-		// Append the new peer
-		room.AddPeer(peer)
-		defer room.DelPeer(peer)
-
 		for {
-			var message InboundMessage
-			if err := peer.Read(&message); err != nil {
-				fmt.Println("error reading message:", err)
+			message, err := peer.Read(conn)
+			if err != nil {
+				fmt.Println("error:", err)
 				continue
 			}
 

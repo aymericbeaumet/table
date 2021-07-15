@@ -13,33 +13,35 @@ type Peer struct {
 	ClientIP  string    `json:"clientIP"`
 	UserAgent string    `json:"userAgent"`
 
-	conn   *websocket.Conn
-	writeC chan interface{}
+	writeC chan interface{} `json:"-"` // required to prevent concurrent writes
 }
 
-func NewPeer(conn *websocket.Conn, userAgent string, clientIP string) *Peer {
+func NewPeer(userAgent string, clientIP string) *Peer {
 	return &Peer{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		ClientIP:  clientIP,
 		UserAgent: userAgent,
 
-		conn:   conn,
 		writeC: make(chan interface{}),
 	}
 }
 
-func (p *Peer) Write(v interface{}) {
-	p.writeC <- v
+func (p *Peer) Read(conn *websocket.Conn) (*InboundMessage, error) {
+	var message InboundMessage
+	if err := conn.ReadJSON(&message); err != nil {
+		return nil, err
+	}
+	return &message, nil
 }
 
-func (p *Peer) Read(v interface{}) error {
-	return p.conn.ReadJSON(v)
+func (p *Peer) Write(message *OutboundMessage) {
+	p.writeC <- message
 }
 
-func (p *Peer) Loop() error {
+func (p *Peer) WriteLoop(conn *websocket.Conn) error {
 	for v := range p.writeC {
-		if err := p.conn.WriteJSON(v); err != nil {
+		if err := conn.WriteJSON(v); err != nil {
 			return err
 		}
 	}
