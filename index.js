@@ -2,6 +2,7 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import SimplePeer from "simple-peer";
 import getVideoId from "get-video-id";
 
+const HOSTNAME = process.env.HOSTNAME || "localhost";
 const WEBSOCKET_BASE_URL =
   process.env.WEBSOCKET_BASE_URL || "ws://localhost:8080";
 
@@ -169,7 +170,7 @@ formElement.addEventListener("submit", function (event) {
   const { service, id } = extractVideoID();
   switch (service) {
     case "twitch":
-      newIframe(`https://player.twitch.tv/?channel=${id}&parent=localhost`);
+      newIframe(`https://player.twitch.tv/?channel=${id}&parent=${HOSTNAME}`);
       break;
     case "vimeo":
       newIframe(`https://player.vimeo.com/video/${id}`);
@@ -242,7 +243,7 @@ function extractVideoID(text) {
   const matches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(
     inputTextElement.value
   );
-  if (matches.length === 2) {
+  if (matches && matches.length === 2) {
     return { service: "twitch", id: matches[1] };
   }
 
