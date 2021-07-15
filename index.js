@@ -25,7 +25,7 @@ if (window.location.pathname !== "/") {
       },
     })
     .then((stream) => {
-      newVideoDOM("me", stream);
+      newVideoDOM(stream, "me", { muted: true });
       initRoom(window.location.pathname.substring(1), stream);
     })
     .catch((error) => {
@@ -97,23 +97,24 @@ function newPeer(ws, peerID, { initiator, stream }) {
   peer.on("stream", (stream) => {
     console.log(`[${peerID}] Incoming stream`);
 
-    const cancel = newVideoDOM(peerID, stream);
+    const cancel = newVideoDOM(stream, peerID);
     peer.once("close", cancel);
   });
 
   return peer;
 }
 
-function newVideoDOM(name, stream) {
+function newVideoDOM(stream, label, opts = {}) {
   const container = document.createElement("div");
   container.classList.add("container");
   document.body.appendChild(container);
 
   const video = document.createElement("video");
+  video.muted = !!opts.muted;
   container.appendChild(video);
 
   const legend = document.createElement("legend");
-  legend.innerText = name;
+  legend.innerText = label;
   container.appendChild(legend);
 
   if ("srcObject" in video) {
