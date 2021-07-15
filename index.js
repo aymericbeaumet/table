@@ -1,3 +1,4 @@
+import ReconnectingWebSocket from "reconnecting-websocket";
 import SimplePeer from "simple-peer";
 
 const WEBSOCKET_BASE_URL =
@@ -6,7 +7,6 @@ const WEBSOCKET_BASE_URL =
 navigator.mediaDevices.enumerateDevices().then((devices) => {
   for (const d of devices) {
     const select = document.getElementById(d.kind);
-
     const option = document.createElement("option");
     option.innerText = d.label;
     select.appendChild(option);
@@ -35,7 +35,7 @@ if (window.location.pathname !== "/") {
 
 function initRoom(name, stream) {
   const url = `${WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(name)}`;
-  const ws = new WebSocket(url);
+  const ws = new ReconnectingWebSocket(url);
 
   const peers = {};
 
