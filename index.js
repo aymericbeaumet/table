@@ -148,8 +148,8 @@ function newIframe(src) {
   iframe.height = "360";
   iframe.src = src;
   iframe.frameborder = "0";
-  iframe.allow = "autoplay; encrypted-media";
-  iframe.allowfullscreen = true;
+  iframe.allow = "autoplay; encrypted-media; fullscreen";
+  iframe.allowfullscreen = "allowfullscreen";
   container.appendChild(iframe);
 
   document.body.appendChild(container);
