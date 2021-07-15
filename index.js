@@ -1,5 +1,8 @@
 import SimplePeer from "simple-peer";
 
+const WEBSOCKET_BASE_URL =
+  process.env.WEBSOCKET_BASE_URL || "ws://localhost:8080";
+
 if (window.location.pathname !== "/") {
   navigator.mediaDevices
     .getUserMedia({
@@ -21,7 +24,7 @@ if (window.location.pathname !== "/") {
 }
 
 function initRoom(name, stream) {
-  const url = `ws://localhost:8080/rooms/${encodeURIComponent(name)}`;
+  const url = `${WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(name)}`;
   const ws = new WebSocket(url);
 
   const peers = {};
