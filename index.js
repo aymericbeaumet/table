@@ -138,14 +138,14 @@ function newTextDOM(text) {
   return () => document.body.removeChild(container);
 }
 
-function newYouTubeEmded(id) {
+function newIframe(src) {
   const container = document.createElement("div");
   container.classList.add("container");
 
   const iframe = document.createElement("iframe");
-  iframe.width = "1440";
-  iframe.height = "762";
-  iframe.src = `https://www.youtube-nocookie.com/embed/${id}&autoplay=1`;
+  iframe.width = "640";
+  iframe.height = "360";
+  iframe.src = src;
   iframe.frameborder = "0";
   iframe.allow = "autoplay; encrypted-media";
   iframe.allowfullscreen = true;
@@ -168,7 +168,9 @@ formElement.addEventListener("submit", function (event) {
 
   const { service, id } = getVideoId(inputTextElement.value);
   if (service === "youtube") {
-    newYouTubeEmded(id);
+    newIframe(`https://www.youtube-nocookie.com/embed/${id}`);
+  } else if (service === "vimeo") {
+    newIframe(`https://player.vimeo.com/video/${id}`);
   }
 
   modalElement.classList.remove("visible");
