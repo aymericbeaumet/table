@@ -1,10 +1,18 @@
 import SimplePeer from "simple-peer";
 
 if (window.location.pathname !== "/") {
-  initRoom(window.location.pathname.substring(1));
+  navigator.mediaDevices
+    .getUserMedia({ audio: true, video: true })
+    .then((stream) => {
+      newVideoDOM("me", stream);
+      initRoom(window.location.pathname.substring(1), stream);
+    })
+    .catch((error) => {
+      throw error;
+    });
 }
 
-function initRoom(name) {
+function initRoom(name, stream) {
   const url = `ws://localhost:8080/rooms/${encodeURIComponent(name)}`;
   const ws = new WebSocket(url);
 
@@ -15,10 +23,9 @@ function initRoom(name) {
 
     // Bootstrap a connection to an existing peer
     if (EXISTING_PEER) {
-      const peer = newPeer({
+      const peer = newPeer(ws, EXISTING_PEER.peerID, {
         initiator: true,
-        peerID: EXISTING_PEER.peerID,
-        ws,
+        stream,
       });
       peers[EXISTING_PEER.peerID] = peer;
     }
@@ -27,10 +34,9 @@ function initRoom(name) {
     if (SIGNAL_RECEIVED) {
       const peer =
         peers[SIGNAL_RECEIVED.peerID] ||
-        newPeer({
+        newPeer(ws, SIGNAL_RECEIVED.peerID, {
           initiator: false,
-          peerID: SIGNAL_RECEIVED.peerID,
-          ws,
+          stream,
         });
       peer.signal(SIGNAL_RECEIVED.signal);
       peers[SIGNAL_RECEIVED.peerID] = peer;
@@ -38,12 +44,16 @@ function initRoom(name) {
   };
 }
 
-function newPeer({ initiator, peerID, ws }) {
-  const peer = new SimplePeer({ initiator, trickle: false });
-  console.log(`New peer: ${peerID}`);
+function newPeer(ws, peerID, { initiator, stream }) {
+  console.log(`[${peerID}] New peer`);
+  const peer = new SimplePeer({
+    trickle: false,
+    initiator,
+    stream,
+  });
 
   peer.on("error", (err) => {
-    console.error("error:", err);
+    console.error(`[${peerID}] error:`, err);
   });
 
   peer.once("signal", (data) => {
@@ -54,13 +64,38 @@ function newPeer({ initiator, peerID, ws }) {
     );
   });
 
-  peer.on("connect", () => {
-    peer.write(`Hello, World!`);
-  });
+  peer.on("stream", (stream) => {
+    console.log(`[${peerID}] Incoming stream`);
 
-  peer.on("data", (data) => {
-    console.log(`Incoming data: "${data.toString()}" (from peer: ${peerID})`);
+    const cancel = newVideoDOM(peerID, stream);
+    peer.once("error", cancel);
+    peer.once("close", cancel);
   });
 
   return peer;
+}
+
+function newVideoDOM(name, stream) {
+  const container = document.createElement("div");
+  container.classList.add("container");
+  document.body.appendChild(container);
+
+  const video = document.createElement("video");
+  container.appendChild(video);
+
+  const legend = document.createElement("legend");
+  legend.innerText = name;
+  container.appendChild(legend);
+
+  if ("srcObject" in video) {
+    video.srcObject = stream;
+  } else {
+    video.src = window.URL.createObjectURL(stream); // for older browsers
+  }
+
+  video.play();
+
+  return () => {
+    document.body.removeChild(container);
+  };
 }
