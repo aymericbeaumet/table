@@ -55,7 +55,7 @@ function newPeer({ initiator, peerID, ws }) {
 
   peer.on("connect", () => {
     console.log("CONNECT");
-    peer.send("Hello, World!");
+    peer.write("Hello, World!");
   });
 
   peer.on("data", (data) => {
