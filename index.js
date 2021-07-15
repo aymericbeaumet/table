@@ -166,11 +166,17 @@ formElement.addEventListener("submit", function (event) {
 
   newTextDOM(inputTextElement.value);
 
-  const { service, id } = getVideoId(inputTextElement.value);
-  if (service === "youtube") {
-    newIframe(`https://www.youtube-nocookie.com/embed/${id}`);
-  } else if (service === "vimeo") {
-    newIframe(`https://player.vimeo.com/video/${id}`);
+  const { service, id } = extractVideoID();
+  switch (service) {
+    case "twitch":
+      newIframe(`https://player.twitch.tv/?channel=${id}&parent=localhost`);
+      break;
+    case "vimeo":
+      newIframe(`https://player.vimeo.com/video/${id}`);
+      break;
+    case "youtube":
+      newIframe(`https://www.youtube-nocookie.com/embed/${id}`);
+      break;
   }
 
   modalElement.classList.remove("visible");
@@ -226,3 +232,19 @@ document.body.addEventListener("mousedown", function (event) {
 
   contextMenuElement.classList.remove("visible");
 });
+
+function extractVideoID(text) {
+  const { service, id } = getVideoId(inputTextElement.value);
+  if (service && id) {
+    return { service, id };
+  }
+
+  const matches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(
+    inputTextElement.value
+  );
+  if (matches.length === 2) {
+    return { service: "twitch", id: matches[1] };
+  }
+
+  return {};
+}
