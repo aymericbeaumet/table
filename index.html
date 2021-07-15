@@ -1,6 +1,17 @@
 <html>
   <head>
     <style>
+      html,
+      body {
+        margin: 0;
+      }
+
+      header {
+        border-bottom: 1px solid grey;
+        padding: 10px;
+        text-align: right;
+      }
+
       .container {
         width: 128px;
       }
@@ -24,8 +35,11 @@
   </head>
   <body>
     <header>
+      <button>Disable Microphone</button>
       <select id="audioinput"></select>
+      <button>Disable Speakers</button>
       <select id="audiooutput"></select>
+      <button>Disable Camera</button>
       <select id="videoinput"></select>
     </header>
 
