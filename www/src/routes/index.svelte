@@ -12,6 +12,10 @@
 	onMount(prefetchRoutes);
 </script>
 
+<svelte:head>
+	<title>Chill</title>
+</svelte:head>
+
 <h1>Home page</h1>
 
 <form on:submit={handleOnSubmit}>

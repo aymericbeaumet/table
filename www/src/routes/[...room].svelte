@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>{name}</title>
+	<title>Chill - {name}</title>
 </svelte:head>
 
 <Room {name} />
