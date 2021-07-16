@@ -5,7 +5,7 @@
 	let name = '';
 
 	function normalize(name) {
-		return name.trim().replace(/\s+/g, ' ');
+		return name.split('/')[0].trim().replace(/\s+/g, ' ');
 	}
 
 	onMount(() => {
