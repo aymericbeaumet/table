@@ -15,6 +15,13 @@
 <h1>Home page</h1>
 
 <form on:submit={handleOnSubmit}>
-	<input type="text" placeholder="Name your room" autofocus bind:value={name} min="3" />
+	<input
+		type="text"
+		placeholder="Name your room"
+		autofocus
+		bind:value={name}
+		required
+		minlength="3"
+	/>
 	<input type="submit" value="Join" />
 </form>
