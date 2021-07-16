@@ -1,8 +1,6 @@
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import SimplePeer from 'simple-peer';
 
-const WEBSOCKET_BASE_URL = process.env.WEBSOCKET_BASE_URL || 'ws://localhost:8080';
-
 export default class Network {
 	constructor(name) {
 		this.name = name;
@@ -10,7 +8,7 @@ export default class Network {
 	}
 
 	start() {
-		const url = `${WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(this.name)}`;
+		const url = `${import.meta.env.VITE_WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(this.name)}`;
 		const ws = new ReconnectingWebSocket(url);
 
 		ws.onmessage = (event) => {
