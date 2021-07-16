@@ -9,6 +9,10 @@
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
 		"format": "prettier --write --plugin-search-dir=. ."
 	},
+	"dependencies": {
+		"reconnecting-websocket": "^4.4.0",
+		"simple-peer": "^9.11.0"
+	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^1.0.0-next.13",
 		"@sveltejs/kit": "^1.0.0-next.131",
