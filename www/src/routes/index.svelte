@@ -1,5 +1,6 @@
 <script>
-	import { goto } from '$app/navigation';
+	import { goto, prefetchRoutes } from '$app/navigation';
+	import { onMount } from 'svelte';
 
 	let name;
 
@@ -7,6 +8,8 @@
 		event.preventDefault();
 		goto(`/${name}`);
 	}
+
+	onMount(prefetchRoutes);
 </script>
 
 <h1>Home page</h1>
