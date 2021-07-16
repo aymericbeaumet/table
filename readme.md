@@ -54,5 +54,4 @@ Automatically deployed when pushed to master.
   * domains=rekki.com,beaumet.me
   * whitelist=a@a,b@b
   * blacklist=a@a,b@b
-  * enable=audio,video
-  * disable=video
+  * flags=noaudio,novideo,nosharescreen,anonymous
