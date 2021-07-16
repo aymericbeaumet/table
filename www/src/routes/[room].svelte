@@ -3,14 +3,14 @@
 
 	let name = '';
 
+	function normalize(name) {
+		return name.trim().replace(/\s+/g, ' ');
+	}
+
 	onMount(() => {
 		name = normalize(decodeURIComponent(window.location.pathname.substring(1)));
 		window.history.replaceState(null, name, `/${name}`);
 	});
-
-	function normalize(name) {
-		return name.trim().replace(/\s+/g, ' ');
-	}
 </script>
 
 <svelte:head>
