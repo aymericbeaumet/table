@@ -1,1 +1,1 @@
-<h1>Room page</h1>
+[room].svelte
