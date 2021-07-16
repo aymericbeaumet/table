@@ -5,7 +5,7 @@
 ### Development
 
 ```bash
-npm run dev
+cd www && npm install && npm run dev -- --open
 go run -race .
 ```
 
