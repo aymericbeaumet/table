@@ -6,7 +6,7 @@ export default {
 		adapter: adapter(),
 		vite: {
 			define: {
-				'process.env.WEBSOCKET_BASE_URL': process.env.WEBSOCKET_BASE_URL
+				'process.env.WEBSOCKET_BASE_URL': 'process.env.WEBSOCKET_BASE_URL'
 			}
 		}
 	}
