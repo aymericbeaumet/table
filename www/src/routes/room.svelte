@@ -1,1 +1,1 @@
-[room].svelte
+[...room].svelte
