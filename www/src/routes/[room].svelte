@@ -17,4 +17,24 @@
 	<title>{name}</title>
 </svelte:head>
 
-<h1>{name}</h1>
+<header>
+	<span class="menutoggle">[&gt;]</span>
+	<h1>{name}</h1>
+	<span>[copy]</span>
+</header>
+
+<main />
+
+<style>
+	header {
+		border-bottom: 1px solid black;
+	}
+
+	h1 {
+		display: inline;
+	}
+
+	.menutoggle {
+		cursor: pointer;
+	}
+</style>
