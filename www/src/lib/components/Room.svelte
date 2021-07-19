@@ -1,11 +1,18 @@
 <script>
 	import { onMount } from 'svelte';
 	import EntityVideo from './EntityVideo.svelte';
+	import ContextMenu from './ContextMenu.svelte';
 
 	export let name;
 
+	const contextMenuItems = [['text', 'Pin Text']];
+
 	function copyJoiningInfo() {
 		navigator.clipboard.writeText(window.location.toString());
+	}
+
+	function onContextMenuAction(event) {
+		console.log('action', event);
 	}
 
 	let fixedEntities = [];
@@ -26,23 +33,25 @@
 </script>
 
 <div class="container">
-	<main>
-		<div class="fixed">
-			{#each fixedEntities as [entity, props]}
-				<div class="entity">
-					<svelte:component this={entity} {...props} />
-				</div>
-			{/each}
-		</div>
+	<ContextMenu items={contextMenuItems} on:action={onContextMenuAction}>
+		<main>
+			<div class="fixed">
+				{#each fixedEntities as [entity, props]}
+					<div class="entity">
+						<svelte:component this={entity} {...props} />
+					</div>
+				{/each}
+			</div>
 
-		<div class="movable">
-			{#each movableEntities as [entity, props]}
-				<div class="entity">
-					<svelte:component this={entity} {...props} />
-				</div>
-			{/each}
-		</div>
-	</main>
+			<div class="movable">
+				{#each movableEntities as [entity, props]}
+					<div class="entity">
+						<svelte:component this={entity} {...props} />
+					</div>
+				{/each}
+			</div>
+		</main>
+	</ContextMenu>
 
 	<footer>
 		<div>
