@@ -9,11 +9,10 @@
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
 		"format": "prettier --write --plugin-search-dir=. ."
 	},
-	"dependencies": {},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^1.0.0-next.13",
-		"@sveltejs/kit": "^1.0.0-next.131",
-		"eslint": "^7.30.0",
+		"@sveltejs/kit": "^1.0.0-next.132",
+		"eslint": "^7.31.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-plugin-svelte3": "^3.2.0",
 		"prettier": "~2.3.2",
