@@ -8,7 +8,8 @@
 		navigator.clipboard.writeText(window.location.toString());
 	}
 
-	let entities = [];
+	let topEntities = [];
+	let mainEntities = [];
 
 	onMount(async () => {
 		const stream = await navigator.mediaDevices.getUserMedia({
@@ -20,17 +21,27 @@
 				frameRate: { ideal: 30, max: 30 }
 			}
 		});
-		entities = [...entities, [EntityVideo, { srcObject: stream }]];
+		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
 	});
 </script>
 
 <div class="container">
 	<main>
-		{#each entities as [entity, props]}
-			<div class="entity">
-				<svelte:component this={entity} {...props} />
-			</div>
-		{/each}
+		<div class="fixed">
+			{#each topEntities as [entity, props]}
+				<div class="entity">
+					<svelte:component this={entity} {...props} />
+				</div>
+			{/each}
+		</div>
+
+		<div class="movable">
+			{#each mainEntities as [entity, props]}
+				<div class="entity">
+					<svelte:component this={entity} {...props} />
+				</div>
+			{/each}
+		</div>
 	</main>
 
 	<footer>
@@ -59,6 +70,17 @@
 	main {
 		height: 100%;
 		background-color: lightyellow;
+	}
+
+	.fixed {
+		display: flex;
+		justify-content: center;
+		padding: 10px;
+	}
+
+	.movable {
+		width: 100%;
+		height: 100%;
 	}
 
 	.entity {
