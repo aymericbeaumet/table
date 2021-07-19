@@ -11,7 +11,21 @@
 	let visible = false;
 
 	function onContextMenu(event) {
+		// allow to bypass custom logic by holding "option"
+		if (event.altKey || event.metaKey) {
+			return;
+		}
+
 		event.preventDefault();
+
+		// allow to right-click on context menu items
+		if (event.target.offsetParent === contextMenuElement) {
+			dispatch('action', {
+				action: event.target.getAttribute('data-action'),
+			});
+			visible = false;
+			return;
+		}
 
 		let x = event.clientX;
 		const clientXDelta = x + contextMenuElement.offsetWidth - document.body.offsetWidth;
@@ -33,7 +47,7 @@
 	function onClick(event) {
 		if (event.target.offsetParent === contextMenuElement) {
 			dispatch('action', {
-				action: event.target.getAttribute('data-action')
+				action: event.target.getAttribute('data-action'),
 			});
 		}
 		visible = false;
@@ -41,7 +55,7 @@
 </script>
 
 <div class="wrapper" on:contextmenu={onContextMenu} on:click={onClick}>
-	<div
+	<table
 		class="context-menu"
 		class:visible
 		bind:this={contextMenuElement}
@@ -50,7 +64,7 @@
 		{#each items as [action, desc]}
 			<div class="item" data-action={action}>{desc}</div>
 		{/each}
-	</div>
+	</table>
 
 	<slot />
 </div>
@@ -64,24 +78,25 @@
 	.context-menu {
 		position: fixed;
 		z-index: 100;
-		width: 150px;
-		background: #1b1a1a;
+		width: 235px;
+		background: lightgrey;
 		border-radius: 3px;
 		display: none;
+		color: black;
+		font-size: 15px;
 	}
 
 	.context-menu.visible {
 		display: block;
 	}
 
-	.context-menu .item {
-		padding: 8px 10px;
-		font-size: 15px;
-		color: #eee;
+	.item {
+		margin: 2px;
+		padding: 10px;
 		cursor: pointer;
 	}
 
-	.context-menu .item:hover {
-		background: #343434;
+	.item:hover {
+		background: grey;
 	}
 </style>

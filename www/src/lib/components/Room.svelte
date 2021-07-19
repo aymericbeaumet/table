@@ -3,16 +3,19 @@
 	import EntityVideo from './EntityVideo.svelte';
 	import ContextMenu from './ContextMenu.svelte';
 
-	export let name;
+	const contextMenuIcons = [
+		['togglecam', 'cam', 'nocam'],
+		['togglemic', 'mic', 'nomic'],
+		['settings', 'set', 'set'],
+	];
 
-	const contextMenuItems = [['text', 'Pin Text']];
-
-	function copyJoiningInfo() {
-		navigator.clipboard.writeText(window.location.toString());
-	}
+	const contextMenuItems = [
+		['pintext', 'Pin text'],
+		['pinmedia', 'Pin media'],
+	];
 
 	function onContextMenuAction(event) {
-		console.log('action', event);
+		console.log('action', event.detail);
 	}
 
 	let fixedEntities = [];
@@ -25,91 +28,47 @@
 				width: { ideal: 360, max: 360 },
 				height: { ideal: 360, max: 360 },
 				facingMode: { ideal: 'user' },
-				frameRate: { ideal: 30, max: 30 }
-			}
+				frameRate: { ideal: 30, max: 30 },
+			},
 		});
 		fixedEntities = [...fixedEntities, [EntityVideo, { srcObject: stream }]];
 	});
 </script>
 
-<div class="container">
-	<ContextMenu items={contextMenuItems} on:action={onContextMenuAction}>
-		<main>
-			<div class="fixed">
-				{#each fixedEntities as [entity, props]}
-					<div class="entity">
-						<svelte:component this={entity} {...props} />
-					</div>
-				{/each}
+<ContextMenu icons={contextMenuIcons} items={contextMenuItems} on:action={onContextMenuAction}>
+	<div class="container">
+		<header>
+			{#each fixedEntities as [entity, props]}
+				<div class="entity">
+					<svelte:component this={entity} {...props} />
+				</div>
+			{/each}
+		</header>
+
+		{#each movableEntities as [entity, props]}
+			<div class="entity">
+				<svelte:component this={entity} {...props} />
 			</div>
-
-			<div class="movable">
-				{#each movableEntities as [entity, props]}
-					<div class="entity">
-						<svelte:component this={entity} {...props} />
-					</div>
-				{/each}
-			</div>
-		</main>
-	</ContextMenu>
-
-	<footer>
-		<div>
-			<h1 class="clickable" title="Copy room URL" on:click={copyJoiningInfo}>{name}</h1>
-		</div>
-
-		<div>
-			<button title="Turn off microphone">mic</button>
-			<button title="Turn off camera">cam</button>
-		</div>
-
-		<div>
-			<button title="Settings">settings</button>
-		</div>
-	</footer>
-</div>
+		{/each}
+	</div>
+</ContextMenu>
 
 <style>
 	.container {
 		height: 100vh;
 		display: flex;
 		flex-direction: column;
-	}
-
-	main {
-		height: 100%;
 		background-color: lightyellow;
 	}
 
-	.fixed {
+	header {
 		display: flex;
 		justify-content: center;
 		padding: 10px;
 	}
 
-	.movable {
-		width: 100%;
-		height: 100%;
-	}
-
 	.entity {
 		height: 150px;
 		width: 150px;
-	}
-
-	footer {
-		border-top: 1px solid black;
-		background-color: lightgrey;
-		padding: 10px;
-		display: flex;
-		justify-content: space-between;
-	}
-
-	h1 {
-		display: inline-block;
-	}
-
-	.clickable:hover {
-		cursor: pointer;
 	}
 </style>
