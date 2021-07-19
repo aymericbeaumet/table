@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { inferEntity } from '$lib/entity';
 
 	const dispatch = createEventDispatcher();
 
@@ -8,6 +9,7 @@
 	let visible = false;
 
 	function onContextMenu(event) {
+		console.log(event);
 		// allow to bypass custom logic by holding "option"
 		if (event.altKey) {
 			return;
@@ -28,10 +30,7 @@
 
 		const value = inputTextValue.trim();
 		if (value.length > 0) {
-			dispatch('entity', {
-				type: 'text',
-				value,
-			});
+			return dispatch('entity', inferEntity(value));
 		}
 
 		hide();

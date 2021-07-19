@@ -1,20 +1,15 @@
 <script>
 	import { onMount } from 'svelte';
 	import EntityVideo from './EntityVideo.svelte';
-	import EntityText from './EntityText.svelte';
 	import PinBar from './PinBar.svelte';
-
-	function onEntity(event) {
-		const entity = event.detail;
-
-		switch (entity.type) {
-			case 'text':
-				entities = [...entities, [EntityText, entity]];
-		}
-	}
 
 	let topEntities = [];
 	let entities = [];
+
+	function onEntity(event) {
+		const [component, props] = event.detail;
+		entities = [...entities, [component, props]];
+	}
 
 	onMount(async () => {
 		const stream = await navigator.mediaDevices.getUserMedia({
@@ -41,7 +36,7 @@
 		</header>
 
 		{#each entities as [entity, props]}
-			<div>
+			<div class="entity">
 				<svelte:component this={entity} {...props} />
 			</div>
 		{/each}
@@ -60,5 +55,11 @@
 		display: flex;
 		justify-content: center;
 		padding: 10px;
+	}
+
+	.entity {
+		position: absolute;
+		border: 1px solid grey;
+		background-color: lightgrey;
 	}
 </style>
