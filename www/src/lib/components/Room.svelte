@@ -1,25 +1,14 @@
 <script>
 	import { onMount } from 'svelte';
 	import EntityVideo from './EntityVideo.svelte';
-	import ContextMenu from './ContextMenu.svelte';
+	import PinBar from './PinBar.svelte';
 
-	const contextMenuIcons = [
-		['togglecam', 'cam', 'nocam'],
-		['togglemic', 'mic', 'nomic'],
-		['settings', 'set', 'set'],
-	];
-
-	const contextMenuItems = [
-		['pintext', 'Pin text'],
-		['pinmedia', 'Pin media'],
-	];
-
-	function onContextMenuAction(event) {
-		console.log('action', event.detail);
+	function onEntity(event) {
+		console.log('entity', event.detail);
 	}
 
-	let fixedEntities = [];
-	let movableEntities = [];
+	let topEntities = [];
+	let entities = [];
 
 	onMount(async () => {
 		const stream = await navigator.mediaDevices.getUserMedia({
@@ -31,27 +20,27 @@
 				frameRate: { ideal: 30, max: 30 },
 			},
 		});
-		fixedEntities = [...fixedEntities, [EntityVideo, { srcObject: stream }]];
+		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
 	});
 </script>
 
-<ContextMenu icons={contextMenuIcons} items={contextMenuItems} on:action={onContextMenuAction}>
+<PinBar on:entity={onEntity}>
 	<div class="container">
 		<header>
-			{#each fixedEntities as [entity, props]}
+			{#each topEntities as [entity, props]}
 				<div class="entity">
 					<svelte:component this={entity} {...props} />
 				</div>
 			{/each}
 		</header>
 
-		{#each movableEntities as [entity, props]}
+		{#each entities as [entity, props]}
 			<div class="entity">
 				<svelte:component this={entity} {...props} />
 			</div>
 		{/each}
 	</div>
-</ContextMenu>
+</PinBar>
 
 <style>
 	.container {
