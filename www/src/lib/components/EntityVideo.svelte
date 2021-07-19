@@ -18,8 +18,8 @@
 	video {
 		transform: scale(-1, 1);
 		border-radius: 50%;
-		width: 100%;
-		height: 100%;
+		width: 150px;
+		height: 150px;
 		border: 1px solid grey;
 		background-color: lightgrey;
 	}

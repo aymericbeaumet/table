@@ -1,10 +1,16 @@
 <script>
 	import { onMount } from 'svelte';
 	import EntityVideo from './EntityVideo.svelte';
+	import EntityText from './EntityText.svelte';
 	import PinBar from './PinBar.svelte';
 
 	function onEntity(event) {
-		console.log('entity', event.detail);
+		const entity = event.detail;
+
+		switch (entity.type) {
+			case 'text':
+				entities = [...entities, [EntityText, entity]];
+		}
 	}
 
 	let topEntities = [];
@@ -28,14 +34,14 @@
 	<div class="container">
 		<header>
 			{#each topEntities as [entity, props]}
-				<div class="entity">
+				<div>
 					<svelte:component this={entity} {...props} />
 				</div>
 			{/each}
 		</header>
 
 		{#each entities as [entity, props]}
-			<div class="entity">
+			<div>
 				<svelte:component this={entity} {...props} />
 			</div>
 		{/each}
@@ -54,10 +60,5 @@
 		display: flex;
 		justify-content: center;
 		padding: 10px;
-	}
-
-	.entity {
-		height: 150px;
-		width: 150px;
 	}
 </style>
