@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import EntityVideo from './EntityVideo.svelte';
 
 	export let name;
 
@@ -7,17 +8,7 @@
 		navigator.clipboard.writeText(window.location.toString());
 	}
 
-	function displayQrcode() {
-		console.log('todo');
-	}
-
-	let srcObject;
-	let video;
-
-	$: if (video && srcObject && video.srcObject !== srcObject) {
-		video.srcObject = srcObject;
-		video.play();
-	}
+	let entities = [];
 
 	onMount(async () => {
 		const stream = await navigator.mediaDevices.getUserMedia({
@@ -29,15 +20,17 @@
 				frameRate: { ideal: 30, max: 30 }
 			}
 		});
-		srcObject = stream;
+		entities = [...entities, [EntityVideo, { srcObject: stream }]];
 	});
 </script>
 
 <div class="container">
 	<main>
-		<div>
-			<video bind:this={video} muted="muted" />
-		</div>
+		{#each entities as [entity, props]}
+			<div class="entity">
+				<svelte:component this={entity} {...props} />
+			</div>
+		{/each}
 	</main>
 
 	<footer>
@@ -48,7 +41,6 @@
 		<div>
 			<button title="Turn off microphone">mic</button>
 			<button title="Turn off camera">cam</button>
-			<button title="Hang up">hang up</button>
 		</div>
 
 		<div>
@@ -69,10 +61,9 @@
 		background-color: lightyellow;
 	}
 
-	video {
-		transform: scale(-1, 1);
-		border-radius: 50%;
+	.entity {
 		height: 150px;
+		width: 150px;
 	}
 
 	footer {
