@@ -36,23 +36,24 @@
 <div class="container">
 	<main>
 		<div>
-			<video class="primary" bind:this={video} muted="muted" />
+			<video bind:this={video} muted="muted" />
 		</div>
 	</main>
 
 	<footer>
 		<div>
-			<h1>{name}</h1>
-			<div class="toggle" on:click={copyJoiningInfo}>copy</div>
-			<div class="toggle" on:click={displayQrcode}>qrcode</div>
+			<h1 class="clickable" title="Copy room URL" on:click={copyJoiningInfo}>{name}</h1>
 		</div>
 
 		<div>
-			<div class="toggle">audio</div>
-			<div class="toggle">video</div>
+			<button title="Turn off microphone">mic</button>
+			<button title="Turn off camera">cam</button>
+			<button title="Hang up">hang up</button>
 		</div>
 
-		<div />
+		<div>
+			<button title="Settings">settings</button>
+		</div>
 	</footer>
 </div>
 
@@ -65,7 +66,7 @@
 
 	main {
 		height: 100%;
-		background-color: red;
+		background-color: lightyellow;
 	}
 
 	video {
@@ -76,20 +77,17 @@
 
 	footer {
 		border-top: 1px solid black;
+		background-color: lightgrey;
+		padding: 10px;
 		display: flex;
 		justify-content: space-between;
-		padding: 10px;
-	}
-
-	.toggle {
-		border: 1px solid black;
-		border-radius: 50%;
-		display: inline-block;
-		width: 48px;
-		height: 48px;
 	}
 
 	h1 {
-		display: inline;
+		display: inline-block;
+	}
+
+	.clickable:hover {
+		cursor: pointer;
 	}
 </style>
