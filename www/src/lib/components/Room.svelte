@@ -8,8 +8,8 @@
 		navigator.clipboard.writeText(window.location.toString());
 	}
 
-	let topEntities = [];
-	let mainEntities = [];
+	let fixedEntities = [];
+	let movableEntities = [];
 
 	onMount(async () => {
 		const stream = await navigator.mediaDevices.getUserMedia({
@@ -21,14 +21,14 @@
 				frameRate: { ideal: 30, max: 30 }
 			}
 		});
-		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
+		fixedEntities = [...fixedEntities, [EntityVideo, { srcObject: stream }]];
 	});
 </script>
 
 <div class="container">
 	<main>
 		<div class="fixed">
-			{#each topEntities as [entity, props]}
+			{#each fixedEntities as [entity, props]}
 				<div class="entity">
 					<svelte:component this={entity} {...props} />
 				</div>
@@ -36,7 +36,7 @@
 		</div>
 
 		<div class="movable">
-			{#each mainEntities as [entity, props]}
+			{#each movableEntities as [entity, props]}
 				<div class="entity">
 					<svelte:component this={entity} {...props} />
 				</div>
