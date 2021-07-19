@@ -1,8 +1,7 @@
 <slot />
 
 <style>
-	:global(html),
-	:global(body) {
+	:global(*) {
 		margin: 0;
 	}
 </style>
