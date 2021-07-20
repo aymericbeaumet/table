@@ -84,6 +84,13 @@ func main() {
 			candidate = c
 		})
 
+		// Listen for data channels
+		peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
+			dc.OnOpen(func() {
+				dc.SendText("Hello, World!")
+			})
+		})
+
 		for {
 			var message InboundMessage
 			if err := conn.ReadJSON(&message); err != nil {

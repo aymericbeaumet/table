@@ -12,6 +12,23 @@ export default class Network {
 
 		stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
+		/* Prepare WebRTC data channel */
+
+		const dc = pc.createDataChannel('unordered', {
+			// do not guarantee order
+			ordered: false,
+			// abort after 3 seconds
+			maxPacketLifeTime: 3000,
+		});
+
+		dc.onopen = () => {
+			console.log('webrtc channel open');
+		};
+
+		dc.onmessage = (event) => {
+			console.log('webrtc channel message', event.data);
+		};
+
 		/* Prepare WebSocket */
 
 		const ws = new WebSocket(
