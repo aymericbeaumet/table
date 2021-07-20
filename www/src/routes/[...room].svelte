@@ -18,4 +18,6 @@
 	<title>Chill - {name}</title>
 </svelte:head>
 
-<Room {name} />
+{#if name}
+	<Room {name} />
+{/if}

@@ -2,6 +2,9 @@
 	import { onMount } from 'svelte';
 	import EntityVideo from './EntityVideo.svelte';
 	import PinBar from './PinBar.svelte';
+	import Network from '$lib/network';
+
+	export let name;
 
 	let topEntities = [];
 	let entities = [];
@@ -22,6 +25,8 @@
 			},
 		});
 		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
+
+		new Network(name, stream);
 	});
 </script>
 

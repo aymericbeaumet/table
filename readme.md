@@ -5,15 +5,15 @@
 ### Development
 
 ```bash
-cd www && npm i && npm run dev -- --open
-go run -race .
+cd www && npm i && npm run dev
+cd api && go run -race .
 ```
 
 ### Update
 
 ```bash
-cd www && npm i -D @sveltejs/kit@next @sveltejs/adapter-static@next && npx ncu -u
-go get -u && go mod tidy
+cd www && npm i -D @sveltejs/kit@next @sveltejs/adapter-static@next && npx ncu -u && npm i
+cd api && go get -u && go mod tidy
 ```
 
 ### Deploy
@@ -36,7 +36,8 @@ Automatically deployed when pushed to master.
 - Play background video / youtube / stream
 - Share files
 - Highlight the person who talks
-- Change background
+- Change background (image, video)
+- Add some background music
 
 ## Pro Plan
 
