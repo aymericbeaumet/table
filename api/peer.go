@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -47,21 +46,6 @@ func NewPeer(offer webrtc.SessionDescription) *Peer {
 		panic(err)
 	}
 
-	// Listen for data channels
-	peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
-		switch dc.Label() {
-		case "reliable":
-			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				fmt.Println("reliable", id, string(msg.Data))
-			})
-
-		case "unreliable":
-			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				fmt.Println("unreliable", id, string(msg.Data))
-			})
-		}
-	})
-
 	return &Peer{
 		ID:             id,
 		peerConnection: peerConnection,
@@ -80,6 +64,10 @@ func (p *Peer) Init() {
 		}
 	})
 	wg.Wait()
+}
+
+func (p *Peer) OnDataChannel(f func(dc *webrtc.DataChannel)) {
+	p.peerConnection.OnDataChannel(f)
 }
 
 func (p *Peer) OnClose(f func()) {

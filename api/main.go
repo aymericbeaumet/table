@@ -43,7 +43,6 @@ func main() {
 
 		// Create peer
 		peer := NewPeer(payload.Offer)
-		peer.OnClose(func() { room.DelPeer(peer) })
 		peer.Init()
 
 		// Add peer

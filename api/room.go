@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/google/uuid"
+	webrtc "github.com/pion/webrtc/v3"
 )
 
 type Room struct {
@@ -39,6 +41,26 @@ func (r *Room) EachPeer(cb func(*Peer)) {
 }
 
 func (r *Room) AddPeer(peer *Peer) error {
+	// Listen for data channels
+	peer.OnDataChannel(func(dc *webrtc.DataChannel) {
+		switch dc.Label() {
+		case "reliable":
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				fmt.Println("reliable", peer.ID, string(msg.Data))
+			})
+
+		case "unreliable":
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				fmt.Println("unreliable", peer.ID, string(msg.Data))
+			})
+		}
+	})
+
+	// Wait for the peer to disconnect
+	peer.OnClose(func() {
+		r.DelPeer(peer)
+	})
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
