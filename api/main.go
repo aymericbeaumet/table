@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,13 +21,7 @@ func main() {
 	godotenv.Load(".env")
 	godotenv.Load(".env." + mode)
 
-	peerConnectionConfig := webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{
-				URLs: []string{"stun:stun.l.google.com:19302"},
-			},
-		},
-	}
+	rooms := NewRooms()
 
 	r := gin.Default()
 
@@ -45,56 +38,28 @@ func main() {
 			return
 		}
 
-		// Create a new RTCPeerConnection
-		peerConnection, err := webrtc.NewPeerConnection(peerConnectionConfig)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+		// Upsert room
+		room := rooms.Upsert(payload.Name)
 
-		// Set remote description
-		if err = peerConnection.SetRemoteDescription(payload.Offer); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+		// Create peer
+		peer := NewPeer(payload.Offer)
+		peer.OnClose(func() { room.DelPeer(peer) })
+		peer.Init()
 
-		// Create answer
-		answer, err := peerConnection.CreateAnswer(nil)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		// Sets the LocalDescription, and starts our UDP listeners
-		if err = peerConnection.SetLocalDescription(answer); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		// Listen for data channels
-		peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
-			dc.OnOpen(func() {
-				dc.SendText("Hello, World!")
-			})
-		})
-
-		// Listen for ICE candidates (TODO: switch to SSE and send ice candidates as they arrive)
-		var wg sync.WaitGroup
-		wg.Add(1)
-		peerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-			if candidate != nil {
-				peerConnection.AddICECandidate(candidate.ToJSON())
-			} else {
-				wg.Done()
-			}
-		})
-		wg.Wait()
+		// Add peer
+		room.AddPeer(peer)
 
 		// Send the answer back
 		c.JSON(http.StatusOK, struct {
 			Answer *webrtc.SessionDescription `json:"answer"`
 		}{
-			Answer: peerConnection.LocalDescription(),
+			Answer: peer.Answer(),
+		})
+	})
+
+	r.GET("/debug", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"roomsbyID": rooms,
 		})
 	})
 
