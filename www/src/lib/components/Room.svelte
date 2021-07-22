@@ -4,6 +4,8 @@
 	import PinBar from './PinBar.svelte';
 	import Network from '$lib/network';
 	import { throttle } from 'lodash';
+	import EntityText from './EntityText.svelte';
+	import EntityIframe from './EntityIframe.svelte';
 
 	const MAX_FPS = 30;
 
@@ -13,15 +15,48 @@
 	let topEntities = [];
 	let entities = [];
 
+	function getEntityByname(name) {
+		switch (name) {
+			case 'iframe':
+				return EntityIframe;
+			case 'text':
+				return EntityText;
+			default:
+				throw new Error(`unknown entity ${name}`);
+		}
+	}
+
 	function onEntity(event) {
-		const [component, props] = event.detail;
-		entities = [...entities, [component, props]];
+		const [name, props] = event.detail;
+		network.send(
+			{
+				NEW_ENTITY: {
+					name,
+					props,
+				},
+			},
+			{ reliable: true },
+		);
+		const entity = getEntityByname(name);
+		entities = [...entities, [entity, props]];
 	}
 
 	function onMouseMove(event) {
 		network.send(
 			{
 				MOUSE_MOVE: {
+					clientX: event.clientX,
+					clientY: event.clientY,
+				},
+			},
+			{ reliable: false },
+		);
+	}
+
+	function onMouseClick(event) {
+		network.send(
+			{
+				MOUSE_CLICK: {
 					clientX: event.clientX,
 					clientY: event.clientY,
 				},
@@ -48,7 +83,11 @@
 </script>
 
 <PinBar on:entity={onEntity}>
-	<div class="container" on:mousemove={network && throttle(onMouseMove, 1000 / MAX_FPS)}>
+	<div
+		class="container"
+		on:mousemove={network && throttle(onMouseMove, 1000 / MAX_FPS)}
+		on:click={network && onMouseClick}
+	>
 		<header>
 			{#each topEntities as [entity, props]}
 				<div>
