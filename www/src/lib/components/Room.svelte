@@ -28,6 +28,8 @@
 
 	function onEntity(event) {
 		const [name, props] = event.detail;
+		const entity = [getEntityByname(name), props];
+		entities = [...entities, entity];
 		network.send(
 			{
 				NEW_ENTITY: {
@@ -37,8 +39,6 @@
 			},
 			{ reliable: true },
 		);
-		const entity = getEntityByname(name);
-		entities = [...entities, [entity, props]];
 	}
 
 	function onMouseMove(event) {
