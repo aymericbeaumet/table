@@ -15,30 +15,30 @@ export default class Network {
 
 		/* Prepare WebRTC unordered but reliable data channel */
 
-		const reliable = this.pc.createDataChannel('reliable', {
+		this.reliable = this.pc.createDataChannel('reliable', {
 			ordered: false,
 		});
 
-		reliable.onopen = () => {
+		this.reliable.onopen = () => {
 			console.log('webrtc reliable channel open');
 		};
 
-		reliable.onmessage = (event) => {
+		this.reliable.onmessage = (event) => {
 			console.log('webrtc reliable channel message', event.data);
 		};
 
 		/* Prepare WebRTC unordered and unreliable data channel */
 
-		const unreliable = this.pc.createDataChannel('unreliable', {
+		this.unreliable = this.pc.createDataChannel('unreliable', {
 			ordered: false,
 			maxRetransmits: 0,
 		});
 
-		unreliable.onopen = () => {
+		this.unreliable.onopen = () => {
 			console.log('webrtc unreliable channel open');
 		};
 
-		unreliable.onmessage = (event) => {
+		this.unreliable.onmessage = (event) => {
 			console.log('webrtc unreliable channel message', event.data);
 		};
 	}
@@ -59,5 +59,14 @@ export default class Network {
 		const { answer } = await res.json();
 
 		this.pc.setRemoteDescription(new RTCSessionDescription(answer));
+	}
+
+	send(payload, { reliable }) {
+		const json = JSON.stringify(payload);
+		if (reliable) {
+			this.reliable.send(json);
+		} else {
+			this.unreliable.send(json);
+		}
 	}
 }

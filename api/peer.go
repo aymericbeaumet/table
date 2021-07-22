@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -22,6 +23,8 @@ type Peer struct {
 }
 
 func NewPeer(offer webrtc.SessionDescription) *Peer {
+	id := uuid.New()
+
 	// Create a new RTCPeerConnection
 	peerConnection, err := webrtc.NewPeerConnection(peerConnectionConfig)
 	if err != nil {
@@ -46,13 +49,21 @@ func NewPeer(offer webrtc.SessionDescription) *Peer {
 
 	// Listen for data channels
 	peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
-		dc.OnOpen(func() {
-			dc.SendText("Hello, World!")
-		})
+		switch dc.Label() {
+		case "reliable":
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				fmt.Println("reliable", id, string(msg.Data))
+			})
+
+		case "unreliable":
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				fmt.Println("unreliable", id, string(msg.Data))
+			})
+		}
 	})
 
 	return &Peer{
-		ID:             uuid.New(),
+		ID:             id,
 		peerConnection: peerConnection,
 	}
 }
@@ -71,10 +82,10 @@ func (p *Peer) Init() {
 	wg.Wait()
 }
 
-func (p *Peer) OnClose(cb func()) {
+func (p *Peer) OnClose(f func()) {
 	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
 		if s == webrtc.PeerConnectionStateClosed || s == webrtc.PeerConnectionStateDisconnected || s == webrtc.PeerConnectionStateFailed {
-			cb()
+			f()
 		}
 	})
 }

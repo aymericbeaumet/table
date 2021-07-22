@@ -3,15 +3,31 @@
 	import EntityVideo from './EntityVideo.svelte';
 	import PinBar from './PinBar.svelte';
 	import Network from '$lib/network';
+	import { throttle } from 'lodash';
+
+	const MAX_FPS = 30;
 
 	export let name;
 
+	let network;
 	let topEntities = [];
 	let entities = [];
 
 	function onEntity(event) {
 		const [component, props] = event.detail;
 		entities = [...entities, [component, props]];
+	}
+
+	function onMouseMove(event) {
+		network.send(
+			{
+				MOUSE_MOVE: {
+					clientX: event.clientX,
+					clientY: event.clientY,
+				},
+			},
+			{ reliable: false },
+		);
 	}
 
 	onMount(async () => {
@@ -21,18 +37,18 @@
 				width: { ideal: 360, max: 360 },
 				height: { ideal: 360, max: 360 },
 				facingMode: { ideal: 'user' },
-				frameRate: { ideal: 30, max: 30 },
+				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
 		});
 		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
 
-		const n = new Network(name, stream);
-		await n.init();
+		network = new Network(name, stream);
+		await network.init();
 	});
 </script>
 
 <PinBar on:entity={onEntity}>
-	<div class="container">
+	<div class="container" on:mousemove={network && throttle(onMouseMove, 1000 / MAX_FPS)}>
 		<header>
 			{#each topEntities as [entity, props]}
 				<div>
