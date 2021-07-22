@@ -26,7 +26,8 @@
 		});
 		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
 
-		new Network(name, stream);
+		const n = new Network(name, stream);
+		await n.init();
 	});
 </script>
 

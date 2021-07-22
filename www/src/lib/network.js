@@ -1,55 +1,63 @@
 export default class Network {
 	constructor(roomName, stream) {
+		this.roomName = roomName;
+		this.stream = stream;
+
 		/* Prepare WebRTC */
 
-		const pc = new RTCPeerConnection({
+		this.pc = new RTCPeerConnection({
 			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 		});
 
-		pc.onconnectionstatechange = () => {
-			console.log(`webrtc ${pc.connectionState}`);
+		this.pc.onconnectionstatechange = () => {
+			console.log(`webrtc ${this.pc.connectionState}`);
 		};
 
-		stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+		/* Prepare WebRTC unordered but reliable data channel */
 
-		/* Prepare WebRTC data channel */
-
-		const dc = pc.createDataChannel('unordered', {
-			// do not guarantee order
+		const reliable = this.pc.createDataChannel('reliable', {
 			ordered: false,
-			// abort after 3 seconds
-			maxPacketLifeTime: 3000,
 		});
 
-		dc.onopen = () => {
-			console.log('webrtc channel open');
+		reliable.onopen = () => {
+			console.log('webrtc reliable channel open');
 		};
 
-		dc.onmessage = (event) => {
-			console.log('webrtc channel message', event.data);
+		reliable.onmessage = (event) => {
+			console.log('webrtc reliable channel message', event.data);
 		};
 
-		/* Prepare WebSocket */
+		/* Prepare WebRTC unordered and unreliable data channel */
 
-		const ws = new WebSocket(
-			`${import.meta.env.VITE_WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(roomName)}`,
-		);
+		const unreliable = this.pc.createDataChannel('unreliable', {
+			ordered: false,
+			maxRetransmits: 0,
+		});
 
-		ws.onopen = async () => {
-			console.log('websocket open');
-			const offer = await pc.createOffer();
-			pc.setLocalDescription(offer);
-			ws.send(JSON.stringify({ OFFER: offer }));
+		unreliable.onopen = () => {
+			console.log('webrtc unreliable channel open');
 		};
 
-		ws.onmessage = (event) => {
-			const data = JSON.parse(event.data);
-			console.log('websocket message', data);
-
-			const { ANSWER } = data;
-			if (ANSWER) {
-				pc.setRemoteDescription(new RTCSessionDescription(ANSWER));
-			}
+		unreliable.onmessage = (event) => {
+			console.log('webrtc unreliable channel message', event.data);
 		};
+	}
+
+	async init() {
+		for (const track of this.stream.getTracks()) {
+			this.pc.addTrack(track, this.stream);
+		}
+
+		const offer = await this.pc.createOffer();
+
+		this.pc.setLocalDescription(offer);
+
+		const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/rooms`, {
+			method: 'POST',
+			body: JSON.stringify({ name: this.roomName, offer }),
+		});
+		const { answer } = await res.json();
+
+		this.pc.setRemoteDescription(new RTCSessionDescription(answer));
 	}
 }

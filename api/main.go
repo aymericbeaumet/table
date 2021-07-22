@@ -5,29 +5,22 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	webrtc "github.com/pion/webrtc/v3"
 )
 
-type InboundMessage struct {
-	Offer *InboundMessageOffer `json:"OFFER,omitempty"`
-}
-
-type InboundMessageOffer struct {
-	webrtc.SessionDescription
-}
-
-type OutboundMessage struct {
-	Answer *OutboundMessageAnswer `json:"ANSWER,omitempty"`
-}
-
-type OutboundMessageAnswer struct {
-	webrtc.SessionDescription
-}
-
 func main() {
+	mode := os.Getenv("MODE")
+	if len(mode) == 0 {
+		mode = "development"
+	}
+	godotenv.Load(".env")
+	godotenv.Load(".env." + mode)
+
 	peerConnectionConfig := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
@@ -36,53 +29,46 @@ func main() {
 		},
 	}
 
-	upgrader := websocket.Upgrader{
-		CheckOrigin:       func(r *http.Request) bool { return true },
-		EnableCompression: true,
-	}
-
 	r := gin.Default()
 
-	r.GET("/rooms/:name", func(c *gin.Context) {
-		//name, err := url.QueryUnescape(c.Param("name"))
-		//if err != nil {
-		//c.AbortWithError(http.StatusBadRequest, err)
-		//return
-		//}
+	config := cors.DefaultConfig()
+	config.AllowOrigins = strings.Split(os.Getenv("CORS_ALLOW_ORIGINS"), ",")
+	r.Use(cors.New(config))
 
-		// Upgrade HTTP to WebSocket
-		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+	r.POST("/rooms", func(c *gin.Context) {
+		var payload struct {
+			Name  string                    `json:"name"`
+			Offer webrtc.SessionDescription `json:"offer"`
+		}
+		if c.BindJSON(&payload) != nil {
 			return
 		}
-		defer conn.Close()
-		conn.EnableWriteCompression(true)
 
 		// Create a new RTCPeerConnection
 		peerConnection, err := webrtc.NewPeerConnection(peerConnectionConfig)
 		if err != nil {
-			panic(err)
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
 		}
-		defer peerConnection.Close()
 
-		// Listen for ICE candidates
-		var candidate *webrtc.ICECandidate
-		peerConnection.OnICECandidate(func(c *webrtc.ICECandidate) {
-			if candidate != nil {
-				return
-			}
+		// Set remote description
+		if err = peerConnection.SetRemoteDescription(payload.Offer); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
-			peerConnection.AddICECandidate(c.ToJSON())
+		// Create answer
+		answer, err := peerConnection.CreateAnswer(nil)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
-			conn.WriteJSON(&OutboundMessage{
-				Answer: &OutboundMessageAnswer{
-					SessionDescription: *peerConnection.LocalDescription(),
-				},
-			})
-
-			candidate = c
-		})
+		// Sets the LocalDescription, and starts our UDP listeners
+		if err = peerConnection.SetLocalDescription(answer); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
 		// Listen for data channels
 		peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
@@ -91,30 +77,23 @@ func main() {
 			})
 		})
 
-		for {
-			var message InboundMessage
-			if err := conn.ReadJSON(&message); err != nil {
-				panic(err)
+		// Listen for ICE candidates
+		done := make(chan struct{})
+		peerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
+			if candidate != nil {
+				peerConnection.AddICECandidate(candidate.ToJSON())
+			} else {
+				done <- struct{}{}
 			}
+		})
+		<-done
 
-			if m := message.Offer; m != nil {
-				// Set the remote SessionDescription
-				if err = peerConnection.SetRemoteDescription(message.Offer.SessionDescription); err != nil {
-					panic(err)
-				}
-
-				// Create answer
-				answer, err := peerConnection.CreateAnswer(nil)
-				if err != nil {
-					panic(err)
-				}
-
-				// Sets the LocalDescription, and starts our UDP listeners
-				if err = peerConnection.SetLocalDescription(answer); err != nil {
-					panic(err)
-				}
-			}
-		}
+		// Send the answer back
+		c.JSON(http.StatusOK, struct {
+			Answer *webrtc.SessionDescription `json:"answer"`
+		}{
+			Answer: peerConnection.LocalDescription(),
+		})
 	})
 
 	hostname := os.Getenv("HOSTNAME")
