@@ -78,7 +78,7 @@ func main() {
 			})
 		})
 
-		// Listen for ICE candidates
+		// Listen for ICE candidates (TODO: switch to SSE and send ice candidates as they arrive)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		peerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
