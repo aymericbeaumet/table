@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -78,15 +79,16 @@ func main() {
 		})
 
 		// Listen for ICE candidates
-		done := make(chan struct{})
+		var wg sync.WaitGroup
+		wg.Add(1)
 		peerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
 			if candidate != nil {
 				peerConnection.AddICECandidate(candidate.ToJSON())
 			} else {
-				done <- struct{}{}
+				wg.Done()
 			}
 		})
-		<-done
+		wg.Wait()
 
 		// Send the answer back
 		c.JSON(http.StatusOK, struct {
