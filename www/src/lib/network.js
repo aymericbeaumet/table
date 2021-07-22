@@ -2,6 +2,7 @@ export default class Network {
 	constructor(roomName, stream) {
 		this.roomName = roomName;
 		this.stream = stream;
+		this.seq = 0;
 
 		/* Prepare WebRTC */
 
@@ -62,6 +63,7 @@ export default class Network {
 	}
 
 	send(payload, { reliable }) {
+		payload.__seq__ = this.seq++;
 		const json = JSON.stringify(payload);
 		if (reliable) {
 			this.reliable.send(json);
