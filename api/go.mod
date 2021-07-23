@@ -14,8 +14,7 @@ require (
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/pion/ice/v2 v2.1.9 // indirect
-	github.com/pion/webrtc/v3 v3.0.31
+	github.com/pion/webrtc/v3 v3.0.32
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
