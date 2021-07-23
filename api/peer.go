@@ -147,11 +147,11 @@ func (p *Peer) SendPeer(peer *Peer) error {
 	return p.SendReliable(peer, msg)
 }
 
-func (p *Peer) OnReliable(f func(msg []byte)) {
+func (p *Peer) OnMessageReliable(f func(msg []byte)) {
 	p.onMessageReliable = f
 }
 
-func (p *Peer) OnUnreliable(f func(msg []byte)) {
+func (p *Peer) OnMessageUnreliable(f func(msg []byte)) {
 	p.onMessageUnreliable = f
 }
 

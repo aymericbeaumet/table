@@ -69,7 +69,7 @@ func main() {
 			}
 		})
 
-		peer.OnReliable(func(msg []byte) {
+		peer.OnMessageReliable(func(msg []byte) {
 			room.EachPeer(func(p *Peer) {
 				if p != peer {
 					if err := p.SendReliable(peer, msg); err != nil {
@@ -79,7 +79,7 @@ func main() {
 			})
 		})
 
-		peer.OnUnreliable(func(msg []byte) {
+		peer.OnMessageUnreliable(func(msg []byte) {
 			room.EachPeer(func(p *Peer) {
 				if p != peer {
 					if err := p.SendUnreliable(peer, msg); err != nil {
