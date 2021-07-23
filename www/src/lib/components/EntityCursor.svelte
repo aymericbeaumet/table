@@ -1,8 +1,6 @@
 <script>
 	export let x;
 	export let y;
-
-	console.log({ x, y });
 </script>
 
 <img

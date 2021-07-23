@@ -21,7 +21,16 @@
 	let cursorEntities = {};
 
 	function onNetworkMessage({ peerID, data }) {
-		console.log(peerID, data);
+		if (data.PEER) {
+			if (data.PEER.status === 'offline') {
+				const cursorEntity = cursorEntities[peerID];
+				if (cursorEntity) {
+					delete cursorEntities[peerID];
+					entities.splice(entities.indexOf(cursorEntity), 1);
+					entities = entities;
+				}
+			}
+		}
 
 		if (data.MOUSE_MOVE) {
 			let entity = cursorEntities[peerID];
