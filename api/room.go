@@ -7,10 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
+var roomID uint32
+
 type Room struct {
-	ID        uuid.UUID           `json:"id"`
-	Name      string              `json:"name"`
-	PeersByID map[uuid.UUID]*Peer `json:"peersByID"`
+	ID        uuid.UUID        `json:"id"`
+	Name      string           `json:"name"`
+	PeersByID map[uint32]*Peer `json:"peersByID"`
 	mu        sync.RWMutex
 }
 
@@ -18,11 +20,11 @@ func NewRoom(name string) *Room {
 	return &Room{
 		ID:        uuid.New(),
 		Name:      NormalizeRoomName(name),
-		PeersByID: map[uuid.UUID]*Peer{},
+		PeersByID: map[uint32]*Peer{},
 	}
 }
 
-func (r *Room) GetPeer(id uuid.UUID) *Peer {
+func (r *Room) GetPeer(id uint32) *Peer {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

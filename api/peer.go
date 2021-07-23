@@ -6,31 +6,32 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 
-	"github.com/google/uuid"
 	webrtc "github.com/pion/webrtc/v3"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
-type MousePosition struct {
-	ClientX int32 `json:"clientX"`
-	ClientY int32 `json:"clientY"`
+var peerID uint32
+
+type Wrap struct {
+	Peer *Peer              `msgpack:"peer"`
+	Data msgpack.RawMessage `msgpack:"data"`
 }
 
 type Peer struct {
-	ID uuid.UUID
+	ID uint32 `msgpack:"id"`
 
-	peerConnection *webrtc.PeerConnection
-
-	reliableDataChannel *webrtc.DataChannel
-	onReliable          func([]byte)
-
+	peerConnection        *webrtc.PeerConnection
+	reliableDataChannel   *webrtc.DataChannel
 	unreliableDataChannel *webrtc.DataChannel
+	onReliable            func([]byte)
 	onUnreliable          func([]byte)
 }
 
 func NewPeer() *Peer {
 	return &Peer{
-		ID: uuid.New(),
+		ID: atomic.AddUint32(&peerID, 1),
 	}
 }
 
@@ -102,11 +103,19 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 }
 
 func (p *Peer) SendReliable(data []byte) error {
-	return p.send(p.reliableDataChannel, data)
+	wrapped, err := p.wrap(data)
+	if err != nil {
+		return err
+	}
+	return p.send(p.reliableDataChannel, wrapped)
 }
 
 func (p *Peer) SendUnreliable(data []byte) error {
-	return p.send(p.unreliableDataChannel, data)
+	wrapped, err := p.wrap(data)
+	if err != nil {
+		return err
+	}
+	return p.send(p.unreliableDataChannel, wrapped)
 }
 
 func (p *Peer) OnReliable(f func(msg []byte)) {
@@ -134,4 +143,12 @@ func (p *Peer) send(dc *webrtc.DataChannel, data []byte) error {
 		return errors.New("channel does not exist")
 	}
 	return dc.Send(data)
+}
+
+func (p *Peer) wrap(data []byte) ([]byte, error) {
+	w := &Wrap{
+		Peer: p,
+		Data: data,
+	}
+	return msgpack.Marshal(w)
 }
