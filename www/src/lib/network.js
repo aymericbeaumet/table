@@ -1,74 +1,76 @@
+import { encode, decode } from '@msgpack/msgpack';
+
 export default class Network {
-	constructor(roomName, stream) {
-		this.roomName = roomName;
-		this.stream = stream;
-		this.seq = 0;
+	constructor(roomName, stream, onMessage) {
+		this._roomName = roomName;
+		this._stream = stream;
+		this._seq = 0;
+
+		const onmessage = (event) => {
+			// TODO: drop the outdated message by leveraging the __seq__ number by message key
+			onMessage(decode(event.data));
+		};
 
 		/* Prepare WebRTC */
 
-		this.pc = new RTCPeerConnection({
-			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+		this._peerConnection = new RTCPeerConnection({
+			iceServers: [
+				{
+					urls: import.meta.env.VITE_STUN_SERVERS_URLS.split(','),
+				},
+			],
 		});
 
-		this.pc.onconnectionstatechange = () => {
-			console.log(`webrtc ${this.pc.connectionState}`);
+		this._peerConnection.onconnectionstatechange = () => {
+			console.log(`webrtc ${this._peerConnection.connectionState}`);
 		};
 
 		/* Prepare WebRTC unordered but reliable data channel */
 
-		this.reliable = this.pc.createDataChannel('reliable', {
+		this._reliable = this._peerConnection.createDataChannel('reliable', {
 			ordered: false,
 		});
 
-		this.reliable.onopen = () => {
-			console.log('webrtc reliable channel open');
-		};
-
-		this.reliable.onmessage = (event) => {
-			console.log('webrtc reliable channel message', event.data);
-		};
+		this._reliable.onmessage = onmessage;
 
 		/* Prepare WebRTC unordered and unreliable data channel */
 
-		this.unreliable = this.pc.createDataChannel('unreliable', {
+		this._unreliable = this._peerConnection.createDataChannel('unreliable', {
 			ordered: false,
 			maxRetransmits: 0,
 		});
 
-		this.unreliable.onopen = () => {
-			console.log('webrtc unreliable channel open');
-		};
-
-		this.unreliable.onmessage = (event) => {
-			console.log('webrtc unreliable channel message', event.data);
-		};
+		this._unreliable.onmessage = onmessage;
 	}
 
 	async init() {
-		for (const track of this.stream.getTracks()) {
-			this.pc.addTrack(track, this.stream);
+		for (const track of this._stream.getTracks()) {
+			this._peerConnection.addTrack(track, this._stream);
 		}
 
-		const offer = await this.pc.createOffer();
+		const offer = await this._peerConnection.createOffer();
 
-		this.pc.setLocalDescription(offer);
+		this._peerConnection.setLocalDescription(offer);
 
 		const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/rooms`, {
 			method: 'POST',
-			body: JSON.stringify({ name: this.roomName, offer }),
+			body: JSON.stringify({ name: this._roomName, offer }),
 		});
+		if (res.status !== 200) {
+			throw new Error(`unexpected status code ${res.status}`);
+		}
 		const { answer } = await res.json();
 
-		this.pc.setRemoteDescription(new RTCSessionDescription(answer));
+		this._peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
 	}
 
-	send(payload, { reliable }) {
-		payload.__seq__ = this.seq++;
-		const json = JSON.stringify(payload);
-		if (reliable) {
-			this.reliable.send(json);
-		} else {
-			this.unreliable.send(json);
-		}
+	reliable(payload) {
+		payload.__seq__ = this._seq++;
+		this._reliable.send(encode(payload));
+	}
+
+	unreliable(payload) {
+		payload.__seq__ = this._seq++;
+		this._unreliable.send(encode(payload));
 	}
 }

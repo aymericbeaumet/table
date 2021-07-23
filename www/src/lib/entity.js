@@ -1,18 +1,20 @@
 import getVideoId from 'get-video-id';
+import EntityText from '$lib/components/EntityText.svelte';
+import EntityIframe from '$lib/components/EntityIframe.svelte';
 
 export function inferEntity(value) {
 	const { service, id } = getVideoId(value);
 	switch (service) {
 		case 'vimeo':
-			return ['iframe', { src: `https://player.vimeo.com/video/${id}` }];
+			return [EntityIframe, { src: `https://player.vimeo.com/video/${id}` }];
 		case 'youtube':
-			return ['iframe', { src: `https://www.youtube-nocookie.com/embed/${id}` }];
+			return [EntityIframe, { src: `https://www.youtube-nocookie.com/embed/${id}` }];
 	}
 
 	const matches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(value);
 	if (matches && matches.length === 2) {
 		return [
-			'iframe',
+			EntityIframe,
 			{
 				src: `https://player.twitch.tv/?channel=${matches[1]}&parent=${
 					import.meta.env.VITE_HOSTNAME
@@ -21,5 +23,5 @@ export function inferEntity(value) {
 		];
 	}
 
-	return ['text', { value }];
+	return [EntityText, { value }];
 }

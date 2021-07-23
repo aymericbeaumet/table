@@ -4,68 +4,27 @@
 	import PinBar from './PinBar.svelte';
 	import Network from '$lib/network';
 	import { throttle } from 'lodash';
-	import EntityText from './EntityText.svelte';
-	import EntityIframe from './EntityIframe.svelte';
 
 	const MAX_FPS = 30;
 
 	export let name;
 
-	let network;
 	let topEntities = [];
 	let entities = [];
 
-	function getEntityByname(name) {
-		switch (name) {
-			case 'iframe':
-				return EntityIframe;
-			case 'text':
-				return EntityText;
-			default:
-				throw new Error(`unknown entity ${name}`);
-		}
+	function onPinBarEntity(event) {
+		entities = [...entities, event.detail];
+		// TODO: send entity through network
 	}
 
-	function onEntity(event) {
-		const [name, props] = event.detail;
-		const entity = [getEntityByname(name), props];
-		entities = [...entities, entity];
-		network.send(
-			{
-				NEW_ENTITY: {
-					name,
-					props,
-				},
-			},
-			{ reliable: true },
-		);
+	function onNetworkMessage(event) {
+		console.log('message', event);
 	}
 
-	function onMouseMove(event) {
-		network.send(
-			{
-				MOUSE_MOVE: {
-					clientX: event.clientX,
-					clientY: event.clientY,
-				},
-			},
-			{ reliable: false },
-		);
-	}
+	let onMouseClick;
+	let onMouseMove;
 
-	function onMouseClick(event) {
-		network.send(
-			{
-				MOUSE_CLICK: {
-					clientX: event.clientX,
-					clientY: event.clientY,
-				},
-			},
-			{ reliable: false },
-		);
-	}
-
-	onMount(async () => {
+	onMount(async function () {
 		const stream = await navigator.mediaDevices.getUserMedia({
 			audio: true,
 			video: {
@@ -77,28 +36,42 @@
 		});
 		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
 
-		network = new Network(name, stream);
+		const network = new Network(name, stream, onNetworkMessage);
 		await network.init();
+
+		onMouseClick = function (event) {
+			network.reliable({
+				MOUSE_CLICK: {
+					clientX: event.clientX,
+					clientY: event.clientY,
+				},
+			});
+		};
+
+		onMouseMove = throttle(function (event) {
+			network.unreliable({
+				MOUSE_MOVE: {
+					clientX: event.clientX,
+					clientY: event.clientY,
+				},
+			});
+		}, 1000 / MAX_FPS);
 	});
 </script>
 
-<PinBar on:entity={onEntity}>
-	<div
-		class="container"
-		on:mousemove={network && throttle(onMouseMove, 1000 / MAX_FPS)}
-		on:click={network && onMouseClick}
-	>
+<PinBar on:entity={onPinBarEntity}>
+	<div class="container" on:click={onMouseClick} on:mousemove={onMouseMove}>
 		<header>
-			{#each topEntities as [entity, props]}
+			{#each topEntities as [component, props]}
 				<div>
-					<svelte:component this={entity} {...props} />
+					<svelte:component this={component} {...props} />
 				</div>
 			{/each}
 		</header>
 
-		{#each entities as [entity, props]}
+		{#each entities as [component, props]}
 			<div class="entity">
-				<svelte:component this={entity} {...props} />
+				<svelte:component this={component} {...props} />
 			</div>
 		{/each}
 	</div>

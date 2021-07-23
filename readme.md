@@ -56,3 +56,16 @@ Automatically deployed when pushed to master.
   * whitelist=a@a,b@b
   * blacklist=a@a,b@b
   * flags=noaudio,novideo,nosharescreen,anonymous
+
+## Network optimization
+
+The signaling is done through HTTP. After that moment all the communication is
+done through WebRTC data channels.
+
+The client is in charge of the business logic.
+
+The server is in charge of filtering the outdated packets and broadcasting to
+all the other clients. Besides the seq number and the partial update flag,
+packets are opaque from the server's perspective.
+
+- Move the client part in a web worker?

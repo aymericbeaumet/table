@@ -1,58 +1,91 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
 	webrtc "github.com/pion/webrtc/v3"
 )
 
-var peerConnectionConfig = webrtc.Configuration{
-	ICEServers: []webrtc.ICEServer{
-		{
-			URLs: []string{"stun:stun.l.google.com:19302"},
-		},
-	},
+type MousePosition struct {
+	ClientX int32 `json:"clientX"`
+	ClientY int32 `json:"clientY"`
 }
 
 type Peer struct {
 	ID uuid.UUID
 
 	peerConnection *webrtc.PeerConnection
+
+	reliableDataChannel *webrtc.DataChannel
+	onReliable          func([]byte)
+
+	unreliableDataChannel *webrtc.DataChannel
+	onUnreliable          func([]byte)
 }
 
-func NewPeer(offer webrtc.SessionDescription) *Peer {
-	id := uuid.New()
-
-	// Create a new RTCPeerConnection
-	peerConnection, err := webrtc.NewPeerConnection(peerConnectionConfig)
-	if err != nil {
-		panic(err)
+func NewPeer() *Peer {
+	return &Peer{
+		ID: uuid.New(),
 	}
+}
+
+func (p *Peer) Init(offer webrtc.SessionDescription) error {
+	// Create a new RTCPeerConnection
+	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{
+				URLs: strings.Split(os.Getenv("STUN_SERVERS_URLS"), ","),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	p.peerConnection = peerConnection
 
 	// Set remote description
-	if err = peerConnection.SetRemoteDescription(offer); err != nil {
-		panic(err)
+	if err := p.peerConnection.SetRemoteDescription(offer); err != nil {
+		return err
 	}
 
 	// Create answer
-	answer, err := peerConnection.CreateAnswer(nil)
+	answer, err := p.peerConnection.CreateAnswer(nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Sets the LocalDescription, and starts our UDP listeners
-	if err = peerConnection.SetLocalDescription(answer); err != nil {
-		panic(err)
+	if err = p.peerConnection.SetLocalDescription(answer); err != nil {
+		return err
 	}
 
-	return &Peer{
-		ID:             id,
-		peerConnection: peerConnection,
-	}
-}
+	// Listen for channels
+	p.peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
+		switch l := dc.Label(); l {
+		case "reliable":
+			p.reliableDataChannel = dc
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				if p.onReliable != nil {
+					p.onReliable(msg.Data)
+				}
+			})
+		case "unreliable":
+			p.unreliableDataChannel = dc
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				if p.onUnreliable != nil {
+					p.onUnreliable(msg.Data)
+				}
+			})
+		default:
+			panic(fmt.Errorf("unsupported data channel %#v", l))
+		}
+	})
 
-func (p *Peer) Init() {
 	// Listen for ICE candidates
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -64,10 +97,24 @@ func (p *Peer) Init() {
 		}
 	})
 	wg.Wait()
+
+	return nil
 }
 
-func (p *Peer) OnDataChannel(f func(dc *webrtc.DataChannel)) {
-	p.peerConnection.OnDataChannel(f)
+func (p *Peer) SendReliable(data []byte) error {
+	return p.send(p.reliableDataChannel, data)
+}
+
+func (p *Peer) SendUnreliable(data []byte) error {
+	return p.send(p.unreliableDataChannel, data)
+}
+
+func (p *Peer) OnReliable(f func(msg []byte)) {
+	p.onReliable = f
+}
+
+func (p *Peer) OnUnreliable(f func(msg []byte)) {
+	p.onUnreliable = f
 }
 
 func (p *Peer) OnClose(f func()) {
@@ -78,6 +125,13 @@ func (p *Peer) OnClose(f func()) {
 	})
 }
 
-func (p *Peer) Answer() *webrtc.SessionDescription {
+func (p *Peer) LocalDescription() *webrtc.SessionDescription {
 	return p.peerConnection.LocalDescription()
+}
+
+func (p *Peer) send(dc *webrtc.DataChannel, data []byte) error {
+	if dc == nil {
+		return errors.New("channel does not exist")
+	}
+	return dc.Send(data)
 }

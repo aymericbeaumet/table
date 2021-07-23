@@ -41,9 +41,38 @@ func main() {
 		// Upsert room
 		room := rooms.Upsert(payload.Name)
 
-		// Create peer
-		peer := NewPeer(payload.Offer)
-		peer.Init()
+		// Create and init peer
+
+		peer := NewPeer()
+
+		if err := peer.Init(payload.Offer); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		peer.OnReliable(func(msg []byte) {
+			room.EachPeer(func(p *Peer) {
+				if p != peer {
+					if err := p.SendReliable(msg); err != nil {
+						fmt.Println("error:", err)
+					}
+				}
+			})
+		})
+
+		peer.OnUnreliable(func(msg []byte) {
+			room.EachPeer(func(p *Peer) {
+				if p != peer {
+					if err := p.SendUnreliable(msg); err != nil {
+						fmt.Println("error:", err)
+					}
+				}
+			})
+		})
+
+		peer.OnClose(func() {
+			room.DelPeer(peer)
+		})
 
 		// Add peer
 		room.AddPeer(peer)
@@ -52,13 +81,13 @@ func main() {
 		c.JSON(http.StatusOK, struct {
 			Answer *webrtc.SessionDescription `json:"answer"`
 		}{
-			Answer: peer.Answer(),
+			Answer: peer.LocalDescription(),
 		})
 	})
 
 	r.GET("/debug", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"roomsbyID": rooms,
+			"roomsByID": rooms,
 		})
 	})
 
