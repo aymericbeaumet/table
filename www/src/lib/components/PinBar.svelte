@@ -8,16 +8,6 @@
 	let inputTextValue;
 	let visible = false;
 
-	function onContextMenu(event) {
-		console.log(event);
-		// allow to bypass custom logic by holding "option"
-		if (event.altKey) {
-			return;
-		}
-		event.preventDefault();
-		show();
-	}
-
 	function onClick(event) {
 		if (event.target === inputTextElement) {
 			return;
@@ -74,7 +64,7 @@
 
 <svelte:window on:keydown={onWindowKeyDown} />
 
-<div class="wrapper" on:contextmenu={onContextMenu} on:click={onClick}>
+<div class="wrapper" on:click={onClick}>
 	<div class="pin-bar" class:visible>
 		<form on:submit={onSubmit}>
 			<input
