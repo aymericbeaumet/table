@@ -4,6 +4,7 @@
 	import PinBar from './PinBar.svelte';
 	import Network from '$lib/network';
 	import { throttle } from 'lodash';
+	import EntityCursor from './EntityCursor.svelte';
 
 	const MAX_FPS = 30;
 
@@ -17,8 +18,22 @@
 		// TODO: send entity through network
 	}
 
+	let cursorEntities = {};
+
 	function onNetworkMessage({ peerID, data }) {
 		console.log(peerID, data);
+
+		if (data.MOUSE_MOVE) {
+			let entity = cursorEntities[peerID];
+			if (!entity) {
+				entity = [EntityCursor, {}];
+				cursorEntities[peerID] = entity;
+				entities = [...entities, entity];
+			}
+			entity[1].x = data.MOUSE_MOVE.clientX;
+			entity[1].y = data.MOUSE_MOVE.clientY;
+			entities = entities;
+		}
 	}
 
 	let onMouseClick;
