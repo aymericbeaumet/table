@@ -42,19 +42,22 @@ func (r *Room) EachPeer(cb func(*Peer)) {
 	}
 }
 
-func (r *Room) AddPeer(peer *Peer) error {
+func (r *Room) AddPeer(peer *Peer) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	_, ok := r.PeersByID[peer.ID]
 	r.PeersByID[peer.ID] = peer
-	return nil
+	return !ok
 }
 
-func (r *Room) DelPeer(peer *Peer) {
+func (r *Room) DelPeer(peer *Peer) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	_, ok := r.PeersByID[peer.ID]
 	delete(r.PeersByID, peer.ID)
+	return ok
 }
 
 func (r *Room) Inc() uint32 {

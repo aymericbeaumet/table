@@ -51,24 +51,28 @@ func main() {
 		}
 
 		peer.OnOpen(func() {
-			room.EachPeer(func(p *Peer) {
-				peer.SendPeer(p)
-				p.SendPeer(p)
-			})
-			room.AddPeer(peer)
+			if room.AddPeer(peer) {
+				room.EachPeer(func(p *Peer) {
+					if p != peer {
+						peer.SendPeer(p)
+						p.SendPeer(peer)
+					}
+				})
+			}
 		})
 
 		peer.OnClose(func() {
-			room.DelPeer(peer)
-			room.EachPeer(func(p *Peer) {
-				p.SendPeer(peer)
-			})
+			if room.DelPeer(peer) {
+				room.EachPeer(func(p *Peer) {
+					p.SendPeer(peer)
+				})
+			}
 		})
 
 		peer.OnReliable(func(msg []byte) {
 			room.EachPeer(func(p *Peer) {
 				if p != peer {
-					if err := p.SendReliable(msg); err != nil {
+					if err := p.SendReliable(peer, msg); err != nil {
 						fmt.Println("error:", err)
 					}
 				}
@@ -78,7 +82,7 @@ func main() {
 		peer.OnUnreliable(func(msg []byte) {
 			room.EachPeer(func(p *Peer) {
 				if p != peer {
-					if err := p.SendUnreliable(msg); err != nil {
+					if err := p.SendUnreliable(peer, msg); err != nil {
 						fmt.Println("error:", err)
 					}
 				}

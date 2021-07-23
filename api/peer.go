@@ -120,16 +120,16 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 	return nil
 }
 
-func (p *Peer) SendReliable(data []byte) error {
-	wrapped, err := p.wrap(data)
+func (p *Peer) SendReliable(sourcePeer *Peer, data []byte) error {
+	wrapped, err := p.wrap(sourcePeer, data)
 	if err != nil {
 		return err
 	}
 	return p.send(p.reliableDataChannel, wrapped)
 }
 
-func (p *Peer) SendUnreliable(data []byte) error {
-	wrapped, err := p.wrap(data)
+func (p *Peer) SendUnreliable(sourcePeer *Peer, data []byte) error {
+	wrapped, err := p.wrap(sourcePeer, data)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (p *Peer) SendPeer(peer *Peer) error {
 		return err
 	}
 
-	return p.SendReliable(msg)
+	return p.SendReliable(peer, msg)
 }
 
 func (p *Peer) OnReliable(f func(msg []byte)) {
@@ -174,9 +174,9 @@ func (p *Peer) send(dc *webrtc.DataChannel, data []byte) error {
 	return dc.Send(data)
 }
 
-func (p *Peer) wrap(data []byte) ([]byte, error) {
+func (p *Peer) wrap(sourcePeer *Peer, data []byte) ([]byte, error) {
 	w := &Wrap{
-		PeerID: p.ID,
+		PeerID: sourcePeer.ID,
 		Data:   data,
 	}
 	return msgpack.Marshal(w)
