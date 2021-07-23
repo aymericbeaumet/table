@@ -17,8 +17,8 @@
 		// TODO: send entity through network
 	}
 
-	function onNetworkMessage({ peer, data }) {
-		console.log(peer, data);
+	function onNetworkMessage({ peerID, data }) {
+		console.log(peerID, data);
 	}
 
 	let onMouseClick;

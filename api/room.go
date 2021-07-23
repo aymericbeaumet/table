@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/google/uuid"
 )
@@ -14,6 +15,7 @@ type Room struct {
 	Name      string           `json:"name"`
 	PeersByID map[uint32]*Peer `json:"peersByID"`
 	mu        sync.RWMutex
+	inc       uint32
 }
 
 func NewRoom(name string) *Room {
@@ -53,6 +55,10 @@ func (r *Room) DelPeer(peer *Peer) {
 	defer r.mu.Unlock()
 
 	delete(r.PeersByID, peer.ID)
+}
+
+func (r *Room) Inc() uint32 {
+	return atomic.AddUint32(&r.inc, 1)
 }
 
 func NormalizeRoomName(name string) string {

@@ -6,32 +6,34 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	webrtc "github.com/pion/webrtc/v3"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-var peerID uint32
-
 type Wrap struct {
-	Peer *Peer              `msgpack:"peer"`
-	Data msgpack.RawMessage `msgpack:"data"`
+	PeerID uint32             `msgpack:"peerID"`
+	Data   msgpack.RawMessage `msgpack:"data"`
 }
 
 type Peer struct {
-	ID uint32 `msgpack:"id"`
+	ID     uint32 `msgpack:"id"`
+	Status string `msgpack:"status"`
 
 	peerConnection        *webrtc.PeerConnection
 	reliableDataChannel   *webrtc.DataChannel
 	unreliableDataChannel *webrtc.DataChannel
-	onReliable            func([]byte)
-	onUnreliable          func([]byte)
+
+	onOpen              func()
+	onClose             func()
+	onMessageReliable   func([]byte)
+	onMessageUnreliable func([]byte)
 }
 
-func NewPeer() *Peer {
+func NewPeer(id uint32) *Peer {
 	return &Peer{
-		ID: atomic.AddUint32(&peerID, 1),
+		ID:     id,
+		Status: "offline",
 	}
 }
 
@@ -71,19 +73,35 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 		case "reliable":
 			p.reliableDataChannel = dc
 			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				if p.onReliable != nil {
-					p.onReliable(msg.Data)
+				if p.onMessageReliable != nil {
+					p.onMessageReliable(msg.Data)
 				}
 			})
 		case "unreliable":
 			p.unreliableDataChannel = dc
 			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				if p.onUnreliable != nil {
-					p.onUnreliable(msg.Data)
+				if p.onMessageUnreliable != nil {
+					p.onMessageUnreliable(msg.Data)
 				}
 			})
 		default:
 			panic(fmt.Errorf("unsupported data channel %#v", l))
+		}
+	})
+
+	// Listen for connection states updates
+	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
+		switch s {
+		case webrtc.PeerConnectionStateConnected:
+			if p.onOpen != nil {
+				p.Status = "online"
+				p.onOpen()
+			}
+		case webrtc.PeerConnectionStateClosed, webrtc.PeerConnectionStateDisconnected, webrtc.PeerConnectionStateFailed:
+			if p.onClose != nil {
+				p.Status = "offline"
+				p.onClose()
+			}
 		}
 	})
 
@@ -118,20 +136,31 @@ func (p *Peer) SendUnreliable(data []byte) error {
 	return p.send(p.unreliableDataChannel, wrapped)
 }
 
+func (p *Peer) SendPeer(peer *Peer) error {
+	msg, err := msgpack.Marshal(map[string]interface{}{
+		"PEER": peer,
+	})
+	if err != nil {
+		return err
+	}
+
+	return p.SendReliable(msg)
+}
+
 func (p *Peer) OnReliable(f func(msg []byte)) {
-	p.onReliable = f
+	p.onMessageReliable = f
 }
 
 func (p *Peer) OnUnreliable(f func(msg []byte)) {
-	p.onUnreliable = f
+	p.onMessageUnreliable = f
+}
+
+func (p *Peer) OnOpen(f func()) {
+	p.onOpen = f
 }
 
 func (p *Peer) OnClose(f func()) {
-	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
-		if s == webrtc.PeerConnectionStateClosed || s == webrtc.PeerConnectionStateDisconnected || s == webrtc.PeerConnectionStateFailed {
-			f()
-		}
-	})
+	p.onClose = f
 }
 
 func (p *Peer) LocalDescription() *webrtc.SessionDescription {
@@ -147,8 +176,8 @@ func (p *Peer) send(dc *webrtc.DataChannel, data []byte) error {
 
 func (p *Peer) wrap(data []byte) ([]byte, error) {
 	w := &Wrap{
-		Peer: p,
-		Data: data,
+		PeerID: p.ID,
+		Data:   data,
 	}
 	return msgpack.Marshal(w)
 }

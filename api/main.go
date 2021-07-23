@@ -43,12 +43,27 @@ func main() {
 
 		// Create and init peer
 
-		peer := NewPeer()
+		peer := NewPeer(room.Inc())
 
 		if err := peer.Init(payload.Offer); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
+
+		peer.OnOpen(func() {
+			room.EachPeer(func(p *Peer) {
+				peer.SendPeer(p)
+				p.SendPeer(p)
+			})
+			room.AddPeer(peer)
+		})
+
+		peer.OnClose(func() {
+			room.DelPeer(peer)
+			room.EachPeer(func(p *Peer) {
+				p.SendPeer(peer)
+			})
+		})
 
 		peer.OnReliable(func(msg []byte) {
 			room.EachPeer(func(p *Peer) {
@@ -69,13 +84,6 @@ func main() {
 				}
 			})
 		})
-
-		peer.OnClose(func() {
-			room.DelPeer(peer)
-		})
-
-		// Add peer
-		room.AddPeer(peer)
 
 		// Send the answer back
 		c.JSON(http.StatusOK, struct {
