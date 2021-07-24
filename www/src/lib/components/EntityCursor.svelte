@@ -1,10 +1,20 @@
 <script>
 	export let x;
 	export let y;
+	export let fps;
 </script>
 
 <img
 	src="/assets/cursor.png"
 	alt="cursor"
-	style={`position: absolute; left: ${x}px; top: ${y}px; width: 32px; height: 32px;`}
+	style={`
+	  width: 32px;
+	  height: 32px;
+	  position: absolute;
+	  transition-property: top, left;
+	  transition-duration: ${1 / fps}s;
+	  transition-timing-function: linear;
+	  left: ${x}px;
+	  top: ${y}px;
+	`}
 />

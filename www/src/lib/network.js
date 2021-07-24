@@ -1,14 +1,23 @@
 import { encode, decode } from '@msgpack/msgpack';
 
 export default class Network {
-	constructor(roomName, stream, onMessage) {
+	constructor(roomName, stream, { onPeer, onMouseMove }) {
 		this._roomName = roomName;
 		this._stream = stream;
 		this._seq = 0;
 
 		const onmessage = (event) => {
+			const { peerID, data } = decode(event.data);
+
 			// TODO: drop the outdated message by leveraging the __seq__ number by message key
-			onMessage(decode(event.data));
+
+			if (data.PEER) {
+				onPeer(peerID, data.PEER);
+			}
+
+			if (data.MOUSE_MOVE) {
+				onMouseMove(peerID, data.MOUSE_MOVE);
+			}
 		};
 
 		/* Prepare WebRTC */
