@@ -27,13 +27,12 @@
 	function onNetworkMouseMove(peerID, data) {
 		let entity = cursorEntities[peerID];
 		if (!entity) {
-			entity = [EntityCursor, {}];
+			entity = [EntityCursor, { fps: MAX_FPS }];
 			cursorEntities[peerID] = entity;
 			entities = [...entities, entity];
 		}
 		entity[1].x = data.clientX;
 		entity[1].y = data.clientY;
-		entity[1].fps = MAX_FPS;
 		entities = entities;
 	}
 
@@ -64,7 +63,7 @@
 		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
 
 		const network = new Network(name, stream, {
-			onMouseClick: onNetworkMouseClick,
+			onMouseClick: throttle(onNetworkMouseClick, 1000 / MAX_FPS),
 			onMouseMove: throttle(onNetworkMouseMove, 1000 / MAX_FPS),
 			onPeer: onNetworkPeer,
 		});
