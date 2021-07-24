@@ -20,15 +20,8 @@
 
 	let cursorEntities = {};
 
-	function onNetworkPeer(peerID, data) {
-		if (data.status === 'offline') {
-			const cursorEntity = cursorEntities[peerID];
-			if (cursorEntity) {
-				delete cursorEntities[peerID];
-				entities.splice(entities.indexOf(cursorEntity), 1);
-				entities = entities;
-			}
-		}
+	function onNetworkMouseClick(peerID, data) {
+		console.log(peerID, data);
 	}
 
 	function onNetworkMouseMove(peerID, data) {
@@ -42,6 +35,17 @@
 		entity[1].y = data.clientY;
 		entity[1].fps = MAX_FPS;
 		entities = entities;
+	}
+
+	function onNetworkPeer(peerID, data) {
+		if (data.status === 'offline') {
+			const cursorEntity = cursorEntities[peerID];
+			if (cursorEntity) {
+				delete cursorEntities[peerID];
+				entities.splice(entities.indexOf(cursorEntity), 1);
+				entities = entities;
+			}
+		}
 	}
 
 	let onMouseClick;
@@ -60,13 +64,14 @@
 		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
 
 		const network = new Network(name, stream, {
+			onMouseClick: onNetworkMouseClick,
+			onMouseMove: throttle(onNetworkMouseMove, 1000 / MAX_FPS),
 			onPeer: onNetworkPeer,
-			onMouseMove: throttle(onNetworkMouseMove, 1000 / 30),
 		});
 		await network.init();
 
 		onMouseClick = function (event) {
-			network.reliable({
+			network.unreliable({
 				MOUSE_CLICK: {
 					clientX: event.clientX,
 					clientY: event.clientY,

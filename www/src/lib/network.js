@@ -1,7 +1,7 @@
 import { encode, decode } from '@msgpack/msgpack';
 
 export default class Network {
-	constructor(roomName, stream, { onPeer, onMouseMove }) {
+	constructor(roomName, stream, { onMouseClick, onMouseMove, onPeer }) {
 		this._roomName = roomName;
 		this._stream = stream;
 		this._seq = 0;
@@ -11,12 +11,16 @@ export default class Network {
 
 			// TODO: drop the outdated message by leveraging the __seq__ number by message key
 
-			if (data.PEER) {
-				onPeer(peerID, data.PEER);
+			if (data.MOUSE_CLICK) {
+				onMouseClick(peerID, data.MOUSE_CLICK);
 			}
 
 			if (data.MOUSE_MOVE) {
 				onMouseMove(peerID, data.MOUSE_MOVE);
+			}
+
+			if (data.PEER) {
+				onPeer(peerID, data.PEER);
 			}
 		};
 
