@@ -29,7 +29,7 @@ type Peer struct {
 	onClose             func()
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
-	onTrack             func(*webrtc.TrackLocalStaticRTP)
+	onTrack             func(webrtc.TrackLocal)
 }
 
 func NewPeer(id uint32) *Peer {
@@ -41,7 +41,7 @@ func NewPeer(id uint32) *Peer {
 		onClose:             func() {},
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
-		onTrack:             func(*webrtc.TrackLocalStaticRTP) {},
+		onTrack:             func(webrtc.TrackLocal) {},
 	}
 }
 
@@ -172,7 +172,7 @@ func (p *Peer) SendPeer(peer *Peer) error {
 	return p.SendReliable(peer, msg)
 }
 
-func (p *Peer) AddTrack(track *webrtc.TrackLocalStaticRTP) error {
+func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 	_, err := p.peerConnection.AddTrack(track)
 	return err
 }
@@ -193,7 +193,7 @@ func (p *Peer) OnClose(f func()) {
 	p.onClose = f
 }
 
-func (p *Peer) OnTrack(f func(*webrtc.TrackLocalStaticRTP)) {
+func (p *Peer) OnTrack(f func(webrtc.TrackLocal)) {
 	p.onTrack = f
 }
 
