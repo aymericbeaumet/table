@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -28,12 +29,19 @@ type Peer struct {
 	onClose             func()
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
+	onTrack             func(*webrtc.TrackLocalStaticRTP)
 }
 
 func NewPeer(id uint32) *Peer {
 	return &Peer{
 		ID:     id,
 		Status: "offline",
+
+		onOpen:              func() {},
+		onClose:             func() {},
+		onMessageReliable:   func([]byte) {},
+		onMessageUnreliable: func([]byte) {},
+		onTrack:             func(*webrtc.TrackLocalStaticRTP) {},
 	}
 }
 
@@ -51,6 +59,11 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 	}
 	p.peerConnection = peerConnection
 
+	// Allow us to receive 1 video track
+	if _, err = p.peerConnection.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
+		return err
+	}
+
 	// Set remote description
 	if err := p.peerConnection.SetRemoteDescription(offer); err != nil {
 		return err
@@ -67,40 +80,53 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 		return err
 	}
 
+	// Listen for connection states updates
+	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
+		switch s {
+		case webrtc.PeerConnectionStateConnected:
+			p.Status = "online"
+			p.onOpen()
+		case webrtc.PeerConnectionStateClosed, webrtc.PeerConnectionStateDisconnected, webrtc.PeerConnectionStateFailed:
+			p.Status = "offline"
+			p.onClose()
+		}
+	})
+
 	// Listen for channels
 	p.peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
 		switch l := dc.Label(); l {
 		case "reliable":
 			p.reliableDataChannel = dc
 			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				if p.onMessageReliable != nil {
-					p.onMessageReliable(msg.Data)
-				}
+				p.onMessageReliable(msg.Data)
 			})
 		case "unreliable":
 			p.unreliableDataChannel = dc
 			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				if p.onMessageUnreliable != nil {
-					p.onMessageUnreliable(msg.Data)
-				}
+				p.onMessageUnreliable(msg.Data)
 			})
 		default:
 			panic(fmt.Errorf("unsupported data channel %#v", l))
 		}
 	})
 
-	// Listen for connection states updates
-	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
-		switch s {
-		case webrtc.PeerConnectionStateConnected:
-			if p.onOpen != nil {
-				p.Status = "online"
-				p.onOpen()
+	// Listen for tracks
+	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
+		localTrack, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", "pion")
+		if err != nil {
+			panic(err)
+		}
+
+		p.onTrack(localTrack)
+
+		rtpBuf := make([]byte, 1400)
+		for {
+			i, _, err := remoteTrack.Read(rtpBuf)
+			if err != nil {
+				panic(err)
 			}
-		case webrtc.PeerConnectionStateClosed, webrtc.PeerConnectionStateDisconnected, webrtc.PeerConnectionStateFailed:
-			if p.onClose != nil {
-				p.Status = "offline"
-				p.onClose()
+			if _, err = localTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+				panic(err)
 			}
 		}
 	})
@@ -143,8 +169,12 @@ func (p *Peer) SendPeer(peer *Peer) error {
 	if err != nil {
 		return err
 	}
-
 	return p.SendReliable(peer, msg)
+}
+
+func (p *Peer) AddTrack(track *webrtc.TrackLocalStaticRTP) error {
+	_, err := p.peerConnection.AddTrack(track)
+	return err
 }
 
 func (p *Peer) OnMessageReliable(f func(msg []byte)) {
@@ -161,6 +191,10 @@ func (p *Peer) OnOpen(f func()) {
 
 func (p *Peer) OnClose(f func()) {
 	p.onClose = f
+}
+
+func (p *Peer) OnTrack(f func(*webrtc.TrackLocalStaticRTP)) {
+	p.onTrack = f
 }
 
 func (p *Peer) LocalDescription() *webrtc.SessionDescription {

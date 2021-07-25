@@ -18,35 +18,6 @@
 		// TODO: send entity through network
 	}
 
-	let cursorEntities = {};
-
-	function onNetworkMouseClick(peerID, data) {
-		console.log(peerID, data);
-	}
-
-	function onNetworkMouseMove(peerID, data) {
-		let entity = cursorEntities[peerID];
-		if (!entity) {
-			entity = [EntityCursor, { fps: MAX_FPS }];
-			cursorEntities[peerID] = entity;
-			entities = [...entities, entity];
-		}
-		entity[1].x = data.clientX;
-		entity[1].y = data.clientY;
-		entities = entities;
-	}
-
-	function onNetworkPeer(peerID, data) {
-		if (data.status === 'offline') {
-			const cursorEntity = cursorEntities[peerID];
-			if (cursorEntity) {
-				delete cursorEntities[peerID];
-				entities.splice(entities.indexOf(cursorEntity), 1);
-				entities = entities;
-			}
-		}
-	}
-
 	let onMouseClick;
 	let onMouseMove;
 
@@ -60,23 +31,52 @@
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
 		});
-		topEntities = [...topEntities, [EntityVideo, { srcObject: stream }]];
+		topEntities = [...topEntities, [EntityVideo, { srcObject: stream, muted: true }]];
+
+		const cursorEntities = {};
 
 		const network = new Network(name, stream, {
-			onMouseClick: throttle(onNetworkMouseClick, 1000 / MAX_FPS),
-			onMouseMove: throttle(onNetworkMouseMove, 1000 / MAX_FPS),
-			onPeer: onNetworkPeer,
+			onMouseClick: throttle(function (peerID, data) {
+				console.log(peerID, data);
+			}, 1000 / MAX_FPS),
+
+			onMouseMove: throttle(function (peerID, data) {
+				let entity = cursorEntities[peerID];
+				if (!entity) {
+					entity = [EntityCursor, { fps: MAX_FPS }];
+					cursorEntities[peerID] = entity;
+					entities = [...entities, entity];
+				}
+				entity[1].x = data.clientX;
+				entity[1].y = data.clientY;
+				entities = entities;
+			}, 1000 / MAX_FPS),
+
+			onPeer: function (peerID, data) {
+				if (data.status === 'offline') {
+					const cursorEntity = cursorEntities[peerID];
+					if (cursorEntity) {
+						delete cursorEntities[peerID];
+						entities.splice(entities.indexOf(cursorEntity), 1);
+						entities = entities;
+					}
+				}
+			},
+
+			onTrack: function (event) {
+				topEntities = [...topEntities, [EntityVideo, { srcObject: event.streams[0] }]];
+			},
 		});
 		await network.init();
 
-		onMouseClick = function (event) {
+		onMouseClick = throttle(function (event) {
 			network.unreliable({
 				MOUSE_CLICK: {
 					clientX: event.clientX,
 					clientY: event.clientY,
 				},
 			});
-		};
+		}, 1000 / MAX_FPS);
 
 		onMouseMove = throttle(function (event) {
 			network.unreliable({

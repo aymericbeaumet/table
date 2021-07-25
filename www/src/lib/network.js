@@ -1,7 +1,7 @@
 import { encode, decode } from '@msgpack/msgpack';
 
 export default class Network {
-	constructor(roomName, stream, { onMouseClick, onMouseMove, onPeer }) {
+	constructor(roomName, stream, { onMouseClick, onMouseMove, onPeer, onTrack }) {
 		this._roomName = roomName;
 		this._stream = stream;
 		this._seq = 0;
@@ -33,6 +33,9 @@ export default class Network {
 				},
 			],
 		});
+
+		this._peerConnection.addTransceiver('video');
+		this._peerConnection.ontrack = onTrack;
 
 		this._peerConnection.onconnectionstatechange = () => {
 			console.log(`webrtc ${this._peerConnection.connectionState}`);

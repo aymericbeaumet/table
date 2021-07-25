@@ -50,6 +50,14 @@ func main() {
 			return
 		}
 
+		peer.OnTrack(func(track *webrtc.TrackLocalStaticRTP) {
+			room.EachPeer(func(p *Peer) {
+				if p != peer {
+					peer.AddTrack(track)
+				}
+			})
+		})
+
 		peer.OnOpen(func() {
 			if room.AddPeer(peer) {
 				room.EachPeer(func(p *Peer) {

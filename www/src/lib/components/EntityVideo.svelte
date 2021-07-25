@@ -2,12 +2,13 @@
 	import { onMount } from 'svelte';
 
 	export let srcObject;
+	export let muted = false;
 
 	let video;
 
 	onMount(() => {
-		video.muted = true;
 		video.srcObject = srcObject;
+		video.muted = muted;
 		video.play();
 	});
 </script>
