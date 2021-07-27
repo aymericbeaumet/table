@@ -38,13 +38,13 @@
 			onMouse: throttle(function (peerID, data) {
 				let entity = cursorEntities[peerID];
 				if (!entity) {
-					entity = [EntityCursor, { fps: MAX_FPS }];
+					entity = ['cursor', EntityCursor, { fps: MAX_FPS }];
 					cursorEntities[peerID] = entity;
 					entities = [...entities, entity];
 				}
-				entity[1].x = data.clientX;
-				entity[1].y = data.clientY;
-				entity[1].isDown = data.isDown;
+				entity[2].x = data.clientX;
+				entity[2].y = data.clientY;
+				entity[2].isDown = data.isDown;
 				entities = entities;
 			}, 1000 / MAX_FPS),
 
@@ -80,7 +80,7 @@
 			},
 
 			onTrack: function (peerID, stream) {
-				const entity = [EntityVideo, { srcObject: stream }];
+				const entity = ['peer', EntityVideo, { srcObject: stream }];
 				videoEntities[peerID] = entity;
 				topEntities = [...topEntities, entity];
 			},
@@ -119,7 +119,7 @@
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
 		});
-		topEntities = [...topEntities, [EntityVideo, { srcObject: stream, muted: true }]];
+		topEntities = [...topEntities, ['self', EntityVideo, { srcObject: stream, muted: true }]];
 		peer.addLocalStream(stream);
 	});
 </script>
@@ -148,14 +148,14 @@
 		on:mouseup={onMouseUp}
 	>
 		<header>
-			{#each topEntities as [component, props]}
+			{#each topEntities as [_, component, props]}
 				<div>
 					<svelte:component this={component} {...props} />
 				</div>
 			{/each}
 		</header>
 
-		{#each entities as [component, props]}
+		{#each entities as [_, component, props]}
 			<div class="entity">
 				<svelte:component this={component} {...props} />
 			</div>

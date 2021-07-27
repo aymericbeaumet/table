@@ -109,8 +109,8 @@
 					bind:this={inputTextElement}
 				/>
 				<ul on:mousemove={onMouseMove}>
-					{#each entities as [_, props], i}
-						<li class:selected={i == selectedIndex}>{JSON.stringify(props)}</li>
+					{#each entities as [kind, _, props], i}
+						<li class:selected={i == selectedIndex}>{kind} {JSON.stringify(props)}</li>
 					{/each}
 				</ul>
 			</form>
