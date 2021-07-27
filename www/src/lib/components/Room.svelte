@@ -58,13 +58,19 @@
 					const videoEntity = videoEntities[peerID];
 					if (videoEntity) {
 						delete videoEntities[peerID];
-						topEntities = topEntities.splice(topEntities.indexOf(videoEntity), 1);
+						const i = topEntities.indexOf(videoEntity);
+						if (i > -1) {
+							topEntities = topEntities.splice(i, 1);
+						}
 					}
 
 					const cursorEntity = cursorEntities[peerID];
 					if (cursorEntity) {
 						delete cursorEntities[peerID];
-						entities = entities.splice(entities.indexOf(cursorEntity), 1);
+						const i = entities.indexOf(cursorEntity);
+						if (i > 0) {
+							entities = entities.splice(i, 1);
+						}
 					}
 				}
 			},
