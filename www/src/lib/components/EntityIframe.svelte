@@ -8,6 +8,5 @@
 	height="360"
 	frameborder="0"
 	allow="autoplay; encrypted-media; fullscreen"
-	allowfullscreen="allowfullscreen"
 	{src}
 />

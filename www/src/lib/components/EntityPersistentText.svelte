@@ -3,7 +3,7 @@
 </script>
 
 <div>
-	<p>{value}</p>
+	<p>Persistent {value}</p>
 </div>
 
 <style>

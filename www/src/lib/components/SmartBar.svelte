@@ -18,13 +18,22 @@
 
 	function onSubmit(event) {
 		event.preventDefault();
-		dispatch('entity', entities[0]);
+		dispatch('entity', entities[selectedIndex]);
 		hide();
 	}
 
 	function onInput(event) {
 		const value = event.target.value.trim();
 		entities = inferEntities(value);
+		selectedIndex = 0;
+	}
+
+	function onKeyDown(event) {
+		if (event.key === 'ArrowUp') {
+			selectedIndex = (selectedIndex + entities.length - 1) % entities.length;
+		} else if (event.key === 'ArrowDown') {
+			selectedIndex = (selectedIndex + entities.length + 1) % entities.length;
+		}
 	}
 
 	function onKeyPress(event) {
@@ -48,12 +57,12 @@
 
 	function show() {
 		if (!visible) {
-			visible = true;
 			entities = [];
 			selectedIndex = 0;
 			inputTextElement.value = '';
 			setTimeout(() => inputTextElement.focus(), 0); // https://github.com/sveltejs/sapper/issues/619#issuecomment-480616597
 		}
+		visible = true;
 	}
 
 	function hide() {
@@ -70,7 +79,13 @@
 <div class="wrapper" on:click={onClick}>
 	<div class="overlay" class:visible>
 		<form on:submit={onSubmit}>
-			<input type="text" on:input={onInput} on:keypress={onKeyPress} bind:this={inputTextElement} />
+			<input
+				type="text"
+				on:input={onInput}
+				on:keydown={onKeyDown}
+				on:keypress={onKeyPress}
+				bind:this={inputTextElement}
+			/>
 			<ul>
 				{#each entities as [_, props], i}
 					<li class:selected={i == selectedIndex}>{JSON.stringify(props)}</li>

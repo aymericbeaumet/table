@@ -1,5 +1,6 @@
 import getVideoId from 'get-video-id';
-import EntityText from '$lib/components/EntityText.svelte';
+import EntityEphemeralText from '$lib/components/EntityEphemeralText.svelte';
+import EntityPersistentText from '$lib/components/EntityPersistentText.svelte';
 import EntityIframe from '$lib/components/EntityIframe.svelte';
 
 export function inferEntities(value) {
@@ -26,7 +27,8 @@ export function inferEntities(value) {
 	}
 
 	if (value.length > 0) {
-		out.push([EntityText, { value }]);
+		out.push([EntityPersistentText, { value }]);
+		out.push([EntityEphemeralText, { value }]);
 	}
 
 	return out;
