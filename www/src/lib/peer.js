@@ -77,9 +77,11 @@ export default class Peer {
 		};
 
 		ws.onmessage = async (event) => {
-			const { description, candidate } = JSON.parse(event.data);
+			const { negotiationneeded, description, candidate } = JSON.parse(event.data);
 			try {
-				if (description) {
+				if (negotiationneeded) {
+					this._peerConnection.onnegotiationneeded();
+				} else if (description) {
 					// An offer may come in while we are busy processing SRD(answer).
 					// In this case, we will be in "stable" by the time the offer is processed
 					// so it is safe to chain it on our Operations Chain now.

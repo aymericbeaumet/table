@@ -33,6 +33,7 @@ type Peer struct {
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
+	onTrackAdded        func(webrtc.TrackLocal)
 
 	mu sync.RWMutex
 }
@@ -47,6 +48,7 @@ func NewPeer(id uint32) (*Peer, error) {
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
 		onTrack:             func(webrtc.TrackLocal) {},
+		onTrackAdded:        func(webrtc.TrackLocal) {},
 	}
 
 	// Create a new RTCPeerConnection
@@ -159,6 +161,8 @@ func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 		}
 	}()
 
+	p.onTrackAdded(track)
+
 	return err
 }
 
@@ -216,6 +220,10 @@ func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
 
 func (p *Peer) OnNegotiationNeeded(f func()) {
 	p.peerConnection.OnNegotiationNeeded(f)
+}
+
+func (p *Peer) OnTrackAdded(f func(track webrtc.TrackLocal)) {
+	p.onTrackAdded = f
 }
 
 func (p *Peer) LocalDescription() *webrtc.SessionDescription {

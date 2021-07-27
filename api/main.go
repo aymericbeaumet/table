@@ -15,7 +15,7 @@ import (
 	webrtc "github.com/pion/webrtc/v3"
 )
 
-type SignalingMessage struct {
+type InboundSignalingMessage struct {
 	SignalingMessageDescription
 	SignalingMessageIceCandidate
 }
@@ -26,6 +26,10 @@ type SignalingMessageDescription struct {
 
 type SignalingMessageIceCandidate struct {
 	Candidate *webrtc.ICECandidateInit `json:"candidate"`
+}
+
+type SignalingMessageNegotiationNeeded struct {
+	NegotiationNeeded bool `json:"negotiationneeded"`
 }
 
 func main() {
@@ -142,6 +146,11 @@ func main() {
 		ignoreOffer := false
 		isSettingRemoteAnswerPending := false
 
+		// TODO: should not be necessary
+		peer.OnTrackAdded(func(track webrtc.TrackLocal) {
+			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
+		})
+
 		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
 			var ic *webrtc.ICECandidateInit
 			if candidate != nil {
@@ -163,7 +172,7 @@ func main() {
 		})
 
 		for {
-			var message SignalingMessage
+			var message InboundSignalingMessage
 			if err := ws.ReadJSON(&message); err != nil {
 				fmt.Println("error:", err)
 				return
