@@ -134,23 +134,6 @@ func main() {
 			return ws.WriteJSON(v)
 		}
 
-		/*
-		 * https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
-		 * The perfect negotiation logic, separated from the rest of the application
-		 */
-
-		const polite = false
-
-		// keep track of some negotiation state to prevent races and errors
-		makingOffer := false
-		ignoreOffer := false
-		isSettingRemoteAnswerPending := false
-
-		// TODO: should not be necessary
-		peer.OnTrackAdded(func(track webrtc.TrackLocal) {
-			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
-		})
-
 		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
 			var ic *webrtc.ICECandidateInit
 			if candidate != nil {
@@ -161,14 +144,11 @@ func main() {
 		})
 
 		peer.OnNegotiationNeeded(func() {
-			defer func() { makingOffer = false }()
-			makingOffer = true
-			offer, err := peer.peerConnection.CreateOffer(nil)
-			if err != nil {
-				panic(err)
-			}
-			peer.peerConnection.SetLocalDescription(offer)
-			writeJSON(&SignalingMessageDescription{Description: peer.peerConnection.LocalDescription()})
+			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
+		})
+
+		peer.OnTrackAdded(func(track webrtc.TrackLocal) {
+			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
 		})
 
 		for {
@@ -179,31 +159,33 @@ func main() {
 			}
 
 			if message.Description != nil {
-				// An offer may come in while we are busy processing SRD(answer).
-				// In this case, we will be in "stable" by the time the offer is processed
-				// so it is safe to chain it on our Operations Chain now.
-				readyForOffer :=
-					!makingOffer &&
-						(peer.peerConnection.SignalingState() == webrtc.SignalingStateStable || isSettingRemoteAnswerPending)
-				offerCollision := message.Description.Type == webrtc.SDPTypeOffer && !readyForOffer
+				desc := message.Description
 
-				ignoreOffer := !polite && offerCollision
-				if ignoreOffer {
-					return
+				if desc.Type != webrtc.SDPTypeOffer {
+					panic(fmt.Errorf("unexpected session description of type %#v", desc.Type))
 				}
 
-				isSettingRemoteAnswerPending = message.Description.Type == webrtc.SDPTypeAnswer
-				peer.peerConnection.SetRemoteDescription(*message.Description)
-				isSettingRemoteAnswerPending = false
-				if message.Description.Type == webrtc.SDPTypeOffer {
-					answer, _ := peer.peerConnection.CreateAnswer(nil)
-					peer.peerConnection.SetLocalDescription(answer)
-					writeJSON(&SignalingMessageDescription{Description: peer.LocalDescription()})
+				if err := peer.peerConnection.SetRemoteDescription(*desc); err != nil {
+					panic(err)
 				}
-			} else if message.Candidate != nil {
-				if err := peer.peerConnection.AddICECandidate(*message.Candidate); err != nil && !ignoreOffer {
-					fmt.Println("error:", err)
-					return
+
+				answer, err := peer.peerConnection.CreateAnswer(nil)
+				if err != nil {
+					panic(err)
+				}
+
+				if err := peer.peerConnection.SetLocalDescription(answer); err != nil {
+					panic(err)
+				}
+
+				if err := writeJSON(&SignalingMessageDescription{Description: peer.LocalDescription()}); err != nil {
+					panic(err)
+				}
+			}
+
+			if message.Candidate != nil {
+				if err := peer.peerConnection.AddICECandidate(*message.Candidate); err != nil {
+					panic(err)
 				}
 			}
 		}
