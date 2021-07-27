@@ -5,6 +5,7 @@
 	let inputTextElement;
 	let visible = false;
 	let entities = [];
+	let selectedIndex = 0;
 
 	const dispatch = createEventDispatcher();
 
@@ -23,10 +24,7 @@
 
 	function onInput(event) {
 		const value = event.target.value.trim();
-		if (value.length > 0) {
-			entities = inferEntities(value);
-			return;
-		}
+		entities = inferEntities(value);
 	}
 
 	function onKeyPress(event) {
@@ -49,16 +47,16 @@
 	}
 
 	function show() {
-		entities = [];
-		setTimeout(() => inputTextElement.focus(), 0); // https://github.com/sveltejs/sapper/issues/619#issuecomment-480616597
 		if (!visible) {
-			/*inputTextValue = '';*/
 			visible = true;
+			entities = [];
+			selectedIndex = 0;
+			inputTextElement.value = '';
+			setTimeout(() => inputTextElement.focus(), 0); // https://github.com/sveltejs/sapper/issues/619#issuecomment-480616597
 		}
 	}
 
 	function hide() {
-		entities = [];
 		visible = false;
 	}
 
@@ -73,12 +71,12 @@
 	<div class="overlay" class:visible>
 		<form on:submit={onSubmit}>
 			<input type="text" on:input={onInput} on:keypress={onKeyPress} bind:this={inputTextElement} />
+			<ul>
+				{#each entities as [_, props], i}
+					<li class:selected={i == selectedIndex}>{JSON.stringify(props)}</li>
+				{/each}
+			</ul>
 		</form>
-		<ul>
-			{#each entities as [_, props]}
-				<li>{JSON.stringify(props)}</li>
-			{/each}
-		</ul>
 	</div>
 
 	<slot />
@@ -95,10 +93,9 @@
 		z-index: 1000;
 		width: 100%;
 		height: 100%;
-		background: rgb(1, 1, 1, 0.5);
+		background: rgb(1, 1, 1, 0.6);
 		display: none;
 		justify-content: center;
-		padding-top: 20%;
 	}
 
 	.overlay.visible {
@@ -106,10 +103,44 @@
 	}
 
 	form {
-		width: 300px;
+		margin-top: 10px;
+		min-width: 700px;
+		width: 50%;
+		background-color: rgb(26, 29, 33);
+		color: rgb(209, 210, 211);
+		border: 1px solid grey;
+		border-radius: 10px;
 	}
 
 	input {
 		width: 100%;
+		background-color: inherit;
+		color: inherit;
+		border: none;
+		border-bottom: 1px solid grey;
+		border-radius: inherit;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		padding: 15px;
+		font-size: 20px;
+	}
+
+	input:focus {
+		outline: none;
+	}
+
+	ul {
+		padding: 0;
+	}
+
+	li {
+		display: block;
+		width: 100%;
+		height: 50px;
+		line-height: 50px;
+	}
+
+	li.selected {
+		background-color: blue;
 	}
 </style>

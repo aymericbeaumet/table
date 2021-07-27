@@ -25,7 +25,9 @@ export function inferEntities(value) {
 		]);
 	}
 
-	out.push([EntityText, { value }]);
+	if (value.length > 0) {
+		out.push([EntityText, { value }]);
+	}
 
 	return out;
 }

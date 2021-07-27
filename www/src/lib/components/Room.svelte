@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import EntityVideo from './EntityVideo.svelte';
-	import PinBar from './PinBar.svelte';
+	import SmartBar from './SmartBar.svelte';
 	import Peer from '$lib/peer';
 	import { throttle } from 'lodash';
 	import EntityCursor from './EntityCursor.svelte';
@@ -14,7 +14,7 @@
 	let topEntities = [];
 	let entities = [];
 
-	function onPinBarEntity(event) {
+	function onSmartBarEntity(event) {
 		const entity = event.detail;
 		entities = [...entities, entity];
 		// TODO: send entity through network
@@ -140,7 +140,7 @@
 	{/if}
 </svelte:head>
 
-<PinBar on:entity={onPinBarEntity}>
+<SmartBar on:entity={onSmartBarEntity}>
 	<div
 		class="container"
 		on:mousedown={onMouseDown}
@@ -161,7 +161,7 @@
 			</div>
 		{/each}
 	</div>
-</PinBar>
+</SmartBar>
 
 <style>
 	.container {
