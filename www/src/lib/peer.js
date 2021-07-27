@@ -43,9 +43,8 @@ export default class Peer {
 		});
 		this._unreliable.onmessage = onmessage;
 
-		/* Prepare tracks */
+		/* Listen for tracks */
 
-		this._peerConnection.addTransceiver('video');
 		this._peerConnection.ontrack = onTrack;
 
 		/*
