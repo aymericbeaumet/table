@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -14,11 +15,17 @@ import (
 	webrtc "github.com/pion/webrtc/v3"
 )
 
-// The same signaling message is used both ways
 type SignalingMessage struct {
-	ANSWER        *webrtc.SessionDescription `json:"ANSWER,omitempty"`
-	ICE_CANDIDATE *webrtc.ICECandidateInit   `json:"ICE_CANDIDATE,omitempty"`
-	OFFER         *webrtc.SessionDescription `json:"OFFER,omitempty"`
+	SignalingMessageDescription
+	SignalingMessageIceCandidate
+}
+
+type SignalingMessageDescription struct {
+	DESCRIPTION *webrtc.SessionDescription `json:"DESCRIPTION"`
+}
+
+type SignalingMessageIceCandidate struct {
+	ICE_CANDIDATE *webrtc.ICECandidateInit `json:"ICE_CANDIDATE"`
 }
 
 func main() {
@@ -113,33 +120,50 @@ func main() {
 		defer ws.Close()
 		ws.EnableWriteCompression(true)
 
-		peer.OnOffer(func(offer webrtc.SessionDescription) {
-			ws.WriteJSON(&SignalingMessage{OFFER: &offer})
+		// TODO: find a cleaner way to prevent concurrent writes
+		var mu sync.Mutex
+		writeJSON := func(v interface{}) error {
+			mu.Lock()
+			defer mu.Unlock()
+			return ws.WriteJSON(v)
+		}
+
+		peer.OnDescription(func(desc webrtc.SessionDescription) {
+			writeJSON(&SignalingMessageDescription{DESCRIPTION: &desc})
 		})
 
 		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-			j := candidate.ToJSON()
-			ws.WriteJSON(&SignalingMessage{ICE_CANDIDATE: &j})
+			var ic *webrtc.ICECandidateInit
+			if candidate != nil {
+				j := candidate.ToJSON()
+				ic = &j
+			}
+			writeJSON(&SignalingMessageIceCandidate{ICE_CANDIDATE: ic})
 		})
 
 		for {
 			var message SignalingMessage
 			if err := ws.ReadJSON(&message); err != nil {
 				fmt.Println("error:", err)
-				continue
+				return
+			}
+
+			if message.DESCRIPTION != nil {
+				answer, err := peer.RemoteDescription(*message.DESCRIPTION)
+				if err != nil {
+					fmt.Println("error:", err)
+					return
+				}
+				if answer != nil {
+					writeJSON(&SignalingMessageDescription{DESCRIPTION: answer})
+				}
 			}
 
 			if message.ICE_CANDIDATE != nil {
-				peer.AddRemoteICECandidate(*message.ICE_CANDIDATE)
-			}
-
-			if message.OFFER != nil {
-				answer, err := peer.AddRemoteOffer(*message.OFFER)
-				if err != nil {
+				if err := peer.RemoteICECandidate(*message.ICE_CANDIDATE); err != nil {
 					fmt.Println("error:", err)
-					continue
+					return
 				}
-				ws.WriteJSON(&SignalingMessage{ANSWER: answer})
 			}
 		}
 	})

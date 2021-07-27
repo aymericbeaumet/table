@@ -36,7 +36,7 @@ type Peer struct {
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
-	onOffer             func(webrtc.SessionDescription)
+	onDescription       func(webrtc.SessionDescription)
 }
 
 func NewPeer(id uint32) (*Peer, error) {
@@ -49,7 +49,7 @@ func NewPeer(id uint32) (*Peer, error) {
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
 		onTrack:             func(webrtc.TrackLocal) {},
-		onOffer:             func(webrtc.SessionDescription) {},
+		onDescription:       func(webrtc.SessionDescription) {},
 	}
 
 	// Create a new RTCPeerConnection
@@ -84,7 +84,7 @@ func NewPeer(id uint32) (*Peer, error) {
 		if err := p.peerConnection.SetLocalDescription(offer); err != nil {
 			panic(err)
 		}
-		p.onOffer(offer)
+		p.onDescription(*pc.LocalDescription())
 	})
 
 	// Create pre-negotiated data channels
@@ -171,28 +171,29 @@ func (p *Peer) AddLocalTrack(track webrtc.TrackLocal) error {
 	return err
 }
 
-func (p *Peer) AddRemoteICECandidate(candidate webrtc.ICECandidateInit) error {
-	return p.peerConnection.AddICECandidate(candidate)
+func (p *Peer) RemoteDescription(desc webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
+	if err := p.peerConnection.SetRemoteDescription(desc); err != nil {
+		return nil, err
+	}
+
+	if desc.Type == webrtc.SDPTypeOffer {
+		answer, err := p.peerConnection.CreateAnswer(nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = p.peerConnection.SetLocalDescription(answer); err != nil {
+			return nil, err
+		}
+
+		return p.peerConnection.LocalDescription(), nil
+	}
+
+	return nil, nil
 }
 
-func (p *Peer) AddRemoteOffer(offer webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
-	// Set remote description
-	if err := p.peerConnection.SetRemoteDescription(offer); err != nil {
-		return nil, err
-	}
-
-	// Create answer
-	answer, err := p.peerConnection.CreateAnswer(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Sets the LocalDescription, and starts our UDP listeners
-	if err = p.peerConnection.SetLocalDescription(answer); err != nil {
-		return nil, err
-	}
-
-	return p.peerConnection.LocalDescription(), nil
+func (p *Peer) RemoteICECandidate(candidate webrtc.ICECandidateInit) error {
+	return p.peerConnection.AddICECandidate(candidate)
 }
 
 func (p *Peer) SendReliable(sourcePeer *Peer, data []byte) error {
@@ -241,8 +242,8 @@ func (p *Peer) OnTrack(f func(webrtc.TrackLocal)) {
 	p.onTrack = f
 }
 
-func (p *Peer) OnOffer(f func(webrtc.SessionDescription)) {
-	p.onOffer = f
+func (p *Peer) OnDescription(f func(webrtc.SessionDescription)) {
+	p.onDescription = f
 }
 
 func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {

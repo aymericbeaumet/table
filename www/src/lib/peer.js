@@ -39,7 +39,7 @@ export default class Peer {
 		this._peerConnection.onnegotiationneeded = async () => {
 			const offer = await this._peerConnection.createOffer();
 			await this._peerConnection.setLocalDescription(offer);
-			signaling.send(JSON.stringify({ OFFER: offer }));
+			signaling.send(JSON.stringify({ DESCRIPTION: offer }));
 		};
 
 		this._peerConnection.onicecandidate = (event) => {
@@ -67,34 +67,31 @@ export default class Peer {
 
 		/* Prepare tracks */
 
-		this._localTracksIDs = new Set();
 		this._peerConnection.addTransceiver('video');
-		this._peerConnection.ontrack = (event) => {
-			// Do not forwards our local tracks
-			if (this._localTracksIDs.has(event.transceiver.sender.track.id)) {
-				return;
-			}
-			onTrack(event);
-		};
+		this._peerConnection.ontrack = onTrack;
 
 		/* Deal with signaling messages */
 
-		signaling.onmessage = (event) => {
+		signaling.onmessage = async (event) => {
 			const payload = JSON.parse(event.data);
 
-			if (payload.ANSWER) {
-				this._peerConnection.setRemoteDescription(new RTCSessionDescription(payload.ANSWER));
+			if (payload.DESCRIPTION) {
+				this._peerConnection.setRemoteDescription(new RTCSessionDescription(payload.DESCRIPTION));
+				if (payload.DESCRIPTION.type == 'offer') {
+					const answer = await this._peerConnection.createAnswer();
+					await this._peerConnection.setLocalDescription(answer);
+					signaling.send(JSON.stringify({ DESCRIPTION: this._peerConnection.localDescription }));
+				}
 			}
 
-			if (payload.CANDIDATE) {
-				this._peerConnection.addIceCandidate(payload.CANDIDATE);
+			if (payload.ICE_CANDIDATE) {
+				this._peerConnection.addIceCandidate(payload.ICE_CANDIDATE);
 			}
 		};
 	}
 
 	addLocalStream(stream) {
 		for (const track of stream.getTracks()) {
-			this._localTracksIDs.add(track.id);
 			this._peerConnection.addTrack(track, stream);
 		}
 	}
