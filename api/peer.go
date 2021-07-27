@@ -7,7 +7,9 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/pion/rtcp"
 	webrtc "github.com/pion/webrtc/v3"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -31,7 +33,7 @@ type Peer struct {
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
-	onDescription       func(webrtc.SessionDescription)
+	onTrackAdded        func(webrtc.TrackLocal)
 
 	mu sync.RWMutex
 }
@@ -46,7 +48,7 @@ func NewPeer(id uint32) (*Peer, error) {
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
 		onTrack:             func(webrtc.TrackLocal) {},
-		onDescription:       func(webrtc.SessionDescription) {},
+		onTrackAdded:        func(webrtc.TrackLocal) {},
 	}
 
 	// Create a new RTCPeerConnection
@@ -115,6 +117,19 @@ func NewPeer(id uint32) (*Peer, error) {
 	}
 
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
+		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
+		// This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
+		go func() {
+			ticker := time.NewTicker(3 * time.Second)
+			defer ticker.Stop()
+			for range ticker.C {
+				if err := p.peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}}); err != nil {
+					fmt.Println("webrtc error:", err)
+					return
+				}
+			}
+		}()
+
 		localTrack, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", "pion")
 		if err != nil {
 			fmt.Println("webrtc error:", err)
@@ -224,10 +239,6 @@ func (p *Peer) OnClose(f func()) {
 
 func (p *Peer) OnTrack(f func(webrtc.TrackLocal)) {
 	p.onTrack = f
-}
-
-func (p *Peer) OnDescription(f func(webrtc.SessionDescription)) {
-	p.onDescription = f
 }
 
 func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {

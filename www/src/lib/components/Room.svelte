@@ -56,6 +56,7 @@
 			},
 
 			onTrack: function (event) {
+				console.log(event);
 				const entity = [EntityVideo, { srcObject: event.streams[0] }];
 				topEntities = [...topEntities, entity];
 			},
@@ -82,7 +83,7 @@
 		}, 1000 / MAX_FPS);
 
 		const stream = await navigator.mediaDevices.getUserMedia({
-			audio: {
+			audio: false && {
 				autoGainControl: true,
 				echoCancellation: true,
 				noiseSuppression: true,

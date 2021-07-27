@@ -1,7 +1,7 @@
 import { encode, decode } from '@msgpack/msgpack';
 
 export default class Peer {
-	constructor(signaling, { onMouse, onPeer, onTrack }) {
+	constructor(ws, { onMouse, onPeer, onTrack }) {
 		const onmessage = (event) => {
 			const { peerID, data } = decode(event.data);
 
@@ -17,25 +17,11 @@ export default class Peer {
 		/* Create and initialize WebRTC */
 
 		this._peerConnection = new RTCPeerConnection({
-			iceServers: [
-				{
-					urls: import.meta.env.VITE_STUN_SERVERS_URLS.split(','),
-				},
-			],
+			iceServers: [{ urls: import.meta.env.VITE_STUN_SERVERS_URLS.split(',') }],
 		});
 
 		this._peerConnection.onconnectionstatechange = () => {
 			console.log(`webrtc ${this._peerConnection.connectionState}`);
-		};
-
-		this._peerConnection.onnegotiationneeded = async () => {
-			const offer = await this._peerConnection.createOffer();
-			await this._peerConnection.setLocalDescription(offer);
-			signaling.send(JSON.stringify({ DESCRIPTION: offer }));
-		};
-
-		this._peerConnection.onicecandidate = (event) => {
-			signaling.send(JSON.stringify({ ICE_CANDIDATE: event.candidate }));
 		};
 
 		/* Create pre-negotiated data channels */
@@ -62,24 +48,66 @@ export default class Peer {
 		this._peerConnection.addTransceiver('video');
 		this._peerConnection.ontrack = onTrack;
 
-		/* Deal with signaling messages */
+		/*
+		 * https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
+		 * The perfect negotiation logic, separated from the rest of the application
+		 */
 
-		signaling.onmessage = async (event) => {
-			const payload = JSON.parse(event.data);
+		const polite = true;
 
-			if (payload.DESCRIPTION) {
-				if (payload.DESCRIPTION.type !== 'answer') {
-					throw new Error(`unexpected session description type "${payload.DESCRIPTION.type}"`);
+		// keep track of some negotiation state to prevent races and errors
+		let makingOffer = false;
+		let ignoreOffer = false;
+		let isSettingRemoteAnswerPending = false;
+
+		// send any ice candidates to the other peer
+		this._peerConnection.onicecandidate = ({ candidate }) => ws.send(JSON.stringify({ candidate }));
+
+		// let the "negotiationneeded" event trigger offer generation
+		this._peerConnection.onnegotiationneeded = async () => {
+			try {
+				makingOffer = true;
+				await this._peerConnection.setLocalDescription();
+				ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
+			} catch (err) {
+				console.error(err);
+			} finally {
+				makingOffer = false;
+			}
+		};
+
+		ws.onmessage = async (event) => {
+			const { description, candidate } = JSON.parse(event.data);
+			try {
+				if (description) {
+					// An offer may come in while we are busy processing SRD(answer).
+					// In this case, we will be in "stable" by the time the offer is processed
+					// so it is safe to chain it on our Operations Chain now.
+					const readyForOffer =
+						!makingOffer &&
+						(this._peerConnection.signalingState === 'stable' || isSettingRemoteAnswerPending);
+					const offerCollision = description.type === 'offer' && !readyForOffer;
+
+					ignoreOffer = !polite && offerCollision;
+					if (ignoreOffer) {
+						return;
+					}
+					isSettingRemoteAnswerPending = description.type === 'answer';
+					await this._peerConnection.setRemoteDescription(description); // SRD rolls back as needed
+					isSettingRemoteAnswerPending = false;
+					if (description.type == 'offer') {
+						await this._peerConnection.setLocalDescription();
+						ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
+					}
+				} else if (candidate) {
+					try {
+						await this._peerConnection.addIceCandidate(candidate);
+					} catch (err) {
+						if (!ignoreOffer) throw err; // Suppress ignored offer's candidates
+					}
 				}
-				this._peerConnection.setRemoteDescription(new RTCSessionDescription(payload.DESCRIPTION));
-			}
-
-			if (payload.ICE_CANDIDATE) {
-				this._peerConnection.addIceCandidate(payload.ICE_CANDIDATE);
-			}
-
-			if (payload.NEGOTIATION_NEEDED) {
-				this._peerConnection.onnegotiationneeded();
+			} catch (err) {
+				console.error(err);
 			}
 		};
 	}
