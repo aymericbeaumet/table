@@ -60,12 +60,14 @@
 						entities.splice(entities.indexOf(cursorEntity), 1);
 						entities = entities;
 					}
+
+					// TODO: remove video entity when peer disconnects
 				}
 			},
 
 			onTrack: function (event) {
-				console.log(event);
 				const entity = [EntityVideo, { srcObject: event.streams[0] }];
+				// TODO: keep track of entity and remove it when peer disconnects
 				topEntities = [...topEntities, entity];
 			},
 		});
