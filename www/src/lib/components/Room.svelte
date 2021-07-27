@@ -45,7 +45,15 @@
 			}, 1000 / MAX_FPS),
 
 			onPeer: function (peerID, data) {
+				if (data.status === 'online') {
+					const audio = new Audio('/assets/murloc.ogg');
+					audio.play();
+				}
+
 				if (data.status === 'offline') {
+					const audio = new Audio('/assets/stealth.ogg');
+					audio.play();
+
 					const cursorEntity = cursorEntities[peerID];
 					if (cursorEntity) {
 						delete cursorEntities[peerID];
