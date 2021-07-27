@@ -60,7 +60,8 @@
 						delete videoEntities[peerID];
 						const i = topEntities.indexOf(videoEntity);
 						if (i > -1) {
-							topEntities = topEntities.splice(i, 1);
+							topEntities.splice(i, 1);
+							topEntities = topEntities;
 						}
 					}
 
@@ -69,7 +70,8 @@
 						delete cursorEntities[peerID];
 						const i = entities.indexOf(cursorEntity);
 						if (i > 0) {
-							entities = entities.splice(i, 1);
+							entities.splice(i, 1);
+							entities = entities;
 						}
 					}
 				}
