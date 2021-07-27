@@ -1,20 +1,12 @@
 import { encode, decode } from '@msgpack/msgpack';
 
 export default class Peer {
-	constructor(signaling, { onMouseDown, onMouseMove, onMouseUp, onPeer, onTrack }) {
+	constructor(signaling, { onMouse, onPeer, onTrack }) {
 		const onmessage = (event) => {
 			const { peerID, data } = decode(event.data);
 
-			if (data.MOUSE_DOWN) {
-				onMouseDown(peerID, data.MOUSE_DOWN);
-			}
-
-			if (data.MOUSE_MOVE) {
-				onMouseMove(peerID, data.MOUSE_MOVE);
-			}
-
-			if (data.MOUSE_UP) {
-				onMouseUp(peerID, data.MOUSE_UP);
+			if (data.MOUSE) {
+				onMouse(peerID, data.MOUSE);
 			}
 
 			if (data.PEER) {

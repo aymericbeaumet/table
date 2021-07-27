@@ -30,11 +30,7 @@
 		await new Promise((resolve) => (ws.onopen = resolve));
 
 		const peer = new Peer(ws, {
-			onMouseDown: throttle(function (peerID, data) {
-				console.log('mouse down', peerID, data);
-			}, 1000 / MAX_FPS),
-
-			onMouseMove: throttle(function (peerID, data) {
+			onMouse: throttle(function (peerID, data) {
 				let entity = cursorEntities[peerID];
 				if (!entity) {
 					entity = [EntityCursor, { fps: MAX_FPS }];
@@ -44,10 +40,6 @@
 				entity[1].x = data.clientX;
 				entity[1].y = data.clientY;
 				entities = entities;
-			}, 1000 / MAX_FPS),
-
-			onMouseUp: throttle(function (peerID, data) {
-				console.log('mouse up', peerID, data);
 			}, 1000 / MAX_FPS),
 
 			onPeer: function (peerID, data) {
@@ -67,16 +59,25 @@
 			},
 		});
 
+		let mouseDown;
+		function sendMouseEvent(event) {
+			peer.unreliable({
+				MOUSE: { down: mouseDown, clientX: event.clientX, clientY: event.clientY },
+			});
+		}
+
 		onMouseDown = throttle(function (event) {
-			peer.unreliable({ MOUSE_DOWN: { clientX: event.clientX, clientY: event.clientY } });
+			mouseDown = true;
+			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
 		onMouseMove = throttle(function (event) {
-			peer.unreliable({ MOUSE_MOVE: { clientX: event.clientX, clientY: event.clientY } });
+			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
 		onMouseUp = throttle(function (event) {
-			peer.unreliable({ MOUSE_UP: { clientX: event.clientX, clientY: event.clientY } });
+			mouseDown = false;
+			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
 		const stream = await navigator.mediaDevices.getUserMedia({
