@@ -52,13 +52,13 @@
 	function onKeyDown(event) {
 		if (event.key === 'ArrowUp') {
 			event.preventDefault();
-			selectedIndex = (selectedIndex + entities.length - 1) % entities.length;
+			selectedIndex = (selectedIndex + entities.length - 1) % entities.length || 0;
 			return;
 		}
 
 		if (event.key === 'ArrowDown') {
 			event.preventDefault();
-			selectedIndex = (selectedIndex + entities.length + 1) % entities.length;
+			selectedIndex = (selectedIndex + entities.length + 1) % entities.length || 0;
 			return;
 		}
 	}
