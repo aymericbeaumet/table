@@ -1,20 +1,42 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { inferEntities } from '$lib/entity';
+	import { throttle } from 'lodash';
 
-	let inputTextElement;
 	let visible = false;
 	let entities = [];
 	let selectedIndex = 0;
+	let inputTextElement;
 
 	const dispatch = createEventDispatcher();
 
 	function onClick(event) {
+		console.log(event);
+
 		if (event.target === inputTextElement) {
 			return;
 		}
+
+		if (event.target.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(event.target.parentNode.children, event.target);
+			if (i > -1) {
+				selectedIndex = i;
+				onSubmit(event);
+				return;
+			}
+		}
+
 		hide();
 	}
+
+	const onMouseMove = throttle((event) => {
+		if (event.target.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(event.target.parentNode.children, event.target);
+			if (i > -1) {
+				selectedIndex = i;
+			}
+		}
+	}, 1000 / 60);
 
 	function onSubmit(event) {
 		event.preventDefault();
@@ -78,20 +100,22 @@
 
 <div class="wrapper" on:click={onClick}>
 	<div class="overlay" class:visible>
-		<form on:submit={onSubmit}>
-			<input
-				type="text"
-				on:input={onInput}
-				on:keydown={onKeyDown}
-				on:keypress={onKeyPress}
-				bind:this={inputTextElement}
-			/>
-			<ul>
-				{#each entities as [_, props], i}
-					<li class:selected={i == selectedIndex}>{JSON.stringify(props)}</li>
-				{/each}
-			</ul>
-		</form>
+		<div>
+			<form on:submit={onSubmit}>
+				<input
+					type="text"
+					on:input={onInput}
+					on:keydown={onKeyDown}
+					on:keypress={onKeyPress}
+					bind:this={inputTextElement}
+				/>
+				<ul on:mousemove={onMouseMove}>
+					{#each entities as [_, props], i}
+						<li class:selected={i == selectedIndex}>{JSON.stringify(props)}</li>
+					{/each}
+				</ul>
+			</form>
+		</div>
 	</div>
 
 	<slot />
@@ -142,10 +166,6 @@
 
 	input:focus {
 		outline: none;
-	}
-
-	ul {
-		padding: 0;
 	}
 
 	li {
