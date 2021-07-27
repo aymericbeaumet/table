@@ -1,12 +1,12 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { inferEntity } from '$lib/entity';
-
-	const dispatch = createEventDispatcher();
+	import { inferEntities } from '$lib/entity';
 
 	let inputTextElement;
-	let inputTextValue;
 	let visible = false;
+	let entities = [];
+
+	const dispatch = createEventDispatcher();
 
 	function onClick(event) {
 		if (event.target === inputTextElement) {
@@ -17,13 +17,16 @@
 
 	function onSubmit(event) {
 		event.preventDefault();
-
-		const value = inputTextValue.trim();
-		if (value.length > 0) {
-			return dispatch('entity', inferEntity(value));
-		}
-
+		dispatch('entity', entities[0]);
 		hide();
+	}
+
+	function onInput(event) {
+		const value = event.target.value.trim();
+		if (value.length > 0) {
+			entities = inferEntities(value);
+			return;
+		}
 	}
 
 	function onKeyPress(event) {
@@ -46,14 +49,16 @@
 	}
 
 	function show() {
+		entities = [];
 		setTimeout(() => inputTextElement.focus(), 0); // https://github.com/sveltejs/sapper/issues/619#issuecomment-480616597
 		if (!visible) {
-			inputTextValue = '';
+			/*inputTextValue = '';*/
 			visible = true;
 		}
 	}
 
 	function hide() {
+		entities = [];
 		visible = false;
 	}
 
@@ -65,18 +70,15 @@
 <svelte:window on:keydown={onWindowKeyDown} />
 
 <div class="wrapper" on:click={onClick}>
-	<div class="pin-bar" class:visible>
+	<div class="overlay" class:visible>
 		<form on:submit={onSubmit}>
-			<input
-				type="text"
-				required
-				minlength="1"
-				on:keypress={onKeyPress}
-				bind:this={inputTextElement}
-				bind:value={inputTextValue}
-			/>
-			<input type="submit" value="Pin" />
+			<input type="text" on:input={onInput} on:keypress={onKeyPress} bind:this={inputTextElement} />
 		</form>
+		<ul>
+			{#each entities as [_, props]}
+				<li>{JSON.stringify(props)}</li>
+			{/each}
+		</ul>
 	</div>
 
 	<slot />
@@ -88,9 +90,9 @@
 		height: 100%;
 	}
 
-	.pin-bar {
+	.overlay {
 		position: fixed;
-		z-index: 100;
+		z-index: 1000;
 		width: 100%;
 		height: 100%;
 		background: rgb(1, 1, 1, 0.5);
@@ -99,7 +101,15 @@
 		padding-top: 20%;
 	}
 
-	.pin-bar.visible {
+	.overlay.visible {
 		display: flex;
+	}
+
+	form {
+		width: 300px;
+	}
+
+	input {
+		width: 100%;
 	}
 </style>
