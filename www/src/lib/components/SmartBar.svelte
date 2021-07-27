@@ -11,8 +11,6 @@
 	const dispatch = createEventDispatcher();
 
 	function onClick(event) {
-		console.log(event);
-
 		if (event.target === inputTextElement) {
 			return;
 		}
