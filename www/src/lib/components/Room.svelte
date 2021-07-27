@@ -5,6 +5,7 @@
 	import Peer from '$lib/peer';
 	import { throttle } from 'lodash';
 	import EntityCursor from './EntityCursor.svelte';
+	import { removeFromArray } from '$lib/utils';
 
 	const MAX_FPS = 30;
 
@@ -58,21 +59,13 @@
 					const videoEntity = videoEntities[peerID];
 					if (videoEntity) {
 						delete videoEntities[peerID];
-						const i = topEntities.indexOf(videoEntity);
-						if (i > -1) {
-							topEntities.splice(i, 1);
-							topEntities = topEntities;
-						}
+						topEntities = removeFromArray(topEntities, videoEntity);
 					}
 
 					const cursorEntity = cursorEntities[peerID];
 					if (cursorEntity) {
 						delete cursorEntities[peerID];
-						const i = entities.indexOf(cursorEntity);
-						if (i > 0) {
-							entities.splice(i, 1);
-							entities = entities;
-						}
+						entities = removeFromArray(entities, cursorEntity);
 					}
 				}
 			},
