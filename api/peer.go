@@ -6,15 +6,9 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/pion/rtcp"
 	webrtc "github.com/pion/webrtc/v3"
 	"github.com/vmihailenco/msgpack/v5"
-)
-
-const (
-	rtcpPLIInterval = time.Second * 3
 )
 
 type Wrap struct {
@@ -76,17 +70,6 @@ func NewPeer(id uint32) (*Peer, error) {
 		}
 	})
 
-	p.peerConnection.OnNegotiationNeeded(func() {
-		offer, err := p.peerConnection.CreateOffer(nil)
-		if err != nil {
-			panic(err)
-		}
-		if err := p.peerConnection.SetLocalDescription(offer); err != nil {
-			panic(err)
-		}
-		p.onDescription(*pc.LocalDescription())
-	})
-
 	// Create pre-negotiated data channels
 
 	rNegotiated, rID, rOrdered := true, uint16(0), false
@@ -125,18 +108,10 @@ func NewPeer(id uint32) (*Peer, error) {
 	}
 
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
-		go func() {
-			ticker := time.NewTicker(rtcpPLIInterval)
-			for range ticker.C {
-				if rtcpSendErr := p.peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}}); rtcpSendErr != nil {
-					fmt.Println(rtcpSendErr)
-				}
-			}
-		}()
-
 		localTrack, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", "pion")
 		if err != nil {
-			panic(err)
+			fmt.Println("webrtc error:", err)
+			return
 		}
 
 		p.onTrack(localTrack)
@@ -145,10 +120,12 @@ func NewPeer(id uint32) (*Peer, error) {
 		for {
 			i, _, err := remoteTrack.Read(rtpBuf)
 			if err != nil {
-				panic(err)
+				fmt.Println("webrtc error:", err)
+				return
 			}
 			if _, err = localTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
-				panic(err)
+				fmt.Println("webrtc error:", err)
+				return
 			}
 		}
 	})
@@ -248,6 +225,10 @@ func (p *Peer) OnDescription(f func(webrtc.SessionDescription)) {
 
 func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
 	p.peerConnection.OnICECandidate(f)
+}
+
+func (p *Peer) OnNegotiationNeeded(f func()) {
+	p.peerConnection.OnNegotiationNeeded(f)
 }
 
 func (p *Peer) LocalDescription() *webrtc.SessionDescription {

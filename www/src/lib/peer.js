@@ -87,6 +87,10 @@ export default class Peer {
 			if (payload.ICE_CANDIDATE) {
 				this._peerConnection.addIceCandidate(payload.ICE_CANDIDATE);
 			}
+
+			if (payload.NEGOTIATION_NEEDED) {
+				this._peerConnection.onnegotiationneeded();
+			}
 		};
 	}
 

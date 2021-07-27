@@ -18,6 +18,7 @@ import (
 type SignalingMessage struct {
 	SignalingMessageDescription
 	SignalingMessageIceCandidate
+	SignalingMessageNegotiationNeeded
 }
 
 type SignalingMessageDescription struct {
@@ -26,6 +27,10 @@ type SignalingMessageDescription struct {
 
 type SignalingMessageIceCandidate struct {
 	ICE_CANDIDATE *webrtc.ICECandidateInit `json:"ICE_CANDIDATE"`
+}
+
+type SignalingMessageNegotiationNeeded struct {
+	NEGOTIATION_NEEDED *bool `json:"NEGOTIATION_NEEDED"`
 }
 
 func main() {
@@ -139,6 +144,11 @@ func main() {
 				ic = &j
 			}
 			writeJSON(&SignalingMessageIceCandidate{ICE_CANDIDATE: ic})
+		})
+
+		peer.OnNegotiationNeeded(func() {
+			t := true
+			writeJSON(&SignalingMessageNegotiationNeeded{NEGOTIATION_NEEDED: &t})
 		})
 
 		for {
