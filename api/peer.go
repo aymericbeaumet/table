@@ -171,6 +171,10 @@ func (p *Peer) AddLocalTrack(track webrtc.TrackLocal) error {
 	return err
 }
 
+func (p *Peer) AddRemoteICECandidate(candidate webrtc.ICECandidateInit) error {
+	return p.peerConnection.AddICECandidate(candidate)
+}
+
 func (p *Peer) AddRemoteOffer(offer webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
 	// Set remote description
 	if err := p.peerConnection.SetRemoteDescription(offer); err != nil {
@@ -243,10 +247,6 @@ func (p *Peer) OnOffer(f func(webrtc.SessionDescription)) {
 
 func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
 	p.peerConnection.OnICECandidate(f)
-}
-
-func (p *Peer) AddICECandidate(candidate webrtc.ICECandidateInit) error {
-	return p.peerConnection.AddICECandidate(candidate)
 }
 
 func (p *Peer) LocalDescription() *webrtc.SessionDescription {

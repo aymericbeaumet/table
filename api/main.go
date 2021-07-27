@@ -14,15 +14,10 @@ import (
 	webrtc "github.com/pion/webrtc/v3"
 )
 
-type FromCaller struct {
+// The same signaling message is used both ways
+type SignalingMessage struct {
 	ANSWER        *webrtc.SessionDescription `json:"ANSWER,omitempty"`
 	ICE_CANDIDATE *webrtc.ICECandidateInit   `json:"ICE_CANDIDATE,omitempty"`
-	OFFER         *webrtc.SessionDescription `json:"OFFER,omitempty"`
-}
-
-type ToCaller struct {
-	ANSWER        *webrtc.SessionDescription `json:"ANSWER,omitempty"`
-	ICE_CANDIDATE *webrtc.ICECandidate       `json:"ICE_CANDIDATE,omitempty"`
 	OFFER         *webrtc.SessionDescription `json:"OFFER,omitempty"`
 }
 
@@ -119,22 +114,23 @@ func main() {
 		ws.EnableWriteCompression(true)
 
 		peer.OnOffer(func(offer webrtc.SessionDescription) {
-			ws.WriteJSON(&ToCaller{OFFER: &offer})
+			ws.WriteJSON(&SignalingMessage{OFFER: &offer})
 		})
 
 		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-			ws.WriteJSON(&ToCaller{ICE_CANDIDATE: candidate})
+			j := candidate.ToJSON()
+			ws.WriteJSON(&SignalingMessage{ICE_CANDIDATE: &j})
 		})
 
 		for {
-			var message FromCaller
+			var message SignalingMessage
 			if err := ws.ReadJSON(&message); err != nil {
 				fmt.Println("error:", err)
 				continue
 			}
 
 			if message.ICE_CANDIDATE != nil {
-				peer.AddICECandidate(*message.ICE_CANDIDATE)
+				peer.AddRemoteICECandidate(*message.ICE_CANDIDATE)
 			}
 
 			if message.OFFER != nil {
@@ -143,7 +139,7 @@ func main() {
 					fmt.Println("error:", err)
 					continue
 				}
-				ws.WriteJSON(&ToCaller{ANSWER: answer})
+				ws.WriteJSON(&SignalingMessage{ANSWER: answer})
 			}
 		}
 	})

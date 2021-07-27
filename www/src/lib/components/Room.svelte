@@ -80,7 +80,11 @@
 		}, 1000 / MAX_FPS);
 
 		const stream = await navigator.mediaDevices.getUserMedia({
-			audio: false, // TODO: enable audio + {'echoCancellation': true},
+			audio: {
+				autoGainControl: true,
+				echoCancellation: true,
+				noiseSuppression: true,
+			},
 			video: {
 				width: { ideal: 360, max: 360 },
 				height: { ideal: 360, max: 360 },
