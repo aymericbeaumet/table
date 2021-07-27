@@ -8,6 +8,7 @@
 	src="/assets/cursor.png"
 	alt="cursor"
 	style={`
+    z-index: 1000;
 	  width: 32px;
 	  height: 32px;
 	  position: absolute;

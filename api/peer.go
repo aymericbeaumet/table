@@ -6,10 +6,15 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
+	"time"
 
+	"github.com/pion/rtcp"
 	webrtc "github.com/pion/webrtc/v3"
 	"github.com/vmihailenco/msgpack/v5"
+)
+
+const (
+	rtcpPLIInterval = time.Second * 3
 )
 
 type Wrap struct {
@@ -22,6 +27,7 @@ type Peer struct {
 	Status string `msgpack:"status"`
 
 	peerConnection        *webrtc.PeerConnection
+	signalDataChannel     *webrtc.DataChannel
 	reliableDataChannel   *webrtc.DataChannel
 	unreliableDataChannel *webrtc.DataChannel
 
@@ -30,10 +36,11 @@ type Peer struct {
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
+	onOffer             func(webrtc.SessionDescription)
 }
 
-func NewPeer(id uint32) *Peer {
-	return &Peer{
+func NewPeer(id uint32) (*Peer, error) {
+	p := &Peer{
 		ID:     id,
 		Status: "offline",
 
@@ -42,12 +49,11 @@ func NewPeer(id uint32) *Peer {
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
 		onTrack:             func(webrtc.TrackLocal) {},
+		onOffer:             func(webrtc.SessionDescription) {},
 	}
-}
 
-func (p *Peer) Init(offer webrtc.SessionDescription) error {
 	// Create a new RTCPeerConnection
-	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
+	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
 				URLs: strings.Split(os.Getenv("STUN_SERVERS_URLS"), ","),
@@ -55,32 +61,10 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	p.peerConnection = peerConnection
+	p.peerConnection = pc
 
-	// Allow us to receive 1 video track
-	if _, err = p.peerConnection.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
-		return err
-	}
-
-	// Set remote description
-	if err := p.peerConnection.SetRemoteDescription(offer); err != nil {
-		return err
-	}
-
-	// Create answer
-	answer, err := p.peerConnection.CreateAnswer(nil)
-	if err != nil {
-		return err
-	}
-
-	// Sets the LocalDescription, and starts our UDP listeners
-	if err = p.peerConnection.SetLocalDescription(answer); err != nil {
-		return err
-	}
-
-	// Listen for connection states updates
 	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
 		switch s {
 		case webrtc.PeerConnectionStateConnected:
@@ -92,26 +76,64 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 		}
 	})
 
-	// Listen for channels
-	p.peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
-		switch l := dc.Label(); l {
-		case "reliable":
-			p.reliableDataChannel = dc
-			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				p.onMessageReliable(msg.Data)
-			})
-		case "unreliable":
-			p.unreliableDataChannel = dc
-			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				p.onMessageUnreliable(msg.Data)
-			})
-		default:
-			panic(fmt.Errorf("unsupported data channel %#v", l))
+	p.peerConnection.OnNegotiationNeeded(func() {
+		offer, err := p.peerConnection.CreateOffer(nil)
+		if err != nil {
+			panic(err)
 		}
+		if err := p.peerConnection.SetLocalDescription(offer); err != nil {
+			panic(err)
+		}
+		p.onOffer(offer)
+	})
+
+	// Create pre-negotiated data channels
+
+	rNegotiated, rID, rOrdered := true, uint16(0), false
+	p.reliableDataChannel, err = p.peerConnection.CreateDataChannel("reliable", &webrtc.DataChannelInit{
+		Negotiated: &rNegotiated,
+		ID:         &rID,
+		//
+		Ordered: &rOrdered,
+	})
+	if err != nil {
+		return nil, err
+	}
+	p.reliableDataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
+		p.onMessageReliable(msg.Data)
+	})
+
+	uNegotiated, uID, uOrdered, uMaxRestransmits := true, uint16(1), false, uint16(0)
+	p.unreliableDataChannel, err = p.peerConnection.CreateDataChannel("unreliable", &webrtc.DataChannelInit{
+		Negotiated: &uNegotiated,
+		ID:         &uID,
+		//
+		Ordered:        &uOrdered,
+		MaxRetransmits: &uMaxRestransmits,
+	})
+	if err != nil {
+		return nil, err
+	}
+	p.unreliableDataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
+		p.onMessageUnreliable(msg.Data)
 	})
 
 	// Listen for tracks
+
+	if _, err = p.peerConnection.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
+		return nil, err
+	}
+
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
+		go func() {
+			ticker := time.NewTicker(rtcpPLIInterval)
+			for range ticker.C {
+				if rtcpSendErr := p.peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}}); rtcpSendErr != nil {
+					fmt.Println(rtcpSendErr)
+				}
+			}
+		}()
+
 		localTrack, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", "pion")
 		if err != nil {
 			panic(err)
@@ -131,19 +153,42 @@ func (p *Peer) Init(offer webrtc.SessionDescription) error {
 		}
 	})
 
-	// Listen for ICE candidates
-	var wg sync.WaitGroup
-	wg.Add(1)
-	p.peerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-		if candidate != nil {
-			p.peerConnection.AddICECandidate(candidate.ToJSON())
-		} else {
-			wg.Done()
-		}
-	})
-	wg.Wait()
+	return p, nil
+}
 
-	return nil
+func (p *Peer) AddLocalTrack(track webrtc.TrackLocal) error {
+	rtpSender, err := p.peerConnection.AddTrack(track)
+
+	go func() {
+		rtcpBuf := make([]byte, 1500)
+		for {
+			if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
+				return
+			}
+		}
+	}()
+
+	return err
+}
+
+func (p *Peer) AddRemoteOffer(offer webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
+	// Set remote description
+	if err := p.peerConnection.SetRemoteDescription(offer); err != nil {
+		return nil, err
+	}
+
+	// Create answer
+	answer, err := p.peerConnection.CreateAnswer(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sets the LocalDescription, and starts our UDP listeners
+	if err = p.peerConnection.SetLocalDescription(answer); err != nil {
+		return nil, err
+	}
+
+	return p.peerConnection.LocalDescription(), nil
 }
 
 func (p *Peer) SendReliable(sourcePeer *Peer, data []byte) error {
@@ -172,11 +217,6 @@ func (p *Peer) SendPeer(peer *Peer) error {
 	return p.SendReliable(peer, msg)
 }
 
-func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
-	_, err := p.peerConnection.AddTrack(track)
-	return err
-}
-
 func (p *Peer) OnMessageReliable(f func(msg []byte)) {
 	p.onMessageReliable = f
 }
@@ -197,8 +237,24 @@ func (p *Peer) OnTrack(f func(webrtc.TrackLocal)) {
 	p.onTrack = f
 }
 
+func (p *Peer) OnOffer(f func(webrtc.SessionDescription)) {
+	p.onOffer = f
+}
+
+func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
+	p.peerConnection.OnICECandidate(f)
+}
+
+func (p *Peer) AddICECandidate(candidate webrtc.ICECandidateInit) error {
+	return p.peerConnection.AddICECandidate(candidate)
+}
+
 func (p *Peer) LocalDescription() *webrtc.SessionDescription {
 	return p.peerConnection.LocalDescription()
+}
+
+func (p *Peer) Close() error {
+	return p.peerConnection.Close()
 }
 
 func (p *Peer) send(dc *webrtc.DataChannel, data []byte) error {

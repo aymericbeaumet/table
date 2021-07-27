@@ -9,9 +9,22 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	webrtc "github.com/pion/webrtc/v3"
 )
+
+type FromCaller struct {
+	ANSWER        *webrtc.SessionDescription `json:"ANSWER,omitempty"`
+	ICE_CANDIDATE *webrtc.ICECandidateInit   `json:"ICE_CANDIDATE,omitempty"`
+	OFFER         *webrtc.SessionDescription `json:"OFFER,omitempty"`
+}
+
+type ToCaller struct {
+	ANSWER        *webrtc.SessionDescription `json:"ANSWER,omitempty"`
+	ICE_CANDIDATE *webrtc.ICECandidate       `json:"ICE_CANDIDATE,omitempty"`
+	OFFER         *webrtc.SessionDescription `json:"OFFER,omitempty"`
+}
 
 func main() {
 	mode := os.Getenv("MODE")
@@ -21,6 +34,10 @@ func main() {
 	godotenv.Load(".env")
 	godotenv.Load(".env." + mode)
 
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
+
 	rooms := NewRooms()
 
 	r := gin.Default()
@@ -29,52 +46,40 @@ func main() {
 	config.AllowOrigins = strings.Split(os.Getenv("CORS_ALLOW_ORIGINS"), ",")
 	r.Use(cors.New(config))
 
-	r.POST("/rooms", func(c *gin.Context) {
-		var payload struct {
-			Name  string                    `json:"name"`
-			Offer webrtc.SessionDescription `json:"offer"`
+	r.GET("/rooms/:name", func(c *gin.Context) {
+		var params struct {
+			Name string `uri:"name"`
 		}
-		if c.BindJSON(&payload) != nil {
+		if c.BindUri(&params) != nil {
 			return
 		}
 
-		// Upsert room
-		room := rooms.Upsert(payload.Name)
+		room := rooms.Upsert(params.Name)
 
-		// Create and init peer
-
-		peer := NewPeer(room.Inc())
-
-		if err := peer.Init(payload.Offer); err != nil {
+		peer, err := NewPeer(room.Inc())
+		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-
-		peer.OnTrack(func(track webrtc.TrackLocal) {
-			room.EachPeer(func(p *Peer) {
-				if p != peer {
-					peer.AddTrack(track)
-				}
-			})
-		})
+		defer peer.Close()
 
 		peer.OnOpen(func() {
 			if room.AddPeer(peer) {
 				room.EachPeer(func(p *Peer) {
 					if p != peer {
-						peer.SendPeer(p)
 						p.SendPeer(peer)
+						peer.SendPeer(p)
 					}
 				})
 			}
 		})
 
-		peer.OnClose(func() {
-			if room.DelPeer(peer) {
-				room.EachPeer(func(p *Peer) {
-					p.SendPeer(peer)
-				})
-			}
+		peer.OnTrack(func(track webrtc.TrackLocal) {
+			room.EachPeer(func(p *Peer) {
+				if p != peer {
+					p.AddLocalTrack(track)
+				}
+			})
 		})
 
 		peer.OnMessageReliable(func(msg []byte) {
@@ -97,12 +102,50 @@ func main() {
 			})
 		})
 
-		// Send the answer back
-		c.JSON(http.StatusOK, struct {
-			Answer *webrtc.SessionDescription `json:"answer"`
-		}{
-			Answer: peer.LocalDescription(),
+		peer.OnClose(func() {
+			if room.DelPeer(peer) {
+				room.EachPeer(func(p *Peer) {
+					p.SendPeer(peer)
+				})
+			}
 		})
+
+		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		defer ws.Close()
+		ws.EnableWriteCompression(true)
+
+		peer.OnOffer(func(offer webrtc.SessionDescription) {
+			ws.WriteJSON(&ToCaller{OFFER: &offer})
+		})
+
+		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
+			ws.WriteJSON(&ToCaller{ICE_CANDIDATE: candidate})
+		})
+
+		for {
+			var message FromCaller
+			if err := ws.ReadJSON(&message); err != nil {
+				fmt.Println("error:", err)
+				continue
+			}
+
+			if message.ICE_CANDIDATE != nil {
+				peer.AddICECandidate(*message.ICE_CANDIDATE)
+			}
+
+			if message.OFFER != nil {
+				answer, err := peer.AddRemoteOffer(*message.OFFER)
+				if err != nil {
+					fmt.Println("error:", err)
+					continue
+				}
+				ws.WriteJSON(&ToCaller{ANSWER: answer})
+			}
+		}
 	})
 
 	r.GET("/debug", func(c *gin.Context) {

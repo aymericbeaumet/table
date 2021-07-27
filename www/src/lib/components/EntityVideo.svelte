@@ -13,7 +13,7 @@
 	});
 </script>
 
-<video bind:this={video} muted="muted" />
+<video bind:this={video} />
 
 <style>
 	video {
