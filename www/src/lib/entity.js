@@ -19,9 +19,9 @@ export function inferEntities(value) {
 		out.push([
 			EntityIframe,
 			{
-				src: `https://player.twitch.tv/?channel=${matches[1]}&parent=${
-					import.meta.env.VITE_HOSTNAME
-				}`,
+				src: `https://player.twitch.tv/?channel=${encodeURIComponent(
+					matches[1],
+				)}&parent=${encodeURIComponent(window.location.hostname)}`,
 			},
 		]);
 	}
