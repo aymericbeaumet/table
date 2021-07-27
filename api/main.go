@@ -74,6 +74,7 @@ func main() {
 				room.EachPeer(func(p *Peer) {
 					if p != peer {
 						p.SendPeer(peer)
+						p.EachTrack(func(t webrtc.TrackLocal) { peer.AddTrack(t) })
 						peer.SendPeer(p)
 					}
 				})

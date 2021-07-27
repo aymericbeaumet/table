@@ -29,6 +29,8 @@ type Peer struct {
 	reliableDataChannel   *webrtc.DataChannel
 	unreliableDataChannel *webrtc.DataChannel
 
+	tracks []webrtc.TrackLocal
+
 	onOpen              func()
 	onClose             func()
 	onMessageReliable   func([]byte)
@@ -125,13 +127,14 @@ func NewPeer(id uint32) (*Peer, error) {
 			}
 		}()
 
-		localTrack, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", strconv.FormatUint(uint64(p.ID), 10))
+		track, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", strconv.FormatUint(uint64(p.ID), 10))
 		if err != nil {
 			fmt.Println("webrtc error:", err)
 			return
 		}
 
-		p.onTrack(localTrack)
+		p.tracks = append(p.tracks, track)
+		p.onTrack(track)
 
 		rtpBuf := make([]byte, 1400)
 		for {
@@ -140,7 +143,7 @@ func NewPeer(id uint32) (*Peer, error) {
 				fmt.Println("webrtc error:", err)
 				return
 			}
-			if _, err = localTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			if _, err = track.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
 				fmt.Println("webrtc error:", err)
 				return
 			}
@@ -153,6 +156,8 @@ func NewPeer(id uint32) (*Peer, error) {
 func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 	rtpSender, err := p.peerConnection.AddTrack(track)
 
+	p.onTrackAdded(track)
+
 	go func() {
 		rtcpBuf := make([]byte, 1500)
 		for {
@@ -162,9 +167,13 @@ func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 		}
 	}()
 
-	p.onTrackAdded(track)
-
 	return err
+}
+
+func (p *Peer) EachTrack(f func(webrtc.TrackLocal)) {
+	for _, t := range p.tracks {
+		f(t)
+	}
 }
 
 func (p *Peer) SendReliable(sourcePeer *Peer, data []byte) error {
