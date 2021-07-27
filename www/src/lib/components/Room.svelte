@@ -24,6 +24,8 @@
 	let onMouseMove, onMouseDown, onMouseUp;
 
 	onMount(async function () {
+		// Some hashmaps indexed by peer ids
+		const latestKnownStatus = {};
 		const cursorEntities = {};
 		const videoEntities = {};
 
@@ -47,6 +49,13 @@
 			}, 1000 / MAX_FPS),
 
 			onPeer: function (peerID, data) {
+				// Make this handler idempotent
+				const s = latestKnownStatus[peerID];
+				if (s === data.status) {
+					return;
+				}
+				latestKnownStatus[peerID] = data.status;
+
 				if (data.status === 'online') {
 					const a = new Audio('/assets/murloc.ogg');
 					a.play();
