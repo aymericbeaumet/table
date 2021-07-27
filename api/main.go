@@ -79,7 +79,9 @@ func main() {
 		peer.OnTrack(func(track webrtc.TrackLocal) {
 			room.EachPeer(func(p *Peer) {
 				if p != peer {
-					p.AddTrack(track)
+					if err := p.AddTrack(track); err != nil {
+						fmt.Println("error:", err)
+					}
 				}
 			})
 		})
