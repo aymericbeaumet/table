@@ -175,7 +175,6 @@
 		display: flex;
 		justify-content: center;
 		padding: 10px;
-		z-index: 100;
 	}
 
 	.entity {

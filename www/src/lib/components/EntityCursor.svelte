@@ -10,7 +10,7 @@
 	src={isDown ? '/assets/gauntlet-glow.png' : '/assets/gauntlet.png'}
 	alt="cursor"
 	style={`
-	  z-index: 1000;
+	  z-index: 500;
 	  width: 32px;
 	  height: 32px;
 	  position: absolute;
