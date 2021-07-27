@@ -46,13 +46,11 @@
 
 			onPeer: function (peerID, data) {
 				if (data.status === 'online') {
-					const audio = new Audio('/assets/murloc.ogg');
-					audio.play();
+					new Audio('/assets/murloc.ogg');
 				}
 
 				if (data.status === 'offline') {
-					const audio = new Audio('/assets/stealth.ogg');
-					audio.play();
+					new Audio('/assets/stealth.ogg');
 
 					const cursorEntity = cursorEntities[peerID];
 					if (cursorEntity) {
