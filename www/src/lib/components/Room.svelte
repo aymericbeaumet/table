@@ -24,6 +24,7 @@
 
 	onMount(async function () {
 		const cursorEntities = {};
+		const videoEntities = {};
 
 		const ws = new WebSocket(
 			`${import.meta.env.VITE_WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(name)}`,
@@ -46,26 +47,31 @@
 
 			onPeer: function (peerID, data) {
 				if (data.status === 'online') {
-					new Audio('/assets/murloc.ogg');
+					const a = new Audio('/assets/murloc.ogg');
+					a.play();
 				}
 
 				if (data.status === 'offline') {
-					new Audio('/assets/stealth.ogg');
+					const a = new Audio('/assets/stealth.ogg');
+					a.play();
+
+					const videoEntity = videoEntities[peerID];
+					if (videoEntity) {
+						delete videoEntities[peerID];
+						topEntities = topEntities.splice(topEntities.indexOf(videoEntity), 1);
+					}
 
 					const cursorEntity = cursorEntities[peerID];
 					if (cursorEntity) {
 						delete cursorEntities[peerID];
-						entities.splice(entities.indexOf(cursorEntity), 1);
-						entities = entities;
+						entities = entities.splice(entities.indexOf(cursorEntity), 1);
 					}
-
-					// TODO: remove video entity when peer disconnects
 				}
 			},
 
-			onTrack: function (event) {
-				const entity = [EntityVideo, { srcObject: event.streams[0] }];
-				// TODO: keep track of entity and remove it when peer disconnects
+			onTrack: function (peerID, stream) {
+				const entity = [EntityVideo, { srcObject: stream }];
+				videoEntities[peerID] = entity;
 				topEntities = [...topEntities, entity];
 			},
 		});

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -124,7 +125,7 @@ func NewPeer(id uint32) (*Peer, error) {
 			}
 		}()
 
-		localTrack, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", "pion")
+		localTrack, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, "video", strconv.FormatUint(uint64(p.ID), 10))
 		if err != nil {
 			fmt.Println("webrtc error:", err)
 			return

@@ -45,7 +45,11 @@ export default class Peer {
 
 		/* Listen for tracks */
 
-		this._peerConnection.ontrack = onTrack;
+		this._peerConnection.ontrack = (event) => {
+			const stream = event.streams[0];
+			const peerID = parseInt(stream.id, 10);
+			onTrack(peerID, stream);
+		};
 
 		/*
 		 * https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
