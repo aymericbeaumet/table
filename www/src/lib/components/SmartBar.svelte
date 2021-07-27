@@ -108,11 +108,16 @@
 					on:keypress={onKeyPress}
 					bind:this={inputTextElement}
 				/>
+
 				<ul on:mousemove={onMouseMove}>
 					{#each entities as [kind, _, props], i}
 						<li class:selected={i == selectedIndex}>{kind} {JSON.stringify(props)}</li>
 					{/each}
 				</ul>
+
+				<footer>
+					<p>Embed content within the page</p>
+				</footer>
 			</form>
 		</div>
 	</div>
@@ -170,11 +175,20 @@
 	li {
 		display: block;
 		width: 100%;
-		height: 50px;
-		line-height: 50px;
+		padding: 15px;
 	}
 
 	li.selected {
-		background-color: blue;
+		background-color: rgb(18, 100, 163);
+	}
+
+	footer {
+		background-color: rgb(34, 37, 41);
+		color: rgb(171, 171, 173);
+		text-align: right;
+		padding: 15px;
+		border-radius: inherit;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
 	}
 </style>
