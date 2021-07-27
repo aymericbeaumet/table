@@ -27,11 +27,9 @@ Automatically deployed when pushed to master.
 ## Ideas
 
 - Ephemeral messages
-- Pin videos, images, text, etc
-- Settings
-  * Configure Mic, Speakers, Camera
+- Pin videos, images, etc
+- Settings: configure Mic, Speakers, Camera
 - Allow to move / rotate
-- Forward mouse moves to all users
 - Play background music / radio / spotify / podcast
 - Play background video / youtube / stream
 - Share files
