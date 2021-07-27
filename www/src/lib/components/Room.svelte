@@ -19,6 +19,7 @@
 		// TODO: send entity through network
 	}
 
+	let isMouseDown = false;
 	let onMouseMove, onMouseDown, onMouseUp;
 
 	onMount(async function () {
@@ -39,6 +40,7 @@
 				}
 				entity[1].x = data.clientX;
 				entity[1].y = data.clientY;
+				entity[1].isDown = data.isDown;
 				entities = entities;
 			}, 1000 / MAX_FPS),
 
@@ -59,15 +61,14 @@
 			},
 		});
 
-		let mouseDown;
 		function sendMouseEvent(event) {
 			peer.unreliable({
-				MOUSE: { down: mouseDown, clientX: event.clientX, clientY: event.clientY },
+				MOUSE: { isDown: isMouseDown, clientX: event.clientX, clientY: event.clientY },
 			});
 		}
 
 		onMouseDown = throttle(function (event) {
-			mouseDown = true;
+			isMouseDown = event.which === 1;
 			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
@@ -76,7 +77,7 @@
 		}, 1000 / MAX_FPS);
 
 		onMouseUp = throttle(function (event) {
-			mouseDown = false;
+			isMouseDown = false;
 			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
@@ -97,6 +98,22 @@
 		peer.addLocalStream(stream);
 	});
 </script>
+
+<svelte:head>
+	{#if isMouseDown}
+		<style>
+			body {
+				cursor: url(/assets/gauntlet-glow.png), auto;
+			}
+		</style>
+	{:else}
+		<style>
+			body {
+				cursor: url(/assets/gauntlet.png), auto;
+			}
+		</style>
+	{/if}
+</svelte:head>
 
 <PinBar on:entity={onPinBarEntity}>
 	<div

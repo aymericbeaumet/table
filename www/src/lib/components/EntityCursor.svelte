@@ -1,11 +1,13 @@
 <script>
+	export let fps;
+
 	export let x;
 	export let y;
-	export let fps;
+	export let isDown = false;
 </script>
 
 <img
-	src="/assets/cursor.png"
+	src={isDown ? '/assets/gauntlet-glow.png' : '/assets/gauntlet.png'}
 	alt="cursor"
 	style={`
     z-index: 1000;
