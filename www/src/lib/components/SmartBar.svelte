@@ -19,7 +19,8 @@
 			const i = Array.prototype.indexOf.call(event.target.parentNode.children, event.target);
 			if (i > -1) {
 				selectedIndex = i;
-				onSubmit(event);
+				dispatch('entity', entities[selectedIndex]);
+				hide();
 				return;
 			}
 		}
