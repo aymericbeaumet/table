@@ -33,7 +33,6 @@ type Peer struct {
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
-	onTrackAdded        func(webrtc.TrackLocal)
 
 	mu sync.RWMutex
 }
@@ -48,7 +47,6 @@ func NewPeer(id uint32) (*Peer, error) {
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
 		onTrack:             func(webrtc.TrackLocal) {},
-		onTrackAdded:        func(webrtc.TrackLocal) {},
 	}
 
 	// Create a new RTCPeerConnection
@@ -110,12 +108,6 @@ func NewPeer(id uint32) (*Peer, error) {
 		p.onMessageUnreliable(msg.Data)
 	})
 
-	// Listen for tracks
-
-	if _, err = p.peerConnection.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
-		return nil, err
-	}
-
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
 		// This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
@@ -155,7 +147,7 @@ func NewPeer(id uint32) (*Peer, error) {
 	return p, nil
 }
 
-func (p *Peer) AddLocalTrack(track webrtc.TrackLocal) error {
+func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 	rtpSender, err := p.peerConnection.AddTrack(track)
 
 	go func() {
@@ -168,31 +160,6 @@ func (p *Peer) AddLocalTrack(track webrtc.TrackLocal) error {
 	}()
 
 	return err
-}
-
-func (p *Peer) RemoteDescription(desc webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
-	if err := p.peerConnection.SetRemoteDescription(desc); err != nil {
-		return nil, err
-	}
-
-	if desc.Type != webrtc.SDPTypeOffer {
-		return nil, fmt.Errorf("unexpected session description type '%s'", desc.Type)
-	}
-
-	answer, err := p.peerConnection.CreateAnswer(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = p.peerConnection.SetLocalDescription(answer); err != nil {
-		return nil, err
-	}
-
-	return p.peerConnection.LocalDescription(), nil
-}
-
-func (p *Peer) RemoteICECandidate(candidate webrtc.ICECandidateInit) error {
-	return p.peerConnection.AddICECandidate(candidate)
 }
 
 func (p *Peer) SendReliable(sourcePeer *Peer, data []byte) error {

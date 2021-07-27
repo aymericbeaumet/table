@@ -79,7 +79,7 @@ func main() {
 		peer.OnTrack(func(track webrtc.TrackLocal) {
 			room.EachPeer(func(p *Peer) {
 				if p != peer {
-					p.AddLocalTrack(track)
+					p.AddTrack(track)
 				}
 			})
 		})
@@ -190,7 +190,7 @@ func main() {
 					writeJSON(&SignalingMessageDescription{Description: peer.LocalDescription()})
 				}
 			} else if message.Candidate != nil {
-				if err := peer.RemoteICECandidate(*message.Candidate); err != nil && !ignoreOffer {
+				if err := peer.peerConnection.AddICECandidate(*message.Candidate); err != nil && !ignoreOffer {
 					fmt.Println("error:", err)
 					return
 				}
