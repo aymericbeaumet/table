@@ -51,9 +51,15 @@
 
 	function onKeyDown(event) {
 		if (event.key === 'ArrowUp') {
+			event.preventDefault();
 			selectedIndex = (selectedIndex + entities.length - 1) % entities.length;
-		} else if (event.key === 'ArrowDown') {
+			return;
+		}
+
+		if (event.key === 'ArrowDown') {
+			event.preventDefault();
 			selectedIndex = (selectedIndex + entities.length + 1) % entities.length;
+			return;
 		}
 	}
 
