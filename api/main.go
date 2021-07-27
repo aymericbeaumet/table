@@ -41,10 +41,6 @@ func main() {
 	godotenv.Load(".env")
 	godotenv.Load(".env." + mode)
 
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
-
 	rooms := NewRooms()
 
 	r := gin.Default()
@@ -52,6 +48,10 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = strings.Split(os.Getenv("CORS_ALLOW_ORIGINS"), ",")
 	r.Use(cors.New(config))
+
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 
 	r.GET("/rooms/:name", func(c *gin.Context) {
 		var params struct {

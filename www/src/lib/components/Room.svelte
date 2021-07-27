@@ -92,8 +92,8 @@
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
 		});
-		peer.addLocalStream(stream);
 		topEntities = [...topEntities, [EntityVideo, { srcObject: stream, muted: true }]];
+		peer.addLocalStream(stream);
 	});
 </script>
 
