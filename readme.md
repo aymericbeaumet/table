@@ -38,6 +38,16 @@ Automatically deployed when pushed to master.
 - Highlight the person who talks
 - Change background (image, video)
 - Add some background music
+- Virtual background/audio on the whole table
+- Animate mouse click
+- Enforce camera
+- Allow to send wizz
+- Allow to play alliance / horse musics
+- Allow to replace cursor by emoji for N seconds
+- Explore non verbal feedbacks (emojis, etc)
+- Metrics + Achievements when someone within the company does something
+- Meeting timer in background since the first participant joined
+- Share screen
 
 ## Pro Plan
 
