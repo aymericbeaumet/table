@@ -63,7 +63,7 @@
 
 		function sendMouseEvent(event) {
 			peer.unreliable({
-				MOUSE: { isDown: isMouseDown, clientX: event.clientX, clientY: event.clientY },
+				MOUSE: { clientX: event.clientX, clientY: event.clientY, isDown: isMouseDown },
 			});
 		}
 

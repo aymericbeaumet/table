@@ -68,12 +68,10 @@ export default class Peer {
 			const payload = JSON.parse(event.data);
 
 			if (payload.DESCRIPTION) {
-				this._peerConnection.setRemoteDescription(new RTCSessionDescription(payload.DESCRIPTION));
-				if (payload.DESCRIPTION.type == 'offer') {
-					const answer = await this._peerConnection.createAnswer();
-					await this._peerConnection.setLocalDescription(answer);
-					signaling.send(JSON.stringify({ DESCRIPTION: this._peerConnection.localDescription }));
+				if (payload.DESCRIPTION.type !== 'answer') {
+					throw new Error(`unexpected session description type "${payload.DESCRIPTION.type}"`);
 				}
+				this._peerConnection.setRemoteDescription(new RTCSessionDescription(payload.DESCRIPTION));
 			}
 
 			if (payload.ICE_CANDIDATE) {

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	webrtc "github.com/pion/webrtc/v3"
 	"github.com/vmihailenco/msgpack/v5"
@@ -31,6 +32,8 @@ type Peer struct {
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
 	onDescription       func(webrtc.SessionDescription)
+
+	mu sync.RWMutex
 }
 
 func NewPeer(id uint32) (*Peer, error) {
@@ -62,10 +65,14 @@ func NewPeer(id uint32) (*Peer, error) {
 	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
 		switch s {
 		case webrtc.PeerConnectionStateConnected:
+			p.mu.Lock()
 			p.Status = "online"
+			p.mu.Unlock()
 			p.onOpen()
 		case webrtc.PeerConnectionStateClosed, webrtc.PeerConnectionStateDisconnected, webrtc.PeerConnectionStateFailed:
+			p.mu.Lock()
 			p.Status = "offline"
+			p.mu.Unlock()
 			p.onClose()
 		}
 	})
@@ -153,20 +160,20 @@ func (p *Peer) RemoteDescription(desc webrtc.SessionDescription) (*webrtc.Sessio
 		return nil, err
 	}
 
-	if desc.Type == webrtc.SDPTypeOffer {
-		answer, err := p.peerConnection.CreateAnswer(nil)
-		if err != nil {
-			return nil, err
-		}
-
-		if err = p.peerConnection.SetLocalDescription(answer); err != nil {
-			return nil, err
-		}
-
-		return p.peerConnection.LocalDescription(), nil
+	if desc.Type != webrtc.SDPTypeOffer {
+		return nil, fmt.Errorf("unexpected session description type '%s'", desc.Type)
 	}
 
-	return nil, nil
+	answer, err := p.peerConnection.CreateAnswer(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = p.peerConnection.SetLocalDescription(answer); err != nil {
+		return nil, err
+	}
+
+	return p.peerConnection.LocalDescription(), nil
 }
 
 func (p *Peer) RemoteICECandidate(candidate webrtc.ICECandidateInit) error {
