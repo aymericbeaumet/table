@@ -212,6 +212,8 @@ func (p *Peer) SendUnreliable(sourcePeer *Peer, data []byte) error {
 }
 
 func (p *Peer) SendPeer(peer *Peer) error {
+	peer.mu.Lock()
+	defer peer.mu.Unlock()
 	msg, err := msgpack.Marshal(map[string]interface{}{
 		"PEER": peer,
 	})
