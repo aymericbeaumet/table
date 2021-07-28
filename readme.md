@@ -46,6 +46,7 @@ Automatically deployed when pushed to master.
 - Metrics + Achievements when someone within the company does something
 - Meeting timer in background since the first participant joined
 - Share screen
+- Embed Netflix/Spotify/arbitrary websites
 
 ## Pro Plan
 

@@ -26,17 +26,34 @@ export function inferEntities(value) {
 			]);
 	}
 
-	const matches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(value);
-	if (matches && matches.length === 2) {
-		out.push([
-			'twitch',
-			EntityIframe,
-			{
-				src: `https://player.twitch.tv/?channel=${encodeURIComponent(
-					matches[1],
-				)}&parent=${encodeURIComponent(window.location.hostname)}`,
-			},
-		]);
+	{
+		const matches = /https?:\/\/open\.spotify\.com\/([a-z]+)\/([A-Za-z0-9]+)\/?/.exec(value);
+		if (matches && matches.length === 3) {
+			out.push([
+				'spotify',
+				EntityIframe,
+				{
+					src: `https://open.spotify.com/embed/${encodeURIComponent(
+						matches[1],
+					)}/${encodeURIComponent(matches[2])}`,
+				},
+			]);
+		}
+	}
+
+	{
+		const matches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(value);
+		if (matches && matches.length === 2) {
+			out.push([
+				'twitch',
+				EntityIframe,
+				{
+					src: `https://player.twitch.tv/?channel=${encodeURIComponent(
+						matches[1],
+					)}&parent=${encodeURIComponent(window.location.hostname)}`,
+				},
+			]);
+		}
 	}
 
 	out.push(['persistent', EntityPersistentText, { value }]);
