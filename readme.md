@@ -6,14 +6,14 @@
 
 ```bash
 cd www && npm i && npm run dev
-cd api && go run -race .
+cd outpost && go run -race .
 ```
 
 ### Update
 
 ```bash
 cd www && npm i -D @sveltejs/kit@next @sveltejs/adapter-static@next && npx ncu -u && npm i
-cd api && go get -u && go mod tidy
+cd outpost && go get -u && go mod tidy
 ```
 
 ### Deploy

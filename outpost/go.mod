@@ -1,4 +1,4 @@
-module github.com/aymericbeaumet/chill-room/api
+module github.com/aymericbeaumet/chill-room/outpost
 
 go 1.16
 
