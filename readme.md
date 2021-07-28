@@ -5,24 +5,23 @@
 ### Development
 
 ```bash
-cd www && npm i && npm run dev
-cd outpost && go run -race .
+cd www && npm run dev
+cd outpost && make dev
 ```
 
 ### Update
 
 ```bash
-cd www && npm i -D @sveltejs/kit@next @sveltejs/adapter-static@next && npx ncu -u && npm i
-cd outpost && go get -u && go mod tidy
+cd www && npm run update
+cd outpost && make update
 ```
 
 ### Deploy
 
-Automatically deployed when pushed to master.
-
-- Website: https://chill-room-production.netlify.app
-- Netlify: https://app.netlify.com/sites/chill-room-production
-- Heroku: https://dashboard.heroku.com/apps/chill-room
+- Website: https://app.netlify.com/sites/chill-room-production (deployed via Netlify CI)
+  * https://table.aymericbeaumet.com
+- Scaleway: https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview (`make build deploy` in `./outpost`)
+  * wss://table-outpost-0.aymericbeaumet.com
 
 ## Ideas
 
@@ -68,7 +67,7 @@ Automatically deployed when pushed to master.
 
 ## Network optimization
 
-The signaling is done through HTTP. After that moment all the communication is
+The signaling is done through WebSocket. Otherwise, all the communication is
 done through WebRTC data channels.
 
 The client is in charge of the business logic.
@@ -76,5 +75,3 @@ The client is in charge of the business logic.
 The server is in charge of filtering the outdated packets and broadcasting to
 all the other clients. Besides the seq number and the partial update flag,
 packets are opaque from the server's perspective.
-
-- Move the client part in a web worker?
