@@ -84,9 +84,11 @@
 			},
 
 			onTrack: function (peerID, stream) {
-				const entity = ['peer', EntityVideo, { srcObject: stream }];
-				videoEntities[peerID] = entity;
-				topEntities = [...topEntities, entity];
+				if (!videoEntities[peerID]) {
+					const entity = ['peer', EntityVideo, { srcObject: stream }];
+					videoEntities[peerID] = entity;
+					topEntities = [...topEntities, entity];
+				}
 			},
 		});
 
@@ -111,7 +113,7 @@
 		}, 1000 / MAX_FPS);
 
 		const stream = await navigator.mediaDevices.getUserMedia({
-			audio: false && {
+			audio: {
 				autoGainControl: true,
 				echoCancellation: true,
 				noiseSuppression: true,
