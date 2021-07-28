@@ -6,6 +6,7 @@
 	import { throttle } from 'lodash';
 	import EntityCursor from './EntityCursor.svelte';
 	import { removeFromArray } from '$lib/utils';
+	import * as audio from '$lib/audio';
 
 	const MAX_FPS = 30;
 
@@ -57,13 +58,18 @@
 				latestKnownStatus[peerID] = data.status;
 
 				if (data.status === 'online') {
-					const a = new Audio('/assets/murloc.ogg');
-					a.play();
+					audio.play('/assets/murloc.ogg');
+					return;
 				}
 
 				if (data.status === 'offline') {
-					const a = new Audio('/assets/stealth.ogg');
-					a.play();
+					audio.play('/assets/stealth.ogg');
+
+					const cursorEntity = cursorEntities[peerID];
+					if (cursorEntity) {
+						delete cursorEntities[peerID];
+						entities = removeFromArray(entities, cursorEntity);
+					}
 
 					const videoEntity = videoEntities[peerID];
 					if (videoEntity) {
@@ -71,11 +77,7 @@
 						topEntities = removeFromArray(topEntities, videoEntity);
 					}
 
-					const cursorEntity = cursorEntities[peerID];
-					if (cursorEntity) {
-						delete cursorEntities[peerID];
-						entities = removeFromArray(entities, cursorEntity);
-					}
+					return;
 				}
 			},
 
