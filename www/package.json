@@ -4,11 +4,11 @@
 	"type": "module",
 	"scripts": {
 		"update": "npm i -D @sveltejs/kit@next @sveltejs/adapter-static@next && npx ncu -u && npm i",
-		"dev": "svelte-kit dev --host=0.0.0.0",
+		"dev": "svelte-kit dev",
 		"build": "svelte-kit build",
-		"start": "svelte-kit preview --host=0.0.0.0",
-		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
+		"preview": "svelte-kit preview",
 		"test": "true",
+		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
 		"format": "prettier --write --plugin-search-dir=. ."
 	},
 	"dependencies": {

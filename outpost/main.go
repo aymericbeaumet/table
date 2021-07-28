@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
@@ -200,11 +201,16 @@ func main() {
 
 	hostname := os.Getenv("HOSTNAME")
 	if len(hostname) == 0 {
-		hostname = "0.0.0.0"
+		hostname = "localhost"
 	}
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		port = "8080"
 	}
-	log.Fatal(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
+
+	if port == "letsencrypt" {
+		log.Fatal(autotls.Run(r, hostname))
+	} else {
+		log.Fatal(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
+	}
 }

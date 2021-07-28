@@ -1,0 +1,38 @@
+BIN := outpost
+
+.PHONY: all
+all: build test lint
+
+.PHONY: dev
+dev:
+	watchexec -e go -- go run -race .
+
+.PHONY: build
+build:
+	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(BIN) .
+
+.PHONY: preview
+preview:
+	./$(BIN)
+
+.PHONY: test
+test:
+	true
+
+.PHONY: lint
+lint:
+	true
+
+.PHONY: format
+format:
+	true
+
+.PHONY: deploy
+deploy: table-outpost-0
+
+.PHONY: table-outpost-%
+table-outpost-%:
+	scp $(BIN) .env.production $@:/usr/local/bin/
+	scp outpost.service $@:/etc/systemd/system/
+	ssh $@ "systemctl enable outpost.service"
+	ssh $@ "systemctl restart outpost.service"
