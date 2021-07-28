@@ -11,6 +11,7 @@
 	import stealthOGG from '$lib/assets/stealth.ogg';
 	import gauntletPNG from '$lib/assets/gauntlet.png';
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
+	import * as env from '$lib/env';
 
 	const MAX_FPS = 30;
 
@@ -34,9 +35,7 @@
 		const cursorEntities = {};
 		const videoEntities = {};
 
-		const ws = new WebSocket(
-			`${import.meta.env.VITE_WEBSOCKET_BASE_URL}/rooms/${encodeURIComponent(name)}`,
-		);
+		const ws = new WebSocket(`${env.OUTPOST_BASE_URL}/rooms/${encodeURIComponent(name)}`);
 		await new Promise((resolve) => (ws.onopen = resolve));
 
 		const peer = new Peer(ws, {
@@ -55,8 +54,7 @@
 
 			onPeer: function (peerID, data) {
 				// Make this handler idempotent
-				const s = latestKnownStatus[peerID];
-				if (s === data.status) {
+				if (latestKnownStatus[peerID] === data.status) {
 					return;
 				}
 				latestKnownStatus[peerID] = data.status;

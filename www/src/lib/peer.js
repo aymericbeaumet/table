@@ -1,4 +1,5 @@
 import { encode, decode } from '@msgpack/msgpack';
+import * as env from '$lib/env';
 
 export default class Peer {
 	constructor(ws, { onMouse, onPeer, onTrack }) {
@@ -17,7 +18,7 @@ export default class Peer {
 		/* Create and initialize WebRTC */
 
 		this._peerConnection = new RTCPeerConnection({
-			iceServers: [{ urls: import.meta.env.VITE_STUN_SERVERS_URLS.split(',') }],
+			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
 		this._peerConnection.onconnectionstatechange = () => {
