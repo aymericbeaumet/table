@@ -36,7 +36,10 @@ deploy: table-outpost-0
 
 .PHONY: table-outpost-%
 table-outpost-%:
-	scp $(BIN) .env.production $@:/usr/local/bin/
+	scp $(BIN) $@:/usr/local/bin/$(BIN)-next
+	scp .env.production $@:/usr/local/bin/
 	scp outpost.service $@:/etc/systemd/system/
 	ssh $@ "systemctl enable outpost.service"
-	ssh $@ "systemctl restart outpost.service"
+	ssh $@ "systemctl stop outpost.service"
+	ssh $@ "mv /usr/local/bin/$(BIN)-next /usr/local/bin/$(BIN)"
+	ssh $@ "systemctl start outpost.service"
