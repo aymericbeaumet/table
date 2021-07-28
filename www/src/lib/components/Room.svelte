@@ -7,6 +7,10 @@
 	import EntityCursor from './EntityCursor.svelte';
 	import { removeFromArray } from '$lib/utils';
 	import * as audio from '$lib/audio';
+	import murlocOGG from '$lib/assets/murloc.ogg';
+	import stealthOGG from '$lib/assets/stealth.ogg';
+	import gauntletPNG from '$lib/assets/gauntlet.png';
+	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 
 	const MAX_FPS = 30;
 
@@ -58,12 +62,12 @@
 				latestKnownStatus[peerID] = data.status;
 
 				if (data.status === 'online') {
-					audio.play('/assets/murloc.ogg');
+					audio.play(murlocOGG);
 					return;
 				}
 
 				if (data.status === 'offline') {
-					audio.play('/assets/stealth.ogg');
+					audio.play(stealthOGG);
 
 					const cursorEntity = cursorEntities[peerID];
 					if (cursorEntity) {
@@ -126,28 +130,13 @@
 	});
 </script>
 
-<svelte:head>
-	{#if isMouseDown}
-		<style>
-			body {
-				cursor: url(/assets/gauntlet-glow.png), auto;
-			}
-		</style>
-	{:else}
-		<style>
-			body {
-				cursor: url(/assets/gauntlet.png), auto;
-			}
-		</style>
-	{/if}
-</svelte:head>
-
 <SmartBar on:entity={onSmartBarEntity}>
 	<div
 		class="container"
 		on:mousedown={onMouseDown}
 		on:mousemove={onMouseMove}
 		on:mouseup={onMouseUp}
+		style="cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;"
 	>
 		<header>
 			{#each topEntities as [_, component, props]}

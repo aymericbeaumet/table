@@ -1,4 +1,7 @@
 <script>
+	import gauntletPNG from '$lib/assets/gauntlet.png';
+	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
+
 	export let fps;
 
 	export let x;
@@ -7,7 +10,7 @@
 </script>
 
 <img
-	src={isDown ? '/assets/gauntlet-glow.png' : '/assets/gauntlet.png'}
+	src={isDown ? gauntletGlowPNG : gauntletPNG}
 	alt="cursor"
 	style={`
 	  z-index: 500;
