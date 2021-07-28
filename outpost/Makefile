@@ -9,7 +9,7 @@ update:
 
 .PHONY: dev
 dev:
-	watchexec -e go -- go run -race .
+	watchexec --restart --clear -e go -- go run -race .
 
 .PHONY: build
 build:
