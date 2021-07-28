@@ -3,6 +3,10 @@ BIN := outpost
 .PHONY: all
 all: build test lint
 
+.PHONY: update
+update:
+	go get -u && go mod tidy
+
 .PHONY: dev
 dev:
 	watchexec -e go -- go run -race .
