@@ -2,23 +2,36 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
-	"github.com/pion/ion-sfu/cmd/signal/json-rpc/server"
-	log "github.com/pion/ion-sfu/pkg/logger"
-	"github.com/pion/ion-sfu/pkg/sfu"
-	"github.com/sourcegraph/jsonrpc2"
-	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
+	webrtc "github.com/pion/webrtc/v3"
 )
 
-var logger = log.New()
+type InboundSignalingMessage struct {
+	SignalingMessageDescription
+	SignalingMessageIceCandidate
+}
+
+type SignalingMessageDescription struct {
+	Description *webrtc.SessionDescription `json:"description"`
+}
+
+type SignalingMessageIceCandidate struct {
+	Candidate *webrtc.ICECandidateInit `json:"candidate"`
+}
+
+type SignalingMessageNegotiationNeeded struct {
+	NegotiationNeeded bool `json:"negotiationneeded"`
+}
 
 func main() {
 	mode := os.Getenv("MODE")
@@ -28,25 +41,7 @@ func main() {
 	godotenv.Load(".env")
 	godotenv.Load(".env." + mode)
 
-	var c sfu.Config
-	c.SFU.Ballast = 0
-	c.SFU.WithStats = false
-	c.Router.MaxBandwidth = 1500
-	c.Router.MaxPacketTrack = 500
-	c.Router.AudioLevelThreshold = 40
-	c.Router.AudioLevelInterval = 1000
-	c.Router.AudioLevelFilter = 20
-	c.Router.Simulcast.BestQualityFirst = true
-	c.Router.Simulcast.EnableTemporalLayer = false
-	c.WebRTC.ICEPortRange = []uint16{5000, 5200}
-	c.WebRTC.SDPSemantics = "unified-plan"
-	c.WebRTC.MDNS = true
-	c.WebRTC.Timeouts.ICEDisconnectedTimeout = 5
-	c.WebRTC.Timeouts.ICEFailedTimeout = 25
-	c.WebRTC.Timeouts.ICEKeepaliveInterval = 2
-	c.Turn.Enabled = false
-
-	s := sfu.NewSFU(c)
+	rooms := NewRooms()
 
 	r := gin.Default()
 
@@ -55,9 +50,7 @@ func main() {
 	r.Use(cors.New(config))
 
 	upgrader := websocket.Upgrader{
-		CheckOrigin:     func(r *http.Request) bool { return true },
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool { return true },
 	}
 
 	r.GET("/rooms/:name", func(c *gin.Context) {
@@ -68,17 +61,142 @@ func main() {
 			return
 		}
 
+		room := rooms.Upsert(params.Name)
+
+		peer, err := NewPeer(room.Inc())
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		defer peer.Close()
+
+		peer.OnOpen(func() {
+			if room.AddPeer(peer) {
+				room.EachPeer(func(p *Peer) {
+					if p != peer {
+						p.SendPeer(peer)
+						p.EachTrack(func(t webrtc.TrackLocal) { peer.AddTrack(t) })
+						peer.SendPeer(p)
+					}
+				})
+			}
+		})
+
+		peer.OnTrack(func(track webrtc.TrackLocal) {
+			room.EachPeer(func(p *Peer) {
+				if p != peer {
+					if err := p.AddTrack(track); err != nil {
+						fmt.Println("error:", err)
+					}
+				}
+			})
+		})
+
+		peer.OnMessageReliable(func(msg []byte) {
+			room.EachPeer(func(p *Peer) {
+				if p != peer {
+					if err := p.SendReliable(peer, msg); err != nil {
+						fmt.Println("error:", err)
+					}
+				}
+			})
+		})
+
+		peer.OnMessageUnreliable(func(msg []byte) {
+			room.EachPeer(func(p *Peer) {
+				if p != peer {
+					if err := p.SendUnreliable(peer, msg); err != nil {
+						fmt.Println("error:", err)
+					}
+				}
+			})
+		})
+
+		peer.OnClose(func() {
+			if room.DelPeer(peer) {
+				room.EachPeer(func(p *Peer) {
+					p.SendPeer(peer)
+				})
+			}
+		})
+
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			panic(err)
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
 		}
 		defer ws.Close()
+		ws.EnableWriteCompression(true)
 
-		p := server.NewJSONSignal(sfu.NewPeer(s), logger)
-		defer p.Close()
+		// TODO: find a cleaner way to prevent concurrent writes
+		var mu sync.Mutex
+		writeJSON := func(v interface{}) error {
+			mu.Lock()
+			defer mu.Unlock()
+			return ws.WriteJSON(v)
+		}
 
-		jc := jsonrpc2.NewConn(c, websocketjsonrpc2.NewObjectStream(ws), p)
-		<-jc.DisconnectNotify()
+		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
+			var ic *webrtc.ICECandidateInit
+			if candidate != nil {
+				j := candidate.ToJSON()
+				ic = &j
+			}
+			writeJSON(&SignalingMessageIceCandidate{Candidate: ic})
+		})
+
+		peer.OnNegotiationNeeded(func() {
+			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
+		})
+
+		peer.OnTrackAdded(func(track webrtc.TrackLocal) {
+			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
+		})
+
+		for {
+			var message InboundSignalingMessage
+			if err := ws.ReadJSON(&message); err != nil {
+				fmt.Println("error:", err)
+				return
+			}
+
+			if message.Description != nil {
+				desc := message.Description
+
+				if desc.Type != webrtc.SDPTypeOffer {
+					panic(fmt.Errorf("unexpected session description of type %#v", desc.Type))
+				}
+
+				if err := peer.peerConnection.SetRemoteDescription(*desc); err != nil {
+					panic(err)
+				}
+
+				answer, err := peer.peerConnection.CreateAnswer(nil)
+				if err != nil {
+					panic(err)
+				}
+
+				if err := peer.peerConnection.SetLocalDescription(answer); err != nil {
+					panic(err)
+				}
+
+				if err := writeJSON(&SignalingMessageDescription{Description: peer.LocalDescription()}); err != nil {
+					panic(err)
+				}
+			}
+
+			if message.Candidate != nil {
+				if err := peer.peerConnection.AddICECandidate(*message.Candidate); err != nil {
+					panic(err)
+				}
+			}
+		}
+	})
+
+	r.GET("/debug", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"roomsByID": rooms,
+		})
 	})
 
 	hostname := os.Getenv("HOSTNAME")
@@ -90,13 +208,9 @@ func main() {
 		port = "8080"
 	}
 
-	var err error
 	if port == "letsencrypt" {
-		err = autotls.Run(r, hostname)
+		log.Fatal(autotls.Run(r, hostname))
 	} else {
-		err = r.Run(fmt.Sprintf("%s:%s", hostname, port))
-	}
-	if err != nil {
-		panic(err)
+		log.Fatal(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
 	}
 }

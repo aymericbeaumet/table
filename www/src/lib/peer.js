@@ -1,10 +1,9 @@
 import { encode, decode } from '@msgpack/msgpack';
 import * as env from '$lib/env';
-import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl';
 
 export default class Peer {
-	constructor(roomName, IonClient, { onMouse, onPeer, onTrack }) {
-		const onMessage = (event) => {
+	constructor(ws, { onMouse, onPeer, onTrack }) {
+		const onmessage = (event) => {
 			const { peerID, data } = decode(event.data);
 
 			if (data.MOUSE) {
@@ -16,61 +15,120 @@ export default class Peer {
 			}
 		};
 
-		const signal = new IonSFUJSONRPCSignal(
-			`${env.OUTPOST_BASE_URL}/rooms/${encodeURIComponent(roomName)}`,
-		);
+		/* Create and initialize WebRTC */
 
-		this._client = new IonClient(signal, {
+		this._peerConnection = new RTCPeerConnection({
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
-		signal.onopen = () => this._client.join(roomName);
+		this._peerConnection.onconnectionstatechange = () => {
+			console.log(`webrtc ${this._peerConnection.connectionState}`);
+		};
 
-		this._client.onconnectionstatechange = () => {
-			console.log(`webrtc ${this._client.connectionState}`);
+		/* Create pre-negotiated data channels */
 
-			if (this._client.connectionState === 'connected') {
-				if (!this._reliable) {
-					const reliable = this._client.createDataChannel('reliable', {
-						negotiated: true,
-						id: 0,
-						//
-						ordered: false,
-					});
-					reliable.onmessage = onMessage;
-					reliable.onopen = () => {
-						this._reliable = reliable;
-					};
-				}
+		this._reliable = this._peerConnection.createDataChannel('reliable', {
+			negotiated: true,
+			id: 0,
+			//
+			ordered: false,
+		});
+		this._reliable.onmessage = onmessage;
 
-				if (!this._unreliable) {
-					const unreliable = this._client.createDataChannel('unreliable', {
-						negotiated: true,
-						id: 1,
-						//
-						ordered: false,
-						maxRetransmits: 0,
-					});
-					unreliable.onmessage = onMessage;
-					unreliable.onopen = () => {
-						this._unreliable = unreliable;
-					};
-				}
+		this._unreliable = this._peerConnection.createDataChannel('unreliable', {
+			negotiated: true,
+			id: 1,
+			//
+			ordered: false,
+			maxRetransmits: 0,
+		});
+		this._unreliable.onmessage = onmessage;
+
+		/* Listen for tracks */
+
+		this._peerConnection.ontrack = (event) => {
+			const stream = event.streams[0];
+			const peerID = parseInt(stream.id, 10);
+			onTrack(peerID, stream);
+		};
+
+		/*
+		 * https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
+		 * The perfect negotiation logic, separated from the rest of the application
+		 */
+
+		const polite = true;
+
+		// keep track of some negotiation state to prevent races and errors
+		let makingOffer = false;
+		let ignoreOffer = false;
+		let isSettingRemoteAnswerPending = false;
+
+		// send any ice candidates to the other peer
+		this._peerConnection.onicecandidate = ({ candidate }) => ws.send(JSON.stringify({ candidate }));
+
+		// let the "negotiationneeded" event trigger offer generation
+		this._peerConnection.onnegotiationneeded = async () => {
+			try {
+				makingOffer = true;
+				await this._peerConnection.setLocalDescription();
+				ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
+			} catch (err) {
+				console.error(err);
+			} finally {
+				makingOffer = false;
 			}
 		};
 
-		this._client.ontrack = (_track, stream) => onTrack(parseInt(stream.id, 10), stream);
+		ws.onmessage = async (event) => {
+			const { negotiationneeded, description, candidate } = JSON.parse(event.data);
+			try {
+				if (negotiationneeded) {
+					this._peerConnection.onnegotiationneeded();
+				} else if (description) {
+					// An offer may come in while we are busy processing SRD(answer).
+					// In this case, we will be in "stable" by the time the offer is processed
+					// so it is safe to chain it on our Operations Chain now.
+					const readyForOffer =
+						!makingOffer &&
+						(this._peerConnection.signalingState === 'stable' || isSettingRemoteAnswerPending);
+					const offerCollision = description.type === 'offer' && !readyForOffer;
+
+					ignoreOffer = !polite && offerCollision;
+					if (ignoreOffer) {
+						return;
+					}
+					isSettingRemoteAnswerPending = description.type === 'answer';
+					await this._peerConnection.setRemoteDescription(description); // SRD rolls back as needed
+					isSettingRemoteAnswerPending = false;
+					if (description.type == 'offer') {
+						await this._peerConnection.setLocalDescription();
+						ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
+					}
+				} else if (candidate) {
+					try {
+						await this._peerConnection.addIceCandidate(candidate);
+					} catch (err) {
+						if (!ignoreOffer) throw err; // Suppress ignored offer's candidates
+					}
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		};
 	}
 
-	publishStream(stream) {
-		this._client.publish(stream);
+	addLocalStream(stream) {
+		for (const track of stream.getTracks()) {
+			this._peerConnection.addTrack(track, stream);
+		}
 	}
 
-	sendReliable(payload) {
-		this._reliable && this._reliable.send(encode(payload));
+	reliable(payload) {
+		this._reliable.send(encode(payload));
 	}
 
-	sendUnreliable(payload) {
-		this._unreliable && this._unreliable.send(encode(payload));
+	unreliable(payload) {
+		this._unreliable.send(encode(payload));
 	}
 }

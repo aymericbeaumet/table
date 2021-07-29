@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>Table - {name}</title>
+	<title>Chill - {name}</title>
 </svelte:head>
 
 {#if name}

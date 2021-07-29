@@ -13,10 +13,8 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
-	github.com/pion/ion-sfu v1.10.8
 	github.com/pion/rtcp v1.2.6
 	github.com/pion/webrtc/v3 v3.0.32
-	github.com/sourcegraph/jsonrpc2 v0.0.0-20210201082850-366fbb520750
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4
 	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985 // indirect

@@ -11,6 +11,7 @@
 	import stealthOGG from '$lib/assets/stealth.ogg';
 	import gauntletPNG from '$lib/assets/gauntlet.png';
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
+	import * as env from '$lib/env';
 
 	const MAX_FPS = 30;
 
@@ -29,16 +30,15 @@
 	let onMouseMove, onMouseDown, onMouseUp;
 
 	onMount(async function () {
-		// TODO: find a way to use the top imports for the 'ion-sdk-js' library
-		// It fails server-side (SSR) because of `ReferenceError: MediaStream is not defined`
-		const { Client, LocalStream } = await import('ion-sdk-js');
-
 		// Some hashmaps indexed by peer ids
 		const latestKnownStatus = {};
 		const cursorEntities = {};
 		const videoEntities = {};
 
-		const peer = new Peer(name, Client, {
+		const ws = new WebSocket(`${env.OUTPOST_BASE_URL}/rooms/${encodeURIComponent(name)}`);
+		await new Promise((resolve) => (ws.onopen = resolve));
+
+		const peer = new Peer(ws, {
 			onMouse: throttle(function (peerID, data) {
 				let entity = cursorEntities[peerID];
 				if (!entity) {
@@ -93,7 +93,7 @@
 		});
 
 		function sendMouseEvent(event) {
-			peer.sendUnreliable({
+			peer.unreliable({
 				MOUSE: { clientX: event.clientX, clientY: event.clientY, isDown: isMouseDown },
 			});
 		}
@@ -112,7 +112,7 @@
 			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
-		const stream = await LocalStream.getUserMedia({
+		const stream = await navigator.mediaDevices.getUserMedia({
 			audio: {
 				autoGainControl: true,
 				echoCancellation: true,
@@ -124,10 +124,9 @@
 				facingMode: { ideal: 'user' },
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
-			simulcast: true,
 		});
-		peer.publishStream(stream);
 		topEntities = [...topEntities, ['self', EntityVideo, { srcObject: stream, muted: true }]];
+		peer.addLocalStream(stream);
 	});
 </script>
 

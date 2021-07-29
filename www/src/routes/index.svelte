@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>Ephemeral discussions - Table</title>
+	<title>Chill</title>
 </svelte:head>
 
 <h1>Home page</h1>
