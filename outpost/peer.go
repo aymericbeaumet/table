@@ -22,8 +22,8 @@ type Wrap struct {
 }
 
 type Peer struct {
-	ID     uint32 `msgpack:"id"`
-	Status string `msgpack:"status"`
+	ID     uint32 `json:"id"`
+	Status string `json:"status"`
 
 	peerConnection        *webrtc.PeerConnection
 	signalDataChannel     *webrtc.DataChannel
