@@ -85,7 +85,7 @@
 
 			onTrack: function (peerID, track, stream) {
 				if (track.kind === 'video' && !videoEntities[peerID]) {
-					const entity = ['peer', EntityVideo, { srcObject: stream }];
+					const entity = ['peer', EntityVideo, { label: `peer:${peerID}`, srcObject: stream }];
 					videoEntities[peerID] = entity;
 					topEntities = [...topEntities, entity];
 				}
@@ -125,7 +125,10 @@
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
 		});
-		topEntities = [...topEntities, ['self', EntityVideo, { srcObject: stream, muted: true }]];
+		topEntities = [
+			...topEntities,
+			['self', EntityVideo, { label: 'me', srcObject: stream, muted: true }],
+		];
 		peer.addLocalStream(stream);
 	});
 </script>

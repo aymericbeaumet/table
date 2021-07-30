@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -66,4 +67,13 @@ func (r *Room) Inc() uint32 {
 
 func NormalizeRoomName(name string) string {
 	return strings.ToLower(strings.TrimSpace(name))
+}
+
+type JRoom Room
+
+func (r *Room) MarshalJSON() ([]byte, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return json.Marshal((*JRoom)(r))
 }

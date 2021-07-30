@@ -45,8 +45,8 @@ func (r *Rooms) Upsert(name string) *Room {
 }
 
 func (r *Rooms) MarshalJSON() ([]byte, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
 	return json.Marshal(r.roomsByName)
 }

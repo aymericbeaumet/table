@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 
+	export let label;
 	export let srcObject;
 	export let muted = false;
 
@@ -14,6 +15,7 @@
 </script>
 
 <video bind:this={video} />
+<legend>{label}</legend>
 
 <style>
 	video {

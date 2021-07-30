@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -191,8 +192,6 @@ func (p *Peer) EachTrack(f func(webrtc.TrackLocal)) {
 }
 
 func (p *Peer) SendPeer(peer *Peer) error {
-	peer.mu.Lock()
-	defer peer.mu.Unlock()
 	msg, err := msgpack.Marshal(map[string]interface{}{
 		"PEER": peer,
 	})
@@ -268,4 +267,13 @@ func (p *Peer) wrap(sourcePeer *Peer, data []byte) ([]byte, error) {
 		Data:   data,
 	}
 	return msgpack.Marshal(w)
+}
+
+type JPeer Peer
+
+func (p *Peer) MarshalJSON() ([]byte, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	return json.Marshal((*JPeer)(p))
 }
