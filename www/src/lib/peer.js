@@ -11,6 +11,7 @@ export default class Peer {
 			}
 
 			if (data.PEER) {
+				console.log(`[onpeer] peer:${peerID} ${data.PEER.status}`);
 				onPeer(peerID, data.PEER);
 			}
 		};
@@ -48,10 +49,11 @@ export default class Peer {
 
 		/* Listen for tracks */
 
-		this._peerConnection.ontrack = (event) => {
-			const stream = event.streams[0];
+		this._peerConnection.ontrack = ({ track, streams }) => {
+			const stream = streams[0];
 			const peerID = parseInt(stream.id, 10);
-			onTrack(peerID, event.track, stream);
+			console.log(`[ontrack] peer:${peerID} ${track.id}`);
+			onTrack(peerID, track, stream);
 		};
 
 		/* WebRTC negotiation mecanism */
