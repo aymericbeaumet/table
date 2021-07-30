@@ -21,7 +21,8 @@ type Wrap struct {
 }
 
 type Peer struct {
-	ID uint32
+	ID     uint32 `msgpack:"id"`
+	Status string `msgpack:"status"`
 
 	peerConnection        *webrtc.PeerConnection
 	signalDataChannel     *webrtc.DataChannel
@@ -30,7 +31,10 @@ type Peer struct {
 
 	tracks []webrtc.TrackLocal
 
-	onConnected         func()
+	onOpen  func()
+	onClose func()
+
+	onNegotiationNeeded func()
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
@@ -41,7 +45,10 @@ type Peer struct {
 func NewPeer(id uint32) (*Peer, error) {
 	p := &Peer{
 		ID:                  id,
-		onConnected:         func() {},
+		Status:              "offline",
+		onOpen:              func() {},
+		onClose:             func() {},
+		onNegotiationNeeded: func() {},
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
 		onTrack:             func(webrtc.TrackLocal) {},
@@ -92,8 +99,22 @@ func NewPeer(id uint32) (*Peer, error) {
 	})
 
 	p.peerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
-		if state == webrtc.PeerConnectionStateConnected {
-			p.onConnected()
+		switch state {
+		case
+			webrtc.PeerConnectionStateConnected:
+			{
+				p.Status = "online"
+				p.onOpen()
+			}
+
+		case
+			webrtc.PeerConnectionStateDisconnected,
+			webrtc.PeerConnectionStateFailed,
+			webrtc.PeerConnectionStateClosed:
+			{
+				p.Status = "offline"
+				p.onClose()
+			}
 		}
 	})
 
@@ -155,6 +176,8 @@ func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 		}
 	}()
 
+	p.onNegotiationNeeded()
+
 	return nil
 }
 
@@ -165,6 +188,18 @@ func (p *Peer) EachTrack(f func(webrtc.TrackLocal)) {
 	for _, t := range p.tracks {
 		f(t)
 	}
+}
+
+func (p *Peer) SendPeer(peer *Peer) error {
+	peer.mu.Lock()
+	defer peer.mu.Unlock()
+	msg, err := msgpack.Marshal(map[string]interface{}{
+		"PEER": peer,
+	})
+	if err != nil {
+		return err
+	}
+	return p.SendReliable(peer, msg)
 }
 
 func (p *Peer) SendReliable(sourcePeer *Peer, data []byte) error {
@@ -191,8 +226,12 @@ func (p *Peer) OnMessageUnreliable(f func(msg []byte)) {
 	p.onMessageUnreliable = f
 }
 
-func (p *Peer) OnConnected(f func()) {
-	p.onConnected = f
+func (p *Peer) OnOpen(f func()) {
+	p.onOpen = f
+}
+
+func (p *Peer) OnClose(f func()) {
+	p.onClose = f
 }
 
 func (p *Peer) OnTrack(f func(webrtc.TrackLocal)) {
@@ -204,6 +243,7 @@ func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
 }
 
 func (p *Peer) OnNegotiationNeeded(f func()) {
+	p.onNegotiationNeeded = f
 	p.peerConnection.OnNegotiationNeeded(f)
 }
 

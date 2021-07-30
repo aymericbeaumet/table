@@ -83,8 +83,8 @@
 				}
 			},
 
-			onTrack: function (peerID, stream) {
-				if (!videoEntities[peerID]) {
+			onTrack: function (peerID, track, stream) {
+				if (track.kind === 'video' && !videoEntities[peerID]) {
 					const entity = ['peer', EntityVideo, { srcObject: stream }];
 					videoEntities[peerID] = entity;
 					topEntities = [...topEntities, entity];

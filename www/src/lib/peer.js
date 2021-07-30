@@ -49,71 +49,40 @@ export default class Peer {
 		this._peerConnection.ontrack = (event) => {
 			const stream = event.streams[0];
 			const peerID = parseInt(stream.id, 10);
-			onTrack(peerID, stream);
+			onTrack(peerID, event.track, stream);
 		};
 
-		/*
-		 * https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
-		 * The perfect negotiation logic, separated from the rest of the application
-		 */
+		/* WebRTC negotiation mecanism */
 
-		const polite = true;
+		let isNegotiationNeeded = false;
+		let isOfferPending = false;
 
-		// keep track of some negotiation state to prevent races and errors
-		let makingOffer = false;
-		let ignoreOffer = false;
-		let isSettingRemoteAnswerPending = false;
-
-		// send any ice candidates to the other peer
 		this._peerConnection.onicecandidate = ({ candidate }) => ws.send(JSON.stringify({ candidate }));
 
-		// let the "negotiationneeded" event trigger offer generation
 		this._peerConnection.onnegotiationneeded = async () => {
-			try {
-				makingOffer = true;
-				await this._peerConnection.setLocalDescription();
-				ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
-			} catch (err) {
-				console.error(err);
-			} finally {
-				makingOffer = false;
+			if (isOfferPending) {
+				return;
 			}
+			await this._peerConnection.setLocalDescription();
+			ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
+			isNegotiationNeeded = false;
+			isOfferPending = true;
 		};
 
 		ws.onmessage = async (event) => {
 			const { negotiationneeded, description, candidate } = JSON.parse(event.data);
-			try {
-				if (negotiationneeded) {
-					this._peerConnection.onnegotiationneeded();
-				} else if (description) {
-					// An offer may come in while we are busy processing SRD(answer).
-					// In this case, we will be in "stable" by the time the offer is processed
-					// so it is safe to chain it on our Operations Chain now.
-					const readyForOffer =
-						!makingOffer &&
-						(this._peerConnection.signalingState === 'stable' || isSettingRemoteAnswerPending);
-					const offerCollision = description.type === 'offer' && !readyForOffer;
 
-					ignoreOffer = !polite && offerCollision;
-					if (ignoreOffer) {
-						return;
-					}
-					isSettingRemoteAnswerPending = description.type === 'answer';
-					await this._peerConnection.setRemoteDescription(description); // SRD rolls back as needed
-					isSettingRemoteAnswerPending = false;
-					if (description.type == 'offer') {
-						await this._peerConnection.setLocalDescription();
-						ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
-					}
-				} else if (candidate) {
-					try {
-						await this._peerConnection.addIceCandidate(candidate);
-					} catch (err) {
-						if (!ignoreOffer) throw err; // Suppress ignored offer's candidates
-					}
+			if (negotiationneeded) {
+				isNegotiationNeeded = true;
+				this._peerConnection.onnegotiationneeded();
+			} else if (description) {
+				await this._peerConnection.setRemoteDescription(description);
+				isOfferPending = false;
+				if (isNegotiationNeeded) {
+					await this._peerConnection.onnegotiationneeded();
 				}
-			} catch (err) {
-				console.error(err);
+			} else if (candidate) {
+				await this._peerConnection.addIceCandidate(candidate);
 			}
 		};
 	}

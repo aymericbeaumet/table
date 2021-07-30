@@ -17,16 +17,16 @@ import (
 )
 
 type InboundSignalingMessage struct {
+	SignalingMessageCandidate
 	SignalingMessageDescription
-	SignalingMessageIceCandidate
+}
+
+type SignalingMessageCandidate struct {
+	Candidate *webrtc.ICECandidateInit `json:"candidate"`
 }
 
 type SignalingMessageDescription struct {
 	Description *webrtc.SessionDescription `json:"description"`
-}
-
-type SignalingMessageIceCandidate struct {
-	Candidate *webrtc.ICECandidateInit `json:"candidate"`
 }
 
 type SignalingMessageNegotiationNeeded struct {
@@ -70,14 +70,26 @@ func main() {
 		}
 		defer peer.Close()
 
-		peer.OnConnected(func() {
+		peer.OnOpen(func() {
 			if room.AddPeer(peer) {
 				room.EachPeer(func(p *Peer) {
-					p.EachTrack(func(t webrtc.TrackLocal) {
-						if err := peer.AddTrack(t); err != nil {
-							fmt.Println("error:", err)
-						}
-					})
+					if p != peer {
+						p.SendPeer(peer)
+						peer.SendPeer(p)
+						p.EachTrack(func(t webrtc.TrackLocal) {
+							if err := peer.AddTrack(t); err != nil {
+								fmt.Println("error:", err)
+							}
+						})
+					}
+				})
+			}
+		})
+
+		peer.OnClose(func() {
+			if room.DelPeer(peer) {
+				room.EachPeer(func(p *Peer) {
+					p.SendPeer(peer)
 				})
 			}
 		})
@@ -134,7 +146,7 @@ func main() {
 				j := candidate.ToJSON()
 				ic = &j
 			}
-			writeJSON(&SignalingMessageIceCandidate{Candidate: ic})
+			writeJSON(&SignalingMessageCandidate{Candidate: ic})
 		})
 
 		peer.OnNegotiationNeeded(func() {
