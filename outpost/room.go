@@ -69,11 +69,11 @@ func NormalizeRoomName(name string) string {
 	return strings.ToLower(strings.TrimSpace(name))
 }
 
-type JRoom Room
+type Room_ Room
 
 func (r *Room) MarshalJSON() ([]byte, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return json.Marshal((*JRoom)(r))
+	return json.Marshal((*Room_)(r))
 }

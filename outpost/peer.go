@@ -22,8 +22,8 @@ type Wrap struct {
 }
 
 type Peer struct {
-	ID     uint32 `json:"id"`
-	Status string `json:"status"`
+	ID     uint32 `msgpack:"id" json:"id"`
+	Status string `msgpack:"status" json:"status"`
 
 	peerConnection        *webrtc.PeerConnection
 	signalDataChannel     *webrtc.DataChannel
@@ -269,11 +269,18 @@ func (p *Peer) wrap(sourcePeer *Peer, data []byte) ([]byte, error) {
 	return msgpack.Marshal(w)
 }
 
-type JPeer Peer
+type Peer_ Peer
 
 func (p *Peer) MarshalJSON() ([]byte, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	return json.Marshal((*JPeer)(p))
+	return json.Marshal((*Peer_)(p))
+}
+
+func (p *Peer) MarshalMsgpack() ([]byte, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	return msgpack.Marshal((*Peer_)(p))
 }
