@@ -104,7 +104,9 @@ func NewPeer(id uint32) (*Peer, error) {
 		case
 			webrtc.PeerConnectionStateConnected:
 			{
+				p.mu.Lock()
 				p.Status = "online"
+				p.mu.Unlock()
 				p.onOpen()
 			}
 
@@ -113,7 +115,9 @@ func NewPeer(id uint32) (*Peer, error) {
 			webrtc.PeerConnectionStateFailed,
 			webrtc.PeerConnectionStateClosed:
 			{
+				p.mu.Lock()
 				p.Status = "offline"
+				p.mu.Unlock()
 				p.onClose()
 			}
 		}
