@@ -26,4 +26,12 @@
 		border: 1px solid grey;
 		background-color: lightgrey;
 	}
+
+	legend {
+		border: 1px solid lightcoral;
+		border-radius: 10px;
+		padding: 3px;
+		background: lightsalmon;
+		text-align: center;
+	}
 </style>
