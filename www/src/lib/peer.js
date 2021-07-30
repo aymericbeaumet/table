@@ -21,9 +21,11 @@ export default class Peer {
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
-		this._peerConnection.onconnectionstatechange = () => {
-			console.log(`webrtc ${this._peerConnection.connectionState}`);
-		};
+		this._peerConnection.onconnectionstatechange = () =>
+			console.log(`[webrtc] ${this._peerConnection.connectionState}`);
+
+		this._peerConnection.onsignalingstatechange = () =>
+			console.log(`[signal] ${this._peerConnection.signalingState}`);
 
 		/* Create pre-negotiated data channels */
 
@@ -61,19 +63,20 @@ export default class Peer {
 
 		this._peerConnection.onnegotiationneeded = async () => {
 			if (isOfferPending) {
+				isNegotiationNeeded = true;
 				return;
 			}
-			await this._peerConnection.setLocalDescription();
-			ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
 			isNegotiationNeeded = false;
 			isOfferPending = true;
+			const offer = await this._peerConnection.createOffer();
+			await this._peerConnection.setLocalDescription(offer);
+			ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
 		};
 
 		ws.onmessage = async (event) => {
 			const { negotiationneeded, description, candidate } = JSON.parse(event.data);
 
 			if (negotiationneeded) {
-				isNegotiationNeeded = true;
 				this._peerConnection.onnegotiationneeded();
 			} else if (description) {
 				await this._peerConnection.setRemoteDescription(description);
