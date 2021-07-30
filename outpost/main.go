@@ -70,14 +70,14 @@ func main() {
 		}
 		defer peer.Close()
 
-		peer.OnOpen(func() {
+		peer.OnConnected(func() {
 			if room.AddPeer(peer) {
 				room.EachPeer(func(p *Peer) {
-					if p != peer {
-						p.SendPeer(peer)
-						p.EachTrack(func(t webrtc.TrackLocal) { peer.AddTrack(t) })
-						peer.SendPeer(p)
-					}
+					p.EachTrack(func(t webrtc.TrackLocal) {
+						if err := peer.AddTrack(t); err != nil {
+							fmt.Println("error:", err)
+						}
+					})
 				})
 			}
 		})
@@ -112,14 +112,6 @@ func main() {
 			})
 		})
 
-		peer.OnClose(func() {
-			if room.DelPeer(peer) {
-				room.EachPeer(func(p *Peer) {
-					p.SendPeer(peer)
-				})
-			}
-		})
-
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -146,10 +138,6 @@ func main() {
 		})
 
 		peer.OnNegotiationNeeded(func() {
-			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
-		})
-
-		peer.OnTrackAdded(func(track webrtc.TrackLocal) {
 			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
 		})
 

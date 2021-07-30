@@ -21,8 +21,7 @@ type Wrap struct {
 }
 
 type Peer struct {
-	ID     uint32 `msgpack:"id"`
-	Status string `msgpack:"status"`
+	ID uint32
 
 	peerConnection        *webrtc.PeerConnection
 	signalDataChannel     *webrtc.DataChannel
@@ -31,27 +30,21 @@ type Peer struct {
 
 	tracks []webrtc.TrackLocal
 
-	onOpen              func()
-	onClose             func()
+	onConnected         func()
 	onMessageReliable   func([]byte)
 	onMessageUnreliable func([]byte)
 	onTrack             func(webrtc.TrackLocal)
-	onTrackAdded        func(webrtc.TrackLocal)
 
 	mu sync.RWMutex
 }
 
 func NewPeer(id uint32) (*Peer, error) {
 	p := &Peer{
-		ID:     id,
-		Status: "offline",
-
-		onOpen:              func() {},
-		onClose:             func() {},
+		ID:                  id,
+		onConnected:         func() {},
 		onMessageReliable:   func([]byte) {},
 		onMessageUnreliable: func([]byte) {},
 		onTrack:             func(webrtc.TrackLocal) {},
-		onTrackAdded:        func(webrtc.TrackLocal) {},
 	}
 
 	// Create a new RTCPeerConnection
@@ -66,21 +59,6 @@ func NewPeer(id uint32) (*Peer, error) {
 		return nil, err
 	}
 	p.peerConnection = pc
-
-	p.peerConnection.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
-		switch s {
-		case webrtc.PeerConnectionStateConnected:
-			p.mu.Lock()
-			p.Status = "online"
-			p.mu.Unlock()
-			p.onOpen()
-		case webrtc.PeerConnectionStateClosed, webrtc.PeerConnectionStateDisconnected, webrtc.PeerConnectionStateFailed:
-			p.mu.Lock()
-			p.Status = "offline"
-			p.mu.Unlock()
-			p.onClose()
-		}
-	})
 
 	// Create pre-negotiated data channels
 
@@ -113,6 +91,12 @@ func NewPeer(id uint32) (*Peer, error) {
 		p.onMessageUnreliable(msg.Data)
 	})
 
+	p.peerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
+		if state == webrtc.PeerConnectionStateConnected {
+			p.onConnected()
+		}
+	})
+
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
 		// This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
@@ -133,7 +117,10 @@ func NewPeer(id uint32) (*Peer, error) {
 			return
 		}
 
+		p.mu.Lock()
 		p.tracks = append(p.tracks, track)
+		p.mu.Unlock()
+
 		p.onTrack(track)
 
 		rtpBuf := make([]byte, 1400)
@@ -155,8 +142,9 @@ func NewPeer(id uint32) (*Peer, error) {
 
 func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 	rtpSender, err := p.peerConnection.AddTrack(track)
-
-	p.onTrackAdded(track)
+	if err != nil {
+		return err
+	}
 
 	go func() {
 		rtcpBuf := make([]byte, 1500)
@@ -167,10 +155,13 @@ func (p *Peer) AddTrack(track webrtc.TrackLocal) error {
 		}
 	}()
 
-	return err
+	return nil
 }
 
 func (p *Peer) EachTrack(f func(webrtc.TrackLocal)) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
 	for _, t := range p.tracks {
 		f(t)
 	}
@@ -192,18 +183,6 @@ func (p *Peer) SendUnreliable(sourcePeer *Peer, data []byte) error {
 	return p.send(p.unreliableDataChannel, wrapped)
 }
 
-func (p *Peer) SendPeer(peer *Peer) error {
-	peer.mu.Lock()
-	defer peer.mu.Unlock()
-	msg, err := msgpack.Marshal(map[string]interface{}{
-		"PEER": peer,
-	})
-	if err != nil {
-		return err
-	}
-	return p.SendReliable(peer, msg)
-}
-
 func (p *Peer) OnMessageReliable(f func(msg []byte)) {
 	p.onMessageReliable = f
 }
@@ -212,12 +191,8 @@ func (p *Peer) OnMessageUnreliable(f func(msg []byte)) {
 	p.onMessageUnreliable = f
 }
 
-func (p *Peer) OnOpen(f func()) {
-	p.onOpen = f
-}
-
-func (p *Peer) OnClose(f func()) {
-	p.onClose = f
+func (p *Peer) OnConnected(f func()) {
+	p.onConnected = f
 }
 
 func (p *Peer) OnTrack(f func(webrtc.TrackLocal)) {
@@ -230,10 +205,6 @@ func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
 
 func (p *Peer) OnNegotiationNeeded(f func()) {
 	p.peerConnection.OnNegotiationNeeded(f)
-}
-
-func (p *Peer) OnTrackAdded(f func(track webrtc.TrackLocal)) {
-	p.onTrackAdded = f
 }
 
 func (p *Peer) LocalDescription() *webrtc.SessionDescription {
