@@ -137,17 +137,11 @@ func NewPeer(id uint32) (*Peer, error) {
 			}
 		}()
 
-		var id string
-		switch remoteTrack.Kind() {
-		case webrtc.RTPCodecTypeAudio:
-			id = "audio"
-		case webrtc.RTPCodecTypeVideo:
-			id = "video"
-		}
-
-		streamID := strconv.FormatUint(uint64(p.ID), 10)
-
-		track, err := webrtc.NewTrackLocalStaticRTP(remoteTrack.Codec().RTPCodecCapability, id, streamID)
+		track, err := webrtc.NewTrackLocalStaticRTP(
+			remoteTrack.Codec().RTPCodecCapability,
+			remoteTrack.Kind().String(),
+			strconv.FormatUint(uint64(p.ID), 10),
+		)
 		if err != nil {
 			fmt.Println("webrtc error:", err)
 			return
