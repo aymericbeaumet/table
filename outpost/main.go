@@ -149,11 +149,18 @@ func main() {
 	})
 
 	r.GET("/debug", func(c *gin.Context) {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+
 		c.JSON(http.StatusOK, gin.H{
-			"sfu": s,
-			"runtime": map[string]interface{}{
-				"goroutines": runtime.NumGoroutine(),
+			"runtime": struct {
+				AllocMegabyte uint64 `json:"alloc_megabyte"`
+				Goroutine     int    `json:"goroutine"`
+			}{
+				AllocMegabyte: m.Alloc / 1_000_000,
+				Goroutine:     runtime.NumGoroutine(),
 			},
+			"sfu": s,
 		})
 	})
 
