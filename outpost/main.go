@@ -76,7 +76,7 @@ func main() {
 		}
 		defer peer.Close() // TODO: remove and make the webrtc independant from websocket
 
-		room.RegisterPeer(peer)
+		peerID := room.RegisterPeer(peer)
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -112,6 +112,7 @@ func main() {
 			); err != nil {
 				panic(err)
 			}
+			fmt.Printf("triggered negotiation for peer:%d", peerID)
 		})
 
 		for {

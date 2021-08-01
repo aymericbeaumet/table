@@ -61,7 +61,7 @@ func NewRoom(name string) *Room {
 	}
 }
 
-func (r *Room) RegisterPeer(peer *Peer) {
+func (r *Room) RegisterPeer(peer *Peer) uint32 {
 	peerID := atomic.AddUint32(&r.nextPeerID, 1)
 	peer.onEvent(func(event peerEvent) {
 		r.eventsC <- roomPeerEvent{
@@ -70,6 +70,7 @@ func (r *Room) RegisterPeer(peer *Peer) {
 			peerEvent: event,
 		}
 	})
+	return peerID
 }
 
 func (r *Room) Loop() {
@@ -95,10 +96,12 @@ func (r *Room) Loop() {
 						peer.sendReliable(event.peerID, peerMessageStatusOnline)
 
 						event.peer.sendReliable(id, peerMessageStatusOnline)
-						for _, track := range r.tracksByPeerID[id] {
-							if err := event.peer.addTrack(track); err != nil {
+
+						for _, localTrack := range r.tracksByPeerID[id] {
+							if err := event.peer.addTrack(localTrack); err != nil {
 								fmt.Println("error:", err)
 							}
+							fmt.Printf("added local track %s from peer:%d to peer:%d\n", localTrack.ID(), id, event.peerID)
 						}
 					}
 				}
@@ -127,6 +130,7 @@ func (r *Room) Loop() {
 						if err := peer.addTrack(localTrack); err != nil {
 							fmt.Println("error:", err)
 						}
+						fmt.Printf("added local track %s from peer:%d to peer:%d\n", localTrack.ID(), event.peerID, id)
 					}
 				}
 			}
@@ -175,10 +179,10 @@ func consumeRemoteTrack(peerID uint32, remoteTrack *webrtc.TrackRemote) (webrtc.
 		for {
 			i, _, readErr := remoteTrack.Read(rtpBuf)
 			if readErr != nil {
-				if readErr != io.EOF {
-					panic(readErr)
+				if readErr == io.EOF {
+					return
 				}
-				return
+				panic(readErr)
 			}
 
 			// ErrClosedPipe means we don't have any subscribers, this is ok if no peers have connected yet

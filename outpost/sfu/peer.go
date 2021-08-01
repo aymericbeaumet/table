@@ -21,9 +21,7 @@ type Peer struct {
 	peerConnection        *webrtc.PeerConnection
 	reliableDataChannel   *webrtc.DataChannel
 	unreliableDataChannel *webrtc.DataChannel
-
-	onEventFunc             func(peerEvent)
-	onNegotiationNeededFunc func()
+	onEventFunc           func(peerEvent)
 }
 
 func NewPeer() (*Peer, error) {
@@ -149,8 +147,6 @@ func (p *Peer) addTrack(track webrtc.TrackLocal) error {
 		}
 	}()
 
-	p.onNegotiationNeededFunc()
-
 	return nil
 }
 
@@ -159,7 +155,6 @@ func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
 }
 
 func (p *Peer) OnNegotiationNeeded(f func()) {
-	p.onNegotiationNeededFunc = f
 	p.peerConnection.OnNegotiationNeeded(f)
 }
 
