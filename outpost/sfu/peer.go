@@ -96,7 +96,7 @@ func NewPeer() (*Peer, error) {
 	})
 
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
-		p.onEventFunc(peerEvent{remoteTrack: &peerEventRemoteTrack{remoteTrack}})
+		p.onEventFunc(peerEvent{remoteTrack: &peerEventRemoteTrack{TrackRemote: *remoteTrack}})
 	})
 
 	return p, nil
@@ -107,9 +107,6 @@ func (p *Peer) onEvent(f func(event peerEvent)) {
 }
 
 func (p *Peer) sendPeer(sourcePeerID uint32, peer *Peer) error {
-	if p == nil {
-		return nil
-	}
 	msg, err := msgpack.Marshal(map[string]interface{}{
 		"PEER": peer,
 	})
@@ -120,40 +117,40 @@ func (p *Peer) sendPeer(sourcePeerID uint32, peer *Peer) error {
 }
 
 func (p *Peer) sendReliable(sourcePeerID uint32, data []byte) error {
-	if p == nil {
-		return nil
-	}
-	wrapped, err := p.wrap(sourcePeerID, data)
+	wrapped, err := wrap(sourcePeerID, data)
 	if err != nil {
 		return err
 	}
-	return p.send(p.reliableDataChannel, wrapped)
+	return send(p.reliableDataChannel, wrapped)
 }
 
 func (p *Peer) sendUnreliable(sourcePeerID uint32, data []byte) error {
-	if p == nil {
-		return nil
-	}
-	wrapped, err := p.wrap(sourcePeerID, data)
+	wrapped, err := wrap(sourcePeerID, data)
 	if err != nil {
 		return err
 	}
-	return p.send(p.unreliableDataChannel, wrapped)
+	return send(p.unreliableDataChannel, wrapped)
 }
 
-func (p *Peer) send(dc *webrtc.DataChannel, data []byte) error {
-	if dc == nil {
-		return errors.New("channel does not exist")
+func (p *Peer) addTrack(track webrtc.TrackLocal) error {
+	rtpSender, err := p.peerConnection.AddTrack(track)
+	if err != nil {
+		return err
 	}
-	return dc.Send(data)
-}
 
-func (p *Peer) wrap(sourcePeer uint32, data []byte) ([]byte, error) {
-	e := &envelope{
-		PeerID: sourcePeer,
-		Data:   data,
-	}
-	return msgpack.Marshal(e)
+	// Read incoming RTCP packets
+	// Before these packets are returned they are processed by interceptors. For things
+	// like NACK this needs to be called.
+	go func() {
+		rtcpBuf := make([]byte, 1500)
+		for {
+			if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
@@ -188,4 +185,18 @@ func (p *Peer) Handshake(remoteDesc webrtc.SessionDescription) (*webrtc.SessionD
 	}
 
 	return p.peerConnection.LocalDescription(), nil
+}
+
+func send(dc *webrtc.DataChannel, data []byte) error {
+	if dc == nil {
+		return errors.New("channel does not exist")
+	}
+	return dc.Send(data)
+}
+
+func wrap(sourcePeer uint32, data []byte) ([]byte, error) {
+	return msgpack.Marshal(&envelope{
+		PeerID: sourcePeer,
+		Data:   data,
+	})
 }

@@ -75,10 +75,7 @@ func main() {
 			return
 		}
 
-		if err := room.RegisterPeer(peer); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+		room.RegisterPeer(peer)
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {

@@ -1,13 +1,14 @@
 package sfu
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"sync/atomic"
 
 	"github.com/google/uuid"
+	webrtc "github.com/pion/webrtc/v3"
 )
 
 const CAPACITY = 256 // uint8
@@ -24,29 +25,24 @@ type Room struct {
 	Name    string    `json:"name"`
 	eventsC chan roomPeerEvent
 
-	// Incremented atomically when a peer is registered.
-	peersCount uint32
-
 	// Only read/write through the sequential Loop() function.
-	peersByID [CAPACITY]*Peer
+	peersByID map[uint32]*Peer
+
+	// Incremented atomically when a peer is registered.
+	nextPeerID uint32
 }
 
 func NewRoom(name string) *Room {
 	return &Room{
 		ID:        uuid.New(),
 		Name:      RoomNormalizeName(name),
-		eventsC:   make(chan roomPeerEvent),
-		peersByID: [CAPACITY]*Peer{},
+		eventsC:   make(chan roomPeerEvent, 1024),
+		peersByID: make(map[uint32]*Peer, 16),
 	}
 }
 
-func (r *Room) RegisterPeer(peer *Peer) error {
-	peersCount := atomic.AddUint32(&r.peersCount, 1)
-	if peersCount > CAPACITY {
-		return errors.New("room is out of capacity")
-	}
-
-	peerID := peersCount - 1
+func (r *Room) RegisterPeer(peer *Peer) {
+	peerID := atomic.AddUint32(&r.nextPeerID, 1)
 	peer.onEvent(func(event peerEvent) {
 		r.eventsC <- roomPeerEvent{
 			peerID:    peerID,
@@ -54,8 +50,6 @@ func (r *Room) RegisterPeer(peer *Peer) error {
 			peerEvent: event,
 		}
 	})
-
-	return nil
 }
 
 func (r *Room) Loop() {
@@ -65,56 +59,57 @@ func (r *Room) Loop() {
 		case event.connectionOpen != nil:
 			{
 				r.peersByID[event.peerID] = event.peer
-				for i, max := uint32(0), r.PeersCount(); i < max; i++ {
-					p := r.peersByID[i]
-					p.sendPeer(event.peerID, event.peer)
-					event.peer.sendPeer(i, p)
-					//p.EachTrack(func(t webrtc.TrackLocal) {
-					//if err := peer.AddTrack(t); err != nil {
-					//fmt.Println("error:", err)
-					//}
-					//})
+				for id, peer := range r.peersByID {
+					if id != event.peerID {
+						peer.sendPeer(event.peerID, event.peer)
+						event.peer.sendPeer(id, peer)
+						//peer.EachTrack(func(t webrtc.TrackLocal) {
+						//if err := peer.AddTrack(t); err != nil {
+						//fmt.Println("error:", err)
+						//}
+						//})
+					}
 				}
 			}
 
 		case event.connectionClose != nil:
 			{
-				r.peersByID[event.peerID] = nil
-				for i, max := uint32(0), r.PeersCount(); i < max; i++ {
-					if i != event.peerID {
-						p := r.peersByID[i]
-						p.sendPeer(event.peerID, event.peer)
-					}
+				delete(r.peersByID, event.peerID)
+				for _, peer := range r.peersByID {
+					peer.sendPeer(event.peerID, event.peer)
 				}
 			}
 
 		case event.remoteTrack != nil:
 			{
-				//r.EachPeer(func(p *Peer) {
-				//if p != peer {
-				//if err := p.AddTrack(track); err != nil {
-				//fmt.Println("error:", err)
-				//}
-				//}
-				//})
+				localTrack, err := consumeRemoteTrack(event.remoteTrack.TrackRemote)
+				if err != nil {
+					fmt.Println("error:", err)
+				}
+
+				for id, peer := range r.peersByID {
+					if id != event.peerID {
+						if err := peer.addTrack(localTrack); err != nil {
+							fmt.Println("error:", err)
+						}
+					}
+				}
 			}
 
 		case event.reliableMessage != nil:
 			{
-				for i, max := uint32(0), r.PeersCount(); i < max; i++ {
-					if i != event.peerID {
-						p := r.peersByID[i]
-						p.sendReliable(event.peerID, event.reliableMessage.data)
+				for id, peer := range r.peersByID {
+					if id != event.peerID {
+						peer.sendReliable(event.peerID, event.reliableMessage.data)
 					}
 				}
 			}
 
 		case event.unreliableMessage != nil:
 			{
-				for i, max := uint32(0), r.PeersCount(); i < max; i++ {
-					if i != event.peerID {
-						p := r.peersByID[i]
-						p.sendUnreliable(event.peerID, event.unreliableMessage.data)
+				for id, peer := range r.peersByID {
+					if id != event.peerID {
+						peer.sendUnreliable(event.peerID, event.unreliableMessage.data)
 					}
 				}
 			}
@@ -126,19 +121,34 @@ func (r *Room) Loop() {
 	}
 }
 
-func (r *Room) PeersCount() uint32 {
-	return atomic.LoadUint32(&r.peersCount)
-}
-
-func (r *Room) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{}{
-		"id":       r.ID,
-		"name":     r.Name,
-		"used":     r.PeersCount(),
-		"capacity": CAPACITY,
-	})
-}
-
 func RoomNormalizeName(name string) string {
 	return strings.ToLower(strings.TrimSpace(name))
+}
+
+func consumeRemoteTrack(remoteTrack webrtc.TrackRemote) (webrtc.TrackLocal, error) {
+	localTrack, err := webrtc.NewTrackLocalStaticRTP(
+		remoteTrack.Codec().RTPCodecCapability,
+		remoteTrack.Kind().String(),
+		"pion",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		rtpBuf := make([]byte, 1400)
+		for {
+			i, _, readErr := remoteTrack.Read(rtpBuf)
+			if readErr != nil {
+				panic(readErr)
+			}
+
+			// ErrClosedPipe means we don't have any subscribers, this is ok if no peers have connected yet
+			if _, err = localTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+				panic(err)
+			}
+		}
+	}()
+
+	return localTrack, nil
 }
