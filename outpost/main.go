@@ -93,14 +93,13 @@ func main() {
 		}
 
 		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-			var ic *webrtc.ICECandidateInit
+			var c *webrtc.ICECandidateInit
 			if candidate != nil {
 				j := candidate.ToJSON()
-				ic = &j
+				c = &j
 			}
-
 			if err := writeJSON(
-				&SignalingMessageCandidate{Candidate: ic},
+				&SignalingMessageCandidate{Candidate: c},
 			); err != nil {
 				panic(err)
 			}
