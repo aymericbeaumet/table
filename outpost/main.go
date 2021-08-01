@@ -155,10 +155,10 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"runtime": struct {
 				AllocMegabyte uint64 `json:"alloc_megabyte"`
-				Goroutine     int    `json:"goroutine"`
+				NumGoroutine  int    `json:"num_goroutine"`
 			}{
 				AllocMegabyte: m.Alloc / 1_000_000,
-				Goroutine:     runtime.NumGoroutine(),
+				NumGoroutine:  runtime.NumGoroutine(),
 			},
 			"sfu": s,
 		})
