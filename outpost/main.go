@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 
+	"github.com/aymericbeaumet/chill-room/outpost/sfu"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
@@ -41,7 +43,7 @@ func main() {
 	godotenv.Load(".env")
 	godotenv.Load(".env." + mode)
 
-	rooms := NewRooms()
+	s := sfu.New()
 
 	r := gin.Default()
 
@@ -61,68 +63,22 @@ func main() {
 			return
 		}
 
-		room := rooms.Upsert(params.Name)
-
-		peer, err := NewPeer(room.Inc())
+		room, err := s.UpsertRoom(params.Name)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		defer peer.Close()
 
-		peer.OnOpen(func() {
-			if room.AddPeer(peer) {
-				room.EachPeer(func(p *Peer) {
-					if p != peer {
-						p.SendPeer(peer)
-						peer.SendPeer(p)
-						p.EachTrack(func(t webrtc.TrackLocal) {
-							if err := peer.AddTrack(t); err != nil {
-								fmt.Println("error:", err)
-							}
-						})
-					}
-				})
-			}
-		})
+		peer, err := sfu.NewPeer()
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
-		peer.OnClose(func() {
-			if room.DelPeer(peer) {
-				room.EachPeer(func(p *Peer) {
-					p.SendPeer(peer)
-				})
-			}
-		})
-
-		peer.OnTrack(func(track webrtc.TrackLocal) {
-			room.EachPeer(func(p *Peer) {
-				if p != peer {
-					if err := p.AddTrack(track); err != nil {
-						fmt.Println("error:", err)
-					}
-				}
-			})
-		})
-
-		peer.OnMessageReliable(func(msg []byte) {
-			room.EachPeer(func(p *Peer) {
-				if p != peer {
-					if err := p.SendReliable(peer, msg); err != nil {
-						fmt.Println("error:", err)
-					}
-				}
-			})
-		})
-
-		peer.OnMessageUnreliable(func(msg []byte) {
-			room.EachPeer(func(p *Peer) {
-				if p != peer {
-					if err := p.SendUnreliable(peer, msg); err != nil {
-						fmt.Println("error:", err)
-					}
-				}
-			})
-		})
+		if err := room.RegisterPeer(peer); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -132,11 +88,10 @@ func main() {
 		defer ws.Close()
 		ws.EnableWriteCompression(true)
 
-		// TODO: find a cleaner way to prevent concurrent writes
-		var mu sync.Mutex
+		var writeJSONmu sync.Mutex
 		writeJSON := func(v interface{}) error {
-			mu.Lock()
-			defer mu.Unlock()
+			writeJSONmu.Lock()
+			defer writeJSONmu.Unlock()
 			return ws.WriteJSON(v)
 		}
 
@@ -146,47 +101,47 @@ func main() {
 				j := candidate.ToJSON()
 				ic = &j
 			}
-			writeJSON(&SignalingMessageCandidate{Candidate: ic})
+
+			if err := writeJSON(
+				&SignalingMessageCandidate{Candidate: ic},
+			); err != nil {
+				panic(err)
+			}
 		})
 
 		peer.OnNegotiationNeeded(func() {
-			writeJSON(&SignalingMessageNegotiationNeeded{NegotiationNeeded: true})
+			if err := writeJSON(
+				&SignalingMessageNegotiationNeeded{NegotiationNeeded: true},
+			); err != nil {
+				panic(err)
+			}
 		})
 
 		for {
 			var message InboundSignalingMessage
 			if err := ws.ReadJSON(&message); err != nil {
-				fmt.Println("error:", err)
+				if _, ok := err.(*websocket.CloseError); !ok {
+					panic(err)
+				}
 				return
 			}
 
 			if message.Description != nil {
-				desc := message.Description
-
-				if desc.Type != webrtc.SDPTypeOffer {
-					panic(fmt.Errorf("unexpected session description of type %#v", desc.Type))
-				}
-
-				if err := peer.peerConnection.SetRemoteDescription(*desc); err != nil {
-					panic(err)
-				}
-
-				answer, err := peer.peerConnection.CreateAnswer(nil)
+				localDesc, err := peer.Handshake(*message.Description)
 				if err != nil {
 					panic(err)
 				}
-
-				if err := peer.peerConnection.SetLocalDescription(answer); err != nil {
+				if err := writeJSON(
+					&SignalingMessageDescription{Description: localDesc},
+				); err != nil {
 					panic(err)
 				}
-
-				if err := writeJSON(&SignalingMessageDescription{Description: peer.LocalDescription()}); err != nil {
-					panic(err)
+			} else {
+				var c webrtc.ICECandidateInit
+				if message.Candidate != nil {
+					c = *message.Candidate
 				}
-			}
-
-			if message.Candidate != nil {
-				if err := peer.peerConnection.AddICECandidate(*message.Candidate); err != nil {
+				if err := peer.AddICECandidate(c); err != nil {
 					panic(err)
 				}
 			}
@@ -195,7 +150,10 @@ func main() {
 
 	r.GET("/debug", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"roomsByID": rooms,
+			"sfu": s,
+			"runtime": map[string]interface{}{
+				"goroutines": runtime.NumGoroutine(),
+			},
 		})
 	})
 
