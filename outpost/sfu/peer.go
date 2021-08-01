@@ -100,7 +100,7 @@ func NewPeer() (*Peer, error) {
 			ticker := time.NewTicker(3 * time.Second)
 			for range ticker.C {
 				if rtcpSendErr := p.peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}}); rtcpSendErr != nil {
-					fmt.Println(rtcpSendErr)
+					return
 				}
 			}
 		}()
@@ -186,6 +186,10 @@ func (p *Peer) Answer(remoteDesc webrtc.SessionDescription) (*webrtc.SessionDesc
 	}
 
 	return p.peerConnection.LocalDescription(), nil
+}
+
+func (p *Peer) Close() error {
+	return p.peerConnection.Close()
 }
 
 func send(dc *webrtc.DataChannel, data []byte) error {

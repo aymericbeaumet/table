@@ -88,6 +88,7 @@ func (r *Room) Loop() {
 
 		case event.connectionOpen != nil:
 			{
+				fmt.Printf("[onpeer] peer:%d online\n", event.peerID)
 				r.peersByID[event.peerID] = event.peer
 				for id, peer := range r.peersByID {
 					if id != event.peerID {
@@ -117,6 +118,7 @@ func (r *Room) Loop() {
 				if err != nil {
 					fmt.Println("error:", err)
 				}
+				fmt.Printf("[ontrack] peer:%d %s\n", event.peerID, localTrack.ID())
 
 				r.tracksByPeerID[event.peerID] = append(r.tracksByPeerID[event.peerID], localTrack)
 
@@ -173,7 +175,10 @@ func consumeRemoteTrack(peerID uint32, remoteTrack *webrtc.TrackRemote) (webrtc.
 		for {
 			i, _, readErr := remoteTrack.Read(rtpBuf)
 			if readErr != nil {
-				panic(readErr)
+				if readErr != io.EOF {
+					panic(readErr)
+				}
+				return
 			}
 
 			// ErrClosedPipe means we don't have any subscribers, this is ok if no peers have connected yet

@@ -74,6 +74,7 @@ func main() {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
+		defer peer.Close() // TODO: remove and make the webrtc independant from websocket
 
 		room.RegisterPeer(peer)
 
