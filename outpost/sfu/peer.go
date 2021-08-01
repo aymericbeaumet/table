@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pion/rtcp"
 	webrtc "github.com/pion/webrtc/v3"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -17,22 +18,19 @@ type envelope struct {
 }
 
 type Peer struct {
-	CreatedAt               time.Time `msgpack:"created_at" json:"created_at"`
-	onEventFunc             func(peerEvent)
-	onNegotiationNeededFunc func()
-
 	peerConnection        *webrtc.PeerConnection
 	reliableDataChannel   *webrtc.DataChannel
 	unreliableDataChannel *webrtc.DataChannel
+
+	onEventFunc             func(peerEvent)
+	onNegotiationNeededFunc func()
 }
 
 func NewPeer() (*Peer, error) {
-	p := &Peer{
-		CreatedAt: time.Now().UTC(),
-	}
+	p := &Peer{}
 
 	// Create a new RTCPeerConnection
-	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{
+	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
 				URLs: strings.Split(os.Getenv("STUN_SERVERS_URLS"), ","),
@@ -42,7 +40,7 @@ func NewPeer() (*Peer, error) {
 	if err != nil {
 		return nil, err
 	}
-	p.peerConnection = pc
+	p.peerConnection = peerConnection
 
 	// Create pre-negotiated data channels
 
@@ -96,7 +94,18 @@ func NewPeer() (*Peer, error) {
 	})
 
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
-		p.onEventFunc(peerEvent{remoteTrack: &peerEventRemoteTrack{TrackRemote: *remoteTrack}})
+		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
+		// This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
+		go func() {
+			ticker := time.NewTicker(3 * time.Second)
+			for range ticker.C {
+				if rtcpSendErr := p.peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}}); rtcpSendErr != nil {
+					fmt.Println(rtcpSendErr)
+				}
+			}
+		}()
+
+		p.onEventFunc(peerEvent{remoteTrack: &peerEventRemoteTrack{TrackRemote: remoteTrack}})
 	})
 
 	return p, nil
@@ -104,16 +113,6 @@ func NewPeer() (*Peer, error) {
 
 func (p *Peer) onEvent(f func(event peerEvent)) {
 	p.onEventFunc = f
-}
-
-func (p *Peer) sendPeer(sourcePeerID uint32, peer *Peer) error {
-	msg, err := msgpack.Marshal(map[string]interface{}{
-		"PEER": peer,
-	})
-	if err != nil {
-		return err
-	}
-	return p.sendReliable(sourcePeerID, msg)
 }
 
 func (p *Peer) sendReliable(sourcePeerID uint32, data []byte) error {

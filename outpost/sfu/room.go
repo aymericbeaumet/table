@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"sync/atomic"
 
 	"github.com/google/uuid"
 	webrtc "github.com/pion/webrtc/v3"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 const CAPACITY = 256 // uint8
@@ -18,6 +20,24 @@ type roomPeerEvent struct {
 	peer   *Peer
 	peerEvent
 }
+
+type roomPeerStatus struct {
+	PEER roomPeerStatusPeer `msgpack:"PEER"`
+}
+
+type roomPeerStatusPeer struct {
+	Status string `msgpack:"status"`
+}
+
+func newRoomPeerStatus(status string) *roomPeerStatus {
+	return &roomPeerStatus{
+		PEER: roomPeerStatusPeer{
+			Status: status,
+		},
+	}
+}
+
+var statusOnline, statusOffline = newRoomPeerStatus("online"), newRoomPeerStatus("offline")
 
 type Room struct {
 	// Immutable after init
@@ -61,8 +81,12 @@ func (r *Room) Loop() {
 				r.peersByID[event.peerID] = event.peer
 				for id, peer := range r.peersByID {
 					if id != event.peerID {
-						peer.sendPeer(event.peerID, event.peer)
-						event.peer.sendPeer(id, peer)
+						d1, _ := msgpack.Marshal(statusOnline)
+						peer.sendReliable(event.peerID, d1)
+
+						d2, _ := msgpack.Marshal(statusOnline)
+						event.peer.sendReliable(id, d2)
+
 						//peer.EachTrack(func(t webrtc.TrackLocal) {
 						//if err := peer.AddTrack(t); err != nil {
 						//fmt.Println("error:", err)
@@ -76,13 +100,14 @@ func (r *Room) Loop() {
 			{
 				delete(r.peersByID, event.peerID)
 				for _, peer := range r.peersByID {
-					peer.sendPeer(event.peerID, event.peer)
+					d, _ := msgpack.Marshal(statusOffline)
+					peer.sendReliable(event.peerID, d)
 				}
 			}
 
 		case event.remoteTrack != nil:
 			{
-				localTrack, err := consumeRemoteTrack(event.remoteTrack.TrackRemote)
+				localTrack, err := consumeRemoteTrack(event.peerID, event.remoteTrack.TrackRemote)
 				if err != nil {
 					fmt.Println("error:", err)
 				}
@@ -125,11 +150,11 @@ func RoomNormalizeName(name string) string {
 	return strings.ToLower(strings.TrimSpace(name))
 }
 
-func consumeRemoteTrack(remoteTrack webrtc.TrackRemote) (webrtc.TrackLocal, error) {
+func consumeRemoteTrack(peerID uint32, remoteTrack *webrtc.TrackRemote) (webrtc.TrackLocal, error) {
 	localTrack, err := webrtc.NewTrackLocalStaticRTP(
 		remoteTrack.Codec().RTPCodecCapability,
 		remoteTrack.Kind().String(),
-		"pion",
+		strconv.FormatUint(uint64(peerID), 10),
 	)
 	if err != nil {
 		return nil, err
