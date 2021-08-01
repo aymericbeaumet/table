@@ -167,7 +167,7 @@ func (p *Peer) AddICECandidate(candidate webrtc.ICECandidateInit) error {
 	return p.peerConnection.AddICECandidate(candidate)
 }
 
-func (p *Peer) Handshake(remoteDesc webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
+func (p *Peer) Answer(remoteDesc webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
 	if remoteDesc.Type != webrtc.SDPTypeOffer {
 		return nil, fmt.Errorf("unexpected session description of type %#v", remoteDesc.Type)
 	}

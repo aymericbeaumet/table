@@ -124,7 +124,7 @@ func main() {
 			}
 
 			if message.Description != nil {
-				localDesc, err := peer.Handshake(*message.Description)
+				localDesc, err := peer.Answer(*message.Description)
 				if err != nil {
 					panic(err)
 				}
