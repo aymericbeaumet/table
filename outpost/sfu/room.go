@@ -21,23 +21,21 @@ type roomPeerEvent struct {
 	peerEvent
 }
 
-type roomPeerStatus struct {
-	PEER roomPeerStatusPeer `msgpack:"PEER"`
+type roomPeerMessage struct {
+	PEER roomPeerMessagePeer `msgpack:"PEER"`
 }
 
-type roomPeerStatusPeer struct {
+type roomPeerMessagePeer struct {
 	Status string `msgpack:"status"`
 }
 
-func newRoomPeerStatus(status string) *roomPeerStatus {
-	return &roomPeerStatus{
-		PEER: roomPeerStatusPeer{
+func newRoomPeerStatus(status string) *roomPeerMessage {
+	return &roomPeerMessage{
+		PEER: roomPeerMessagePeer{
 			Status: status,
 		},
 	}
 }
-
-var statusOnline, statusOffline = newRoomPeerStatus("online"), newRoomPeerStatus("offline")
 
 type Room struct {
 	// Immutable after init
@@ -46,7 +44,8 @@ type Room struct {
 	eventsC chan roomPeerEvent
 
 	// Only read/write through the sequential Loop() function.
-	peersByID map[uint32]*Peer
+	peersByID      map[uint32]*Peer
+	tracksByPeerID map[uint32][]webrtc.TrackLocal
 
 	// Incremented atomically when a peer is registered.
 	nextPeerID uint32
@@ -54,10 +53,11 @@ type Room struct {
 
 func NewRoom(name string) *Room {
 	return &Room{
-		ID:        uuid.New(),
-		Name:      RoomNormalizeName(name),
-		eventsC:   make(chan roomPeerEvent, 1024),
-		peersByID: make(map[uint32]*Peer, 16),
+		ID:             uuid.New(),
+		Name:           RoomNormalizeName(name),
+		eventsC:        make(chan roomPeerEvent, 1024),
+		peersByID:      make(map[uint32]*Peer, 16),
+		tracksByPeerID: make(map[uint32][]webrtc.TrackLocal, 16),
 	}
 }
 
@@ -73,6 +73,16 @@ func (r *Room) RegisterPeer(peer *Peer) {
 }
 
 func (r *Room) Loop() {
+	peerMessageStatusOnline, err := msgpack.Marshal(newRoomPeerStatus("online"))
+	if err != nil {
+		panic(err)
+	}
+
+	peerMessageStatusOffline, err := msgpack.Marshal(newRoomPeerStatus("offline"))
+	if err != nil {
+		panic(err)
+	}
+
 	for event := range r.eventsC {
 		switch {
 
@@ -81,17 +91,14 @@ func (r *Room) Loop() {
 				r.peersByID[event.peerID] = event.peer
 				for id, peer := range r.peersByID {
 					if id != event.peerID {
-						d1, _ := msgpack.Marshal(statusOnline)
-						peer.sendReliable(event.peerID, d1)
+						peer.sendReliable(event.peerID, peerMessageStatusOnline)
 
-						d2, _ := msgpack.Marshal(statusOnline)
-						event.peer.sendReliable(id, d2)
-
-						//peer.EachTrack(func(t webrtc.TrackLocal) {
-						//if err := peer.AddTrack(t); err != nil {
-						//fmt.Println("error:", err)
-						//}
-						//})
+						event.peer.sendReliable(id, peerMessageStatusOnline)
+						for _, track := range r.tracksByPeerID[id] {
+							if err := event.peer.addTrack(track); err != nil {
+								fmt.Println("error:", err)
+							}
+						}
 					}
 				}
 			}
@@ -100,8 +107,7 @@ func (r *Room) Loop() {
 			{
 				delete(r.peersByID, event.peerID)
 				for _, peer := range r.peersByID {
-					d, _ := msgpack.Marshal(statusOffline)
-					peer.sendReliable(event.peerID, d)
+					peer.sendReliable(event.peerID, peerMessageStatusOffline)
 				}
 			}
 
@@ -111,6 +117,8 @@ func (r *Room) Loop() {
 				if err != nil {
 					fmt.Println("error:", err)
 				}
+
+				r.tracksByPeerID[event.peerID] = append(r.tracksByPeerID[event.peerID], localTrack)
 
 				for id, peer := range r.peersByID {
 					if id != event.peerID {

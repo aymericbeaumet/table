@@ -149,6 +149,8 @@ func (p *Peer) addTrack(track webrtc.TrackLocal) error {
 		}
 	}()
 
+	p.onNegotiationNeededFunc()
+
 	return nil
 }
 
