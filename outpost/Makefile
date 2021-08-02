@@ -3,9 +3,9 @@ BIN := outpost
 .PHONY: all
 all: build test lint
 
-.PHONY: install
-install:
-	brew install go golangci/tap/golangci-lint
+.PHONY: dependencies
+dependencies:
+	brew install go golangci/tap/golangci-lint watchexec
 
 .PHONY: update
 update:
