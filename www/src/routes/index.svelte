@@ -19,6 +19,7 @@
 <h1>Home page</h1>
 
 <form on:submit={handleOnSubmit}>
+	<!-- svelte-ignore a11y-autofocus -->
 	<input
 		type="text"
 		placeholder="Name your room"

@@ -18,12 +18,14 @@ export function inferEntities(value) {
 				EntityIframe,
 				{ src: `https://player.vimeo.com/video/${encodeURIComponent(id)}` },
 			]);
+			break;
 		case 'youtube':
 			out.push([
 				'youtube',
 				EntityIframe,
 				{ src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}` },
 			]);
+			break;
 	}
 
 	{

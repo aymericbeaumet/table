@@ -10,6 +10,7 @@
 </script>
 
 <div>
+	<!-- svelte-ignore a11y-media-has-caption -->
 	<video bind:this={video} bind:muted autoplay playsinline />
 	<legend>{label}</legend>
 </div>
