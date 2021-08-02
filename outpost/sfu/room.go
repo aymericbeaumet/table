@@ -93,9 +93,13 @@ func (r *Room) Loop() {
 				r.peersByID[event.peerID] = event.peer
 				for id, peer := range r.peersByID {
 					if id != event.peerID {
-						peer.sendReliable(event.peerID, peerMessageStatusOnline)
+						if err := peer.sendReliable(event.peerID, peerMessageStatusOnline); err != nil {
+							panic(err)
+						}
 
-						event.peer.sendReliable(id, peerMessageStatusOnline)
+						if err := event.peer.sendReliable(id, peerMessageStatusOnline); err != nil {
+							panic(err)
+						}
 
 						for _, localTrack := range r.tracksByPeerID[id] {
 							if err := event.peer.addTrack(localTrack); err != nil {
@@ -112,7 +116,9 @@ func (r *Room) Loop() {
 				delete(r.peersByID, event.peerID)
 				delete(r.tracksByPeerID, event.peerID)
 				for _, peer := range r.peersByID {
-					peer.sendReliable(event.peerID, peerMessageStatusOffline)
+					if err := peer.sendReliable(event.peerID, peerMessageStatusOffline); err != nil {
+						panic(err)
+					}
 				}
 			}
 
@@ -140,7 +146,9 @@ func (r *Room) Loop() {
 			{
 				for id, peer := range r.peersByID {
 					if id != event.peerID {
-						peer.sendReliable(event.peerID, event.reliableMessage.data)
+						if err := peer.sendReliable(event.peerID, event.reliableMessage.data); err != nil {
+							panic(err)
+						}
 					}
 				}
 			}
@@ -149,7 +157,9 @@ func (r *Room) Loop() {
 			{
 				for id, peer := range r.peersByID {
 					if id != event.peerID {
-						peer.sendUnreliable(event.peerID, event.unreliableMessage.data)
+						if err := peer.sendUnreliable(event.peerID, event.unreliableMessage.data); err != nil {
+							panic(err)
+						}
 					}
 				}
 			}

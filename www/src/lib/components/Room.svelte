@@ -95,7 +95,7 @@
 				if (!videoEntity) {
 					videoEntity = ['peer', EntityVideo, { label: `peer:${peerID}`, srcObject: stream }];
 					videoEntities[peerID] = videoEntity;
-					topEntities = [...topEntities, entity];
+					topEntities = [...topEntities, videoEntity];
 				} else {
 					videoEntity[2].srcObject = stream;
 					topEntities = topEntities;
