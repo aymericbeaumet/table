@@ -38,6 +38,7 @@
 		width: 150px;
 		height: 150px;
 		background: #997447;
+		border: 1px solid #997447;
 	}
 
 	legend {
