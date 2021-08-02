@@ -64,7 +64,7 @@
 	}
 
 	function onKeyPress(event) {
-		if (event.ctrlKey && (event.key === 'c' || event.key === '\\')) {
+		if (event.ctrlKey && (event.key === 'c' || event.key === 'l' || event.key === '\\')) {
 			hide();
 			return;
 		}
