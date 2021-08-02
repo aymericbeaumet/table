@@ -17,18 +17,27 @@ type envelope struct {
 	Data   msgpack.RawMessage `msgpack:"data"`
 }
 
+type pendingMessage struct {
+	peerID  uint32
+	payload []byte
+}
+
 type Peer struct {
 	peerConnection          *webrtc.PeerConnection
 	reliableDataChannel     *webrtc.DataChannel
+	reliableDataChannelC    chan []byte
 	unreliableDataChannel   *webrtc.DataChannel
 	onEventFunc             func(peerEvent)
 	onNegotiationNeededFunc func()
 }
 
 func NewPeer() (*Peer, error) {
-	p := &Peer{}
+	p := &Peer{
+		reliableDataChannelC: make(chan []byte, 64),
+	}
 
 	// Create a new RTCPeerConnection
+
 	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
@@ -39,9 +48,10 @@ func NewPeer() (*Peer, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	p.peerConnection = peerConnection
 
-	// Create pre-negotiated data channels
+	// Reliable data channel
 
 	rNegotiated, rID, rOrdered := true, uint16(0), false
 	reliableDataChannel, err := p.peerConnection.CreateDataChannel("reliable", &webrtc.DataChannelInit{
@@ -53,10 +63,22 @@ func NewPeer() (*Peer, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	reliableDataChannel.OnOpen(func() {
+		go func() {
+			if err := p.processPendingReliable(); err != nil {
+				panic(err)
+			}
+		}()
+	})
+
 	reliableDataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
 		p.onEventFunc(peerEvent{reliableMessage: &peerEventReliableMessage{msg.Data}})
 	})
+
 	p.reliableDataChannel = reliableDataChannel
+
+	// Unreliable data channel
 
 	uNegotiated, uID, uOrdered, uMaxRestransmits := true, uint16(1), false, uint16(0)
 	unreliableDataChannel, err := p.peerConnection.CreateDataChannel("unreliable", &webrtc.DataChannelInit{
@@ -69,10 +91,14 @@ func NewPeer() (*Peer, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	unreliableDataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
 		p.onEventFunc(peerEvent{unreliableMessage: &peerEventUnreliableMessage{msg.Data}})
 	})
+
 	p.unreliableDataChannel = unreliableDataChannel
+
+	// Monitor connection state change
 
 	p.peerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
 		switch state {
@@ -116,12 +142,22 @@ func (p *Peer) onEvent(f func(event peerEvent)) {
 	p.onEventFunc = f
 }
 
+func (p *Peer) processPendingReliable() error {
+	for pending := range p.reliableDataChannelC {
+		if err := send(p.reliableDataChannel, pending); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (p *Peer) sendReliable(sourcePeerID uint32, data []byte) error {
 	wrapped, err := wrap(sourcePeerID, data)
 	if err != nil {
 		return err
 	}
-	return send(p.reliableDataChannel, wrapped)
+	p.reliableDataChannelC <- wrapped
+	return nil
 }
 
 func (p *Peer) sendUnreliable(sourcePeerID uint32, data []byte) error {
