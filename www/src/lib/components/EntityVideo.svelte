@@ -16,9 +16,7 @@
 	<!-- svelte-ignore a11y-media-has-caption -->
 	<video
 		bind:this={video}
-		autopictureinpicture="false"
 		autoplay
-		controls="false"
 		disablepictureinpicture
 		disableremoteplayback
 		bind:muted
