@@ -12,9 +12,9 @@
 	import gauntletPNG from '$lib/assets/gauntlet.png';
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import Badge from 'svelte-favicon-badge';
-	import backgroundPng from '$lib/assets/background.png';
 	import leatherPng from '$lib/assets/leather.png';
 	import campfireMp3 from '$lib/assets/campfire.mp3';
+	import { audioEnabled, videoEnabled, backgroundURL } from '$lib/stores';
 
 	const MAX_FPS = 30;
 
@@ -34,6 +34,7 @@
 
 	let isMouseDown = false;
 	let onMouseMove, onMouseDown, onMouseUp;
+	let localStream;
 
 	onMount(async function () {
 		// Some hashmaps indexed by peer ids
@@ -132,7 +133,7 @@
 			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
-		const stream = await navigator.mediaDevices.getUserMedia({
+		localStream = await navigator.mediaDevices.getUserMedia({
 			audio: {
 				autoGainControl: true,
 				echoCancellation: true,
@@ -145,11 +146,19 @@
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
 		});
-		topEntities = [
-			...topEntities,
-			['self', EntityVideo, { label: 'me', srcObject: stream, muted: true }],
-		];
-		peer.addTrack(stream);
+		peer.addTrack(localStream);
+
+		audioEnabled.subscribe((enabled) => {
+			for (const track of localStream.getAudioTracks()) {
+				track.enabled = enabled;
+			}
+		});
+
+		videoEnabled.subscribe((enabled) => {
+			for (const track of localStream.getVideoTracks()) {
+				track.enabled = enabled;
+			}
+		});
 	});
 </script>
 
@@ -167,15 +176,33 @@
 		on:mousemove={onMouseMove}
 		on:mouseup={onMouseUp}
 		style="
-		  background: repeat url({backgroundPng});
+		  background: repeat url({$backgroundURL});
 		  cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;
 		"
 	>
 		<header style="background: repeat url({leatherPng});">
-			{#each topEntities as [_, component, props]}
-				<div>
-					<svelte:component this={component} {...props} />
-				</div>
+			{#each topEntities as [_, component, props], i}
+				{#if i < topEntities.length / 2}
+					<div>
+						<svelte:component this={component} {...props} />
+					</div>
+				{/if}
+			{/each}
+
+			<EntityVideo
+				srcObject={localStream}
+				muted={true}
+				toggles={true}
+				on:audiotoggle={(event) => audioEnabled.set(event.detail)}
+				on:videotoggle={(event) => videoEnabled.set(event.detail)}
+			/>
+
+			{#each topEntities as [_, component, props], i}
+				{#if i >= topEntities.length / 2}
+					<div>
+						<svelte:component this={component} {...props} />
+					</div>
+				{/if}
 			{/each}
 		</header>
 
