@@ -47,6 +47,7 @@ cd outpost && make update
 - Around emojis:
   - Right click on the table to pin an emoji and start an ephemeral emoji fountain
   - Allow to replace cursor by emoji for N seconds
+- Only show the camera on mobile (hide the table)
 
 ## Pro Plan
 
