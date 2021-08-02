@@ -93,7 +93,7 @@
 			onTrack: function (peerID, _track, stream) {
 				let entity = videoEntities[peerID];
 				if (!entity) {
-					entity = ['peer', EntityVideo, { label: `peer:${peerID}`, srcObject: stream }];
+					entity = ['peer', EntityVideo, { label: `peer:${peerID}` }];
 					videoEntities[peerID] = entity;
 					topEntities = [...topEntities, entity];
 				}
