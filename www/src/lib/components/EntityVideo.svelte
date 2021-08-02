@@ -25,14 +25,14 @@
 		border-radius: 50%;
 		width: 150px;
 		height: 150px;
-		border: 1px solid grey;
-		background-color: lightgrey;
+		background: #997447;
 	}
 
 	legend {
 		border-radius: 30px;
+		margin-top: 3px;
 		padding: 3px;
-		background: lightgrey;
+		background: #997447;
 		text-align: center;
 	}
 </style>
