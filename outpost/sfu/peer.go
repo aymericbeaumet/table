@@ -17,11 +17,6 @@ type envelope struct {
 	Data   msgpack.RawMessage `msgpack:"data"`
 }
 
-type pendingMessage struct {
-	peerID  uint32
-	payload []byte
-}
-
 type Peer struct {
 	peerConnection          *webrtc.PeerConnection
 	reliableDataChannel     *webrtc.DataChannel

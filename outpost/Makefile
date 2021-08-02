@@ -3,6 +3,10 @@ BIN := outpost
 .PHONY: all
 all: build test lint
 
+.PHONY: install
+install:
+	brew install go golangci/tap/golangci-lint
+
 .PHONY: update
 update:
 	go get -u && go mod tidy
@@ -21,11 +25,11 @@ preview:
 
 .PHONY: test
 test:
-	true
+	go test -failfast -v -vet=off -race ./...
 
 .PHONY: lint
 lint:
-	true
+	golangci-lint run ./...
 
 .PHONY: format
 format:

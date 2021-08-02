@@ -40,8 +40,8 @@ func main() {
 	if len(mode) == 0 {
 		mode = "development"
 	}
-	godotenv.Load(".env")
-	godotenv.Load(".env." + mode)
+	_ = godotenv.Load(".env")
+	_ = godotenv.Load(".env." + mode)
 
 	s := sfu.New()
 
@@ -65,13 +65,13 @@ func main() {
 
 		room, err := s.UpsertRoom(params.Name)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
 		peer, err := sfu.NewPeer()
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		defer peer.Close() // TODO: remove and make the webrtc independant from websocket
@@ -80,7 +80,7 @@ func main() {
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		defer ws.Close()
