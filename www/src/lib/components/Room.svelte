@@ -61,6 +61,13 @@
 
 				if (data.status === 'online') {
 					audio.play(murlocOGG);
+
+					if (!videoEntities[peerID]) {
+						const entity = ['peer', EntityVideo, { label: `peer:${peerID}` }];
+						videoEntities[peerID] = entity;
+						topEntities = [...topEntities, entity];
+					}
+
 					return;
 				}
 
@@ -83,11 +90,15 @@
 				}
 			},
 
-			onTrack: function (peerID, track, stream) {
-				if (track.kind === 'video' && !videoEntities[peerID]) {
-					const entity = ['peer', EntityVideo, { label: `peer:${peerID}`, srcObject: stream }];
-					videoEntities[peerID] = entity;
+			onTrack: function (peerID, _track, stream) {
+				let videoEntity = videoEntities[peerID];
+				if (!videoEntity) {
+					videoEntity = ['peer', EntityVideo, { label: `peer:${peerID}`, srcObject: stream }];
+					videoEntities[peerID] = videoEntity;
 					topEntities = [...topEntities, entity];
+				} else {
+					videoEntity[2].srcObject = stream;
+					topEntities = topEntities;
 				}
 			},
 		});

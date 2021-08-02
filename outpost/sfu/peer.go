@@ -92,6 +92,8 @@ func NewPeer() (*Peer, error) {
 		}
 	})
 
+	// Expect to receive audio/video tracks
+
 	p.peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
 		// This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
