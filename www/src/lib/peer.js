@@ -3,6 +3,8 @@ import * as env from '$lib/env';
 
 export default class Peer {
 	constructor(ws, { onMouse, onPeer, onTrack }) {
+		this._ws = ws;
+
 		const onmessage = (event) => {
 			const { peerID, data } = decode(event.data);
 
@@ -58,33 +60,21 @@ export default class Peer {
 
 		/* WebRTC negotiation mecanism */
 
-		let isNegotiationNeeded = false;
-		let isOfferPending = false;
+		this._isNegotiationNeeded = false;
+		this._isOfferPending = false;
 
 		this._peerConnection.onicecandidate = ({ candidate }) => ws.send(JSON.stringify({ candidate }));
-
-		this._peerConnection.onnegotiationneeded = async () => {
-			if (isOfferPending) {
-				isNegotiationNeeded = true;
-				return;
-			}
-			isNegotiationNeeded = false;
-			isOfferPending = true;
-			const offer = await this._peerConnection.createOffer();
-			await this._peerConnection.setLocalDescription(offer);
-			ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
-		};
 
 		ws.onmessage = async (event) => {
 			const { negotiationneeded, description, candidate } = JSON.parse(event.data);
 
 			if (negotiationneeded) {
-				this._peerConnection.onnegotiationneeded();
+				this.onnegotiationneeded();
 			} else if (description) {
 				await this._peerConnection.setRemoteDescription(description);
-				isOfferPending = false;
-				if (isNegotiationNeeded) {
-					await this._peerConnection.onnegotiationneeded();
+				this._isOfferPending = false;
+				if (this._isNegotiationNeeded) {
+					await this.onnegotiationneeded();
 				}
 			} else if (candidate) {
 				await this._peerConnection.addIceCandidate(candidate);
@@ -92,10 +82,23 @@ export default class Peer {
 		};
 	}
 
-	addLocalStream(stream) {
+	async onnegotiationneeded() {
+		if (this._isOfferPending) {
+			this._isNegotiationNeeded = true;
+			return;
+		}
+		this._isNegotiationNeeded = false;
+		this._isOfferPending = true;
+		const offer = await this._peerConnection.createOffer();
+		await this._peerConnection.setLocalDescription(offer);
+		this._ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
+	}
+
+	addTrack(stream) {
 		for (const track of stream.getTracks()) {
 			this._peerConnection.addTrack(track, stream);
 		}
+		this.onnegotiationneeded();
 	}
 
 	reliable(payload) {

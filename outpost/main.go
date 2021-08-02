@@ -86,10 +86,10 @@ func main() {
 		defer ws.Close()
 		ws.EnableWriteCompression(true)
 
-		var writeJSONmu sync.Mutex
+		var mu sync.Mutex
 		writeJSON := func(v interface{}) error {
-			writeJSONmu.Lock()
-			defer writeJSONmu.Unlock()
+			mu.Lock()
+			defer mu.Unlock()
 			return ws.WriteJSON(v)
 		}
 
@@ -112,7 +112,7 @@ func main() {
 			); err != nil {
 				panic(err)
 			}
-			fmt.Printf("triggered negotiation for peer:%d", peerID)
+			fmt.Printf("triggered negotiation for peer:%d\n", peerID)
 		})
 
 		for {

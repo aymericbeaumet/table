@@ -110,6 +110,7 @@ func (r *Room) Loop() {
 		case event.connectionClose != nil:
 			{
 				delete(r.peersByID, event.peerID)
+				delete(r.tracksByPeerID, event.peerID)
 				for _, peer := range r.peersByID {
 					peer.sendReliable(event.peerID, peerMessageStatusOffline)
 				}

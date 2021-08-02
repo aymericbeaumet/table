@@ -129,7 +129,7 @@
 			...topEntities,
 			['self', EntityVideo, { label: 'me', srcObject: stream, muted: true }],
 		];
-		peer.addLocalStream(stream);
+		peer.addTrack(stream);
 	});
 </script>
 

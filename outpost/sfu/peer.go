@@ -18,10 +18,11 @@ type envelope struct {
 }
 
 type Peer struct {
-	peerConnection        *webrtc.PeerConnection
-	reliableDataChannel   *webrtc.DataChannel
-	unreliableDataChannel *webrtc.DataChannel
-	onEventFunc           func(peerEvent)
+	peerConnection          *webrtc.PeerConnection
+	reliableDataChannel     *webrtc.DataChannel
+	unreliableDataChannel   *webrtc.DataChannel
+	onEventFunc             func(peerEvent)
+	onNegotiationNeededFunc func()
 }
 
 func NewPeer() (*Peer, error) {
@@ -147,6 +148,8 @@ func (p *Peer) addTrack(track webrtc.TrackLocal) error {
 		}
 	}()
 
+	p.onNegotiationNeededFunc()
+
 	return nil
 }
 
@@ -155,7 +158,7 @@ func (p *Peer) OnICECandidate(f func(candidate *webrtc.ICECandidate)) {
 }
 
 func (p *Peer) OnNegotiationNeeded(f func()) {
-	p.peerConnection.OnNegotiationNeeded(f)
+	p.onNegotiationNeededFunc = f
 }
 
 func (p *Peer) AddICECandidate(candidate webrtc.ICECandidateInit) error {
