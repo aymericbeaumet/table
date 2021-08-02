@@ -102,6 +102,7 @@ export default class Peer {
 	}
 
 	reliable(payload) {
+		// TODO: buffer any message that couldn't be sent
 		this._reliable.send(encode(payload));
 	}
 
