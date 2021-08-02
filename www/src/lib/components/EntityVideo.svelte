@@ -1,6 +1,6 @@
 <script>
-	export let label;
-	export let srcObject;
+	export let label = '';
+	export let srcObject = null;
 	export let muted = false;
 
 	let video;
