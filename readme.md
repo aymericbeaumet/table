@@ -18,10 +18,15 @@ cd outpost && make update
 
 ### Deploy
 
-- Website: https://app.netlify.com/sites/chill-room-production (deployed via Netlify CI)
+- Website:
+  * automatically deployed via Netlify CI when a new commit is pushed on master
+  * https://app.netlify.com/sites/table-production/settings/general
   * https://table.aymericbeaumet.com
-- Scaleway: https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview (`make build deploy` in `./outpost`)
-  * wss://table-outpost-0.aymericbeaumet.com
+
+- Outpost
+  * `make build deploy` in `./outpost`
+  * https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview
+  * https://table-outpost-0.aymericbeaumet.com/debug
 
 ## Ideas
 
