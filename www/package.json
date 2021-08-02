@@ -14,7 +14,8 @@
 	"dependencies": {
 		"@msgpack/msgpack": "^2.7.0",
 		"get-video-id": "^3.2.0",
-		"lodash": "^4.17.21"
+		"lodash": "^4.17.21",
+		"svelte-favicon-badge": "^1.0.0"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^1.0.0-next.13",

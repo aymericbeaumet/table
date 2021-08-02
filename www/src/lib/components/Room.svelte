@@ -12,6 +12,7 @@
 	import gauntletPNG from '$lib/assets/gauntlet.png';
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import * as env from '$lib/env';
+	import Badge from 'svelte-favicon-badge';
 
 	const MAX_FPS = 30;
 
@@ -19,6 +20,9 @@
 
 	let topEntities = [];
 	let entities = [];
+
+	let faviconBackground = '#FF0000';
+	let faviconColor = '#FFFFFF';
 
 	function onSmartBarEntity(event) {
 		const entity = event.detail;
@@ -142,6 +146,13 @@
 		peer.addTrack(stream);
 	});
 </script>
+
+<Badge
+	count={topEntities.length}
+	color={faviconColor}
+	background={faviconBackground}
+	href="/favicon.png"
+/>
 
 <SmartBar on:entity={onSmartBarEntity}>
 	<div
