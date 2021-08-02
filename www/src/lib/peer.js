@@ -1,10 +1,9 @@
 import { encode, decode } from '@msgpack/msgpack';
 import * as env from '$lib/env';
+import Signaling from '$lib/signaling';
 
 export default class Peer {
-	constructor(ws, { onMouse, onPeer, onTrack }) {
-		this._ws = ws;
-
+	constructor(name, { onMouse, onPeer, onTrack }) {
 		const onmessage = (event) => {
 			const { peerID, data } = decode(event.data);
 
@@ -17,6 +16,10 @@ export default class Peer {
 				onPeer(peerID, data.PEER);
 			}
 		};
+
+		/* Initialize signaling */
+
+		this._signaling = new Signaling(`${env.OUTPOST_BASE_URL}/rooms/${encodeURIComponent(name)}`);
 
 		/* Create and initialize WebRTC */
 
@@ -63,21 +66,19 @@ export default class Peer {
 		this._isNegotiationNeeded = false;
 		this._isOfferPending = false;
 
-		this._peerConnection.onicecandidate = ({ candidate }) => ws.send(JSON.stringify({ candidate }));
+		this._peerConnection.onicecandidate = ({ candidate }) => this._signaling.send({ candidate });
 
-		ws.onmessage = async (event) => {
-			const { negotiationneeded, description, candidate } = JSON.parse(event.data);
-
-			if (negotiationneeded) {
+		this._signaling.onmessage = async (data) => {
+			if ('negotiationneeded' in data) {
 				this._onnegotiationneeded();
-			} else if (description) {
-				await this._peerConnection.setRemoteDescription(description);
+			} else if ('description' in data) {
+				await this._peerConnection.setRemoteDescription(data.description);
 				this._isOfferPending = false;
 				if (this._isNegotiationNeeded) {
 					await this._onnegotiationneeded();
 				}
-			} else if (candidate) {
-				await this._peerConnection.addIceCandidate(candidate);
+			} else if ('candidate' in data) {
+				await this._peerConnection.addIceCandidate(data.candidate);
 			}
 		};
 	}
@@ -91,7 +92,7 @@ export default class Peer {
 		this._isOfferPending = true;
 		const offer = await this._peerConnection.createOffer();
 		await this._peerConnection.setLocalDescription(offer);
-		this._ws.send(JSON.stringify({ description: this._peerConnection.localDescription }));
+		this._signaling.send({ description: this._peerConnection.localDescription });
 	}
 
 	addTrack(stream) {

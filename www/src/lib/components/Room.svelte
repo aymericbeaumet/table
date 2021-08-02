@@ -11,7 +11,6 @@
 	import stealthOGG from '$lib/assets/stealth.ogg';
 	import gauntletPNG from '$lib/assets/gauntlet.png';
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
-	import * as env from '$lib/env';
 	import Badge from 'svelte-favicon-badge';
 	import backgroundPng from '$lib/assets/background.png';
 
@@ -40,10 +39,7 @@
 		const cursorEntities = {};
 		const videoEntities = {};
 
-		const ws = new WebSocket(`${env.OUTPOST_BASE_URL}/rooms/${encodeURIComponent(name)}`);
-		await new Promise((resolve) => (ws.onopen = resolve));
-
-		const peer = new Peer(ws, {
+		const peer = new Peer(name, {
 			onMouse: throttle(function (peerID, data) {
 				let entity = cursorEntities[peerID];
 				if (!entity) {
