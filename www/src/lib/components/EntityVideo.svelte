@@ -1,7 +1,10 @@
 <script>
+	import videoPosterPng from '$lib/assets/video-poster.png';
+
 	export let label = '';
-	export let srcObject = null;
 	export let muted = false;
+	export let poster = videoPosterPng;
+	export let srcObject = null;
 
 	let video;
 	$: if (srcObject && video && video.srcObject !== srcObject) {
@@ -11,7 +14,18 @@
 
 <div>
 	<!-- svelte-ignore a11y-media-has-caption -->
-	<video bind:this={video} bind:muted autoplay playsinline />
+	<video
+		bind:this={video}
+		autopictureinpicture="false"
+		autoplay
+		controls="false"
+		disablepictureinpicture
+		disableremoteplayback
+		bind:muted
+		playsinline
+		{poster}
+	/>
+
 	<legend>{label}</legend>
 </div>
 
