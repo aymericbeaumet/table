@@ -180,6 +180,12 @@
 		display: flex;
 		justify-content: center;
 		padding: 10px;
+		border: 1px solid brown;
+		background: brown;
+		margin: 0 auto;
+		border-radius: 30px;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
 	}
 
 	.entity {
