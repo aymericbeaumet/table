@@ -117,7 +117,7 @@
 
 				<ul on:mousemove={onMouseMove}>
 					{#each entities as [kind, _, props], i}
-						<li class:selected={i == selectedIndex}>{kind} {JSON.stringify(props)}</li>
+						<li class:selected={i === selectedIndex}>{kind} {JSON.stringify(props)}</li>
 					{/each}
 				</ul>
 
@@ -176,6 +176,10 @@
 
 	input:focus {
 		outline: none;
+	}
+
+	ul {
+		cursor: pointer;
 	}
 
 	li {
