@@ -91,15 +91,14 @@
 			},
 
 			onTrack: function (peerID, _track, stream) {
-				let videoEntity = videoEntities[peerID];
-				if (!videoEntity) {
-					videoEntity = ['peer', EntityVideo, { label: `peer:${peerID}`, srcObject: stream }];
-					videoEntities[peerID] = videoEntity;
-					topEntities = [...topEntities, videoEntity];
-				} else {
-					videoEntity[2].srcObject = stream;
-					topEntities = topEntities;
+				let entity = videoEntities[peerID];
+				if (!entity) {
+					entity = ['peer', EntityVideo, { label: `peer:${peerID}`, srcObject: stream }];
+					videoEntities[peerID] = entity;
+					topEntities = [...topEntities, entity];
 				}
+				entity[2].srcObject = stream;
+				topEntities = topEntities;
 			},
 		});
 

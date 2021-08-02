@@ -1,20 +1,15 @@
 <script>
-	import { onMount } from 'svelte';
-
 	export let label;
 	export let srcObject;
 	export let muted = false;
 
 	let video;
-
-	onMount(() => {
+	$: if (srcObject && video && video.srcObject !== srcObject) {
 		video.srcObject = srcObject;
-		video.muted = muted;
-		video.play();
-	});
+	}
 </script>
 
-<video bind:this={video} />
+<video bind:this={video} bind:muted autoplay playsinline />
 <legend>{label}</legend>
 
 <style>
