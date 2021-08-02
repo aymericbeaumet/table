@@ -39,7 +39,7 @@ format:
 deploy: table-outpost-0
 
 .PHONY: table-outpost-%
-table-outpost-%:
+table-outpost-%: build
 	scp $(BIN) $@:/usr/local/bin/$(BIN)-next
 	scp .env.production $@:/usr/local/bin/
 	scp outpost.service $@:/etc/systemd/system/
