@@ -23,5 +23,5 @@ type peerEventUnreliableMessage struct {
 }
 
 type peerEventRemoteTrack struct {
-	*webrtc.TrackRemote
+	track *webrtc.TrackRemote
 }

@@ -124,7 +124,7 @@ func (r *Room) Loop() {
 
 		case event.remoteTrack != nil:
 			{
-				localTrack, err := consumeRemoteTrack(event.peerID, event.remoteTrack.TrackRemote)
+				localTrack, err := consumeRemoteTrack(event.peerID, event.remoteTrack.track)
 				if err != nil {
 					fmt.Println("error:", err)
 				}

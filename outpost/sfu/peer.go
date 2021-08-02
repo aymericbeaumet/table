@@ -126,6 +126,8 @@ func NewPeer() (*Peer, error) {
 		// This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
 		go func() {
 			ticker := time.NewTicker(3 * time.Second)
+			defer ticker.Stop()
+
 			for range ticker.C {
 				if rtcpSendErr := p.peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}}); rtcpSendErr != nil {
 					return
@@ -133,7 +135,7 @@ func NewPeer() (*Peer, error) {
 			}
 		}()
 
-		p.onEventFunc(peerEvent{remoteTrack: &peerEventRemoteTrack{TrackRemote: remoteTrack}})
+		p.onEventFunc(peerEvent{remoteTrack: &peerEventRemoteTrack{track: remoteTrack}})
 	})
 
 	return p, nil
