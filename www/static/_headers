@@ -1,0 +1,17 @@
+## Global security measures:
+##   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+##   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+##   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+
+/*
+  x-content-type-options: nosniff
+  x-frame-options: DENY
+  x-xss-protection: 1; mode=block
+
+## Immutable assets caching:
+##   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#caching_static_assets
+
+/_app/*
+  cache-control: public
+  cache-control: max-age=604800
+  cache-control: immutable
