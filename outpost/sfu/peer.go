@@ -67,7 +67,8 @@ func NewPeer() (*Peer, error) {
 	reliableDataChannel.OnOpen(func() {
 		go func() {
 			if err := p.processPendingReliable(); err != nil {
-				panic(err)
+				fmt.Println("error:", err)
+				return
 			}
 		}()
 	})
