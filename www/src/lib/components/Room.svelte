@@ -6,7 +6,7 @@
 	import { throttle } from 'lodash';
 	import EntityCursor from './EntityCursor.svelte';
 	import { removeFromArray } from '$lib/utils';
-	import * as audio from '$lib/audio';
+	import AudioPlayer from '$lib/audio-player';
 	import murlocOGG from '$lib/assets/murloc.ogg';
 	import stealthOGG from '$lib/assets/stealth.ogg';
 	import gauntletPNG from '$lib/assets/gauntlet.png';
@@ -14,6 +14,7 @@
 	import Badge from 'svelte-favicon-badge';
 	import backgroundPng from '$lib/assets/background.png';
 	import leatherPng from '$lib/assets/leather.png';
+	import campfireMp3 from '$lib/assets/campfire.mp3';
 
 	const MAX_FPS = 30;
 
@@ -40,6 +41,13 @@
 		const cursorEntities = {};
 		const videoEntities = {};
 
+		const backgroundAudioPlayer = new AudioPlayer();
+		backgroundAudioPlayer.setLoop(true);
+		backgroundAudioPlayer.setVolume(0.3);
+		backgroundAudioPlayer.play(campfireMp3);
+
+		const peerAudioPlayer = new AudioPlayer();
+
 		const peer = new Peer(name, {
 			onMouse: throttle(function (peerID, data) {
 				let entity = cursorEntities[peerID];
@@ -62,7 +70,7 @@
 				latestKnownStatus[peerID] = data.status;
 
 				if (data.status === 'online') {
-					audio.play(murlocOGG);
+					peerAudioPlayer.play(murlocOGG);
 
 					if (!videoEntities[peerID]) {
 						const entity = ['peer', EntityVideo, { label: `peer:${peerID}` }];
@@ -74,7 +82,7 @@
 				}
 
 				if (data.status === 'offline') {
-					audio.play(stealthOGG);
+					peerAudioPlayer.play(stealthOGG);
 
 					const cursorEntity = cursorEntities[peerID];
 					if (cursorEntity) {
