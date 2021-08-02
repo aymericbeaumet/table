@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/aymericbeaumet/chill-room/outpost/sfu"
+	"github.com/aymericbeaumet/table/outpost/sfu"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
