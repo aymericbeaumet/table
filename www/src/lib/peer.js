@@ -69,12 +69,12 @@ export default class Peer {
 			const { negotiationneeded, description, candidate } = JSON.parse(event.data);
 
 			if (negotiationneeded) {
-				this.onnegotiationneeded();
+				this._onnegotiationneeded();
 			} else if (description) {
 				await this._peerConnection.setRemoteDescription(description);
 				this._isOfferPending = false;
 				if (this._isNegotiationNeeded) {
-					await this.onnegotiationneeded();
+					await this._onnegotiationneeded();
 				}
 			} else if (candidate) {
 				await this._peerConnection.addIceCandidate(candidate);
@@ -82,7 +82,7 @@ export default class Peer {
 		};
 	}
 
-	async onnegotiationneeded() {
+	async _onnegotiationneeded() {
 		if (this._isOfferPending) {
 			this._isNegotiationNeeded = true;
 			return;
@@ -98,7 +98,7 @@ export default class Peer {
 		for (const track of stream.getTracks()) {
 			this._peerConnection.addTrack(track, stream);
 		}
-		this.onnegotiationneeded();
+		this._onnegotiationneeded();
 	}
 
 	reliable(payload) {
