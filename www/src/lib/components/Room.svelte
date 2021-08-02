@@ -13,6 +13,7 @@
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import Badge from 'svelte-favicon-badge';
 	import backgroundPng from '$lib/assets/background.png';
+	import leatherPng from '$lib/assets/leather.png';
 
 	const MAX_FPS = 30;
 
@@ -162,7 +163,7 @@
 		  cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;
 		"
 	>
-		<header>
+		<header style="background: repeat url({leatherPng});">
 			{#each topEntities as [_, component, props]}
 				<div>
 					<svelte:component this={component} {...props} />
@@ -188,7 +189,6 @@
 	header {
 		display: flex;
 		justify-content: center;
-		background: #4e3b25;
 		margin: 0 auto;
 		padding: 5px;
 		border: 3px solid #281b0d;
