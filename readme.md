@@ -18,15 +18,15 @@ cd outpost && make update
 
 ### Deploy
 
-- Website:
+- [`outpost`](./outpost)
+  * `make deploy`
+  * https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview
+  * https://table-outpost-0.aymericbeaumet.com/debug
+
+- [`www`](./www)
   * automatically deployed via Netlify CI when a new commit is pushed on master
   * https://app.netlify.com/sites/table-production/settings/general
   * https://table.aymericbeaumet.com
-
-- Outpost
-  * `make build deploy` in `./outpost`
-  * https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview
-  * https://table-outpost-0.aymericbeaumet.com/debug
 
 ## Ideas
 
