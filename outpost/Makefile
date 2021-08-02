@@ -25,15 +25,16 @@ preview:
 
 .PHONY: test
 test:
-	go test -failfast -v -vet=off -race ./...
+	go test -v -failfast -vet=off -race ./...
 
 .PHONY: lint
 lint:
+	out="$$(gofmt -l .)"; if [ -n "$$out" ]; then echo "$$out"; exit 1; fi
 	golangci-lint run ./...
 
 .PHONY: format
 format:
-	true
+	gofmt -s -w .
 
 .PHONY: deploy
 deploy: table-outpost-0
