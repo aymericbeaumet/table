@@ -195,6 +195,8 @@
 		background: #4e3b25;
 		margin: 0 auto;
 		padding: 5px;
+		border: 3px solid #281b0d;
+		border-top: 0;
 		border-radius: 20px;
 		border-top-left-radius: 0;
 		border-top-right-radius: 0;
