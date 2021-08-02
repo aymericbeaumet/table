@@ -102,7 +102,8 @@ func main() {
 			if err := writeJSON(
 				&SignalingMessageCandidate{Candidate: c},
 			); err != nil {
-				panic(err)
+				fmt.Println("error:", err)
+				return
 			}
 		})
 
@@ -110,7 +111,8 @@ func main() {
 			if err := writeJSON(
 				&SignalingMessageNegotiationNeeded{NegotiationNeeded: true},
 			); err != nil {
-				panic(err)
+				fmt.Println("error:", err)
+				return
 			}
 			fmt.Printf("triggered negotiation for peer:%d\n", peerID)
 		})
@@ -132,7 +134,8 @@ func main() {
 				if err := writeJSON(
 					&SignalingMessageDescription{Description: localDesc},
 				); err != nil {
-					panic(err)
+					fmt.Println("error:", err)
+					return
 				}
 			} else {
 				var c webrtc.ICECandidateInit
