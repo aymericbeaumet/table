@@ -28,7 +28,7 @@ cd outpost && make update
 - Ephemeral messages
 - Pin videos, images, etc
 - Settings: configure Mic, Speakers, Camera
-- Allow to move / rotate
+- Allow to move / resize
 - Play background music / radio / spotify / podcast
 - Play background video / youtube / stream
 - Share files
@@ -37,15 +37,16 @@ cd outpost && make update
 - Add some background music
 - Virtual background/audio on the whole table
 - Animate mouse click
-- Enforce camera
 - Allow to send wizz
 - Allow to play alliance / horse musics
-- Allow to replace cursor by emoji for N seconds
 - Explore non verbal feedbacks (emojis, etc)
 - Metrics + Achievements when someone within the company does something
 - Meeting timer in background since the first participant joined
 - Share screen
 - Embed Netflix/Spotify/arbitrary websites
+- Around emojis:
+  - Right click on the table to pin an emoji and start an ephemeral emoji fountain
+  - Allow to replace cursor by emoji for N seconds
 
 ## Pro Plan
 
