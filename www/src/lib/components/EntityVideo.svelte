@@ -9,10 +9,16 @@
 	}
 </script>
 
-<video bind:this={video} bind:muted autoplay playsinline />
-<legend>{label}</legend>
+<div>
+	<video bind:this={video} bind:muted autoplay playsinline />
+	<legend>{label}</legend>
+</div>
 
 <style>
+	div {
+		padding: 5px;
+	}
+
 	video {
 		transform: scale(-1, 1);
 		border-radius: 50%;
@@ -23,10 +29,9 @@
 	}
 
 	legend {
-		border: 1px solid lightcoral;
-		border-radius: 10px;
+		border-radius: 30px;
 		padding: 3px;
-		background: lightsalmon;
+		background: lightgrey;
 		text-align: center;
 	}
 </style>
