@@ -1,18 +1,12 @@
 <script>
 	import videoPosterPng from '$lib/assets/video-poster.png';
-	import { createEventDispatcher } from 'svelte';
+	import { audioEnabled, videoEnabled } from '$lib/stores';
 
 	export let label = '';
 	export let muted = false;
 	export let poster = videoPosterPng;
 	export let srcObject = null;
 	export let toggles = false;
-
-	const dispatch = createEventDispatcher();
-
-	// toggle states
-	let audioEnabled = true;
-	let videoEnabled = true;
 
 	let video;
 	$: if (srcObject && video && video.srcObject !== srcObject) {
@@ -21,14 +15,12 @@
 
 	function onAudioToggleClick(event) {
 		event.preventDefault();
-		audioEnabled = !audioEnabled;
-		dispatch('audiotoggle', audioEnabled);
+		audioEnabled.update((v) => !v);
 	}
 
 	function onVideoToggleClick(event) {
 		event.preventDefault();
-		videoEnabled = !videoEnabled;
-		dispatch('videotoggle', videoEnabled);
+		videoEnabled.update((v) => !v);
 	}
 </script>
 
@@ -44,15 +36,15 @@
 		{poster}
 	/>
 
-	<legend>
-		{#if toggles}
-			<span on:click={onAudioToggleClick} class:active={audioEnabled}>A</span>
-			<span on:click={onVideoToggleClick} class:active={videoEnabled}>V</span>
-		{/if}
+	<footer>
 		{#if label}
-			{label}
+			<legend>{label}</legend>
 		{/if}
-	</legend>
+		{#if toggles}
+			<button on:click={onAudioToggleClick} class:active={$audioEnabled}>A</button>
+			<button on:click={onVideoToggleClick} class:active={$videoEnabled}>V</button>
+		{/if}
+	</footer>
 </div>
 
 <style>
@@ -69,26 +61,32 @@
 		border: 1px solid #997447;
 	}
 
-	legend {
+	footer {
 		display: flex;
 		justify-content: center;
-		border-radius: 30px;
 		margin-top: 3px;
 		padding: 3px;
-		background: #997447;
 		text-align: center;
 	}
 
-	span {
-		cursor: pointer;
-		text-decoration: line-through;
+	legend {
 		user-select: none;
-		border: 1px solid black;
 		padding: 0 3px;
 		margin: 0 3px;
+		background: #997447;
+		width: 100%;
+		border-radius: 30px;
 	}
 
-	span.active {
+	button {
+		border: 1px solid black;
+		padding: 0 6px;
+		margin: 0 3px;
+		cursor: pointer;
 		text-decoration: none;
+	}
+
+	button:not(.active) {
+		text-decoration: line-through;
 	}
 </style>

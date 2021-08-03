@@ -189,13 +189,7 @@
 				{/if}
 			{/each}
 
-			<EntityVideo
-				srcObject={localStream}
-				muted={true}
-				toggles={true}
-				on:audiotoggle={(event) => audioEnabled.set(event.detail)}
-				on:videotoggle={(event) => videoEnabled.set(event.detail)}
-			/>
+			<EntityVideo srcObject={localStream} muted={true} toggles={true} />
 
 			{#each topEntities as [_, component, props], i}
 				{#if i >= topEntities.length / 2}
