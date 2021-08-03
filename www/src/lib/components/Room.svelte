@@ -163,7 +163,7 @@
 </script>
 
 <Badge
-	count={topEntities.length}
+	count={1 + topEntities.length}
 	color={faviconColor}
 	background={faviconBackground}
 	href="/favicon.png"
