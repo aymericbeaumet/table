@@ -119,19 +119,19 @@
 			});
 		}
 
-		onMouseDown = throttle(function (event) {
+		onMouseDown = function (event) {
 			isMouseDown = event.which === 1;
 			sendMouseEvent(event);
-		}, 1000 / MAX_FPS);
+		};
 
 		onMouseMove = throttle(function (event) {
 			sendMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
-		onMouseUp = throttle(function (event) {
+		onMouseUp = function (event) {
 			isMouseDown = false;
 			sendMouseEvent(event);
-		}, 1000 / MAX_FPS);
+		};
 
 		localStream = await navigator.mediaDevices.getUserMedia({
 			audio: {
