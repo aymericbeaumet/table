@@ -181,6 +181,7 @@
 		if (constraints.audio || constraints.video) {
 			lastStream = await navigator.mediaDevices.getUserMedia(constraints);
 			videoStream = constraints.video ? lastStream : null;
+			peer.addTracks(lastStream);
 		}
 	}
 </script>

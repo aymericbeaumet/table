@@ -1,6 +1,7 @@
 import { encode, decode } from '@msgpack/msgpack';
 import * as env from '$lib/env';
 import Signaling from '$lib/signaling';
+import { debounce } from 'lodash';
 
 export default class Peer {
 	constructor(name, { onMouse, onPeer, onTrack }) {
@@ -16,6 +17,20 @@ export default class Peer {
 				onPeer(peerID, data.PEER);
 			}
 		};
+
+		/* Debounced onnegotiationneeded handler */
+
+		this._onnegotiationneeded = debounce(async () => {
+			if (this._isOfferPending) {
+				this._isNegotiationNeeded = true;
+				return;
+			}
+			this._isNegotiationNeeded = false;
+			this._isOfferPending = true;
+			const offer = await this._peerConnection.createOffer();
+			await this._peerConnection.setLocalDescription(offer);
+			this._signaling.send({ description: this._peerConnection.localDescription });
+		}, 250);
 
 		/* Initialize signaling */
 
@@ -52,6 +67,8 @@ export default class Peer {
 		});
 		this._unreliable.onmessage = onmessage;
 
+		this._onnegotiationneeded();
+
 		/* Listen for tracks */
 
 		this._peerConnection.ontrack = ({ track, streams }) => {
@@ -81,18 +98,6 @@ export default class Peer {
 				await this._peerConnection.addIceCandidate(data.candidate);
 			}
 		};
-	}
-
-	async _onnegotiationneeded() {
-		if (this._isOfferPending) {
-			this._isNegotiationNeeded = true;
-			return;
-		}
-		this._isNegotiationNeeded = false;
-		this._isOfferPending = true;
-		const offer = await this._peerConnection.createOffer();
-		await this._peerConnection.setLocalDescription(offer);
-		this._signaling.send({ description: this._peerConnection.localDescription });
 	}
 
 	addTracks(stream) {
