@@ -53,6 +53,13 @@ cd outpost && make update
   - Right click on the table to pin an emoji and start an ephemeral emoji fountain
   - Allow to replace cursor by emoji for N seconds
 - Only show the camera on mobile (hide the table)
+- EntityPDF to read documents synchronously
+- Add border around cameras + cursors to know who each cursor belongs to
+- Settings screen to change background + music and share to all people
+- tables.quest
+- tables.app
+- tabl.es
+- tables.club
 
 ## Pro Plan
 
