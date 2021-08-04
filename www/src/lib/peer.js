@@ -95,11 +95,27 @@ export default class Peer {
 		this._signaling.send({ description: this._peerConnection.localDescription });
 	}
 
-	addTrack(stream) {
+	addTracks(stream) {
 		for (const track of stream.getTracks()) {
 			this._peerConnection.addTrack(track, stream);
 		}
 		this._onnegotiationneeded();
+	}
+
+	removeAudioTracks() {
+		return this.removeTracksByKind('audio');
+	}
+
+	removeVideoTracks() {
+		return this.removeTracksByKind('video');
+	}
+
+	removeTracksByKind(kind) {
+		for (const sender of this._peerConnection.getSenders()) {
+			if (sender.track?.kind === kind) {
+				this._peerConnection.removeTrack(sender);
+			}
+		}
 	}
 
 	reliable(payload) {

@@ -15,6 +15,7 @@
 	import leatherPng from '$lib/assets/leather.png';
 	import campfireMp3 from '$lib/assets/campfire.mp3';
 	import { audioEnabled, videoEnabled, backgroundURL } from '$lib/stores';
+	import { get } from 'svelte/store';
 
 	const MAX_FPS = 30;
 
@@ -34,7 +35,6 @@
 
 	let isMouseDown = false;
 	let onMouseMove, onMouseDown, onMouseUp;
-	let localStream;
 
 	onMount(async function () {
 		// Some hashmaps indexed by peer ids
@@ -133,33 +133,56 @@
 			sendMouseEvent(event);
 		};
 
-		localStream = await navigator.mediaDevices.getUserMedia({
-			audio: {
+		initLocalStream(peer);
+		audioEnabled.subscribe(() => initLocalStream(peer));
+		videoEnabled.subscribe(() => initLocalStream(peer));
+	});
+
+	let lastStream = null;
+	let videoStream = null;
+
+	async function initLocalStream(peer) {
+		const constraints = {
+			audio: false,
+			video: false,
+		};
+
+		if (get(audioEnabled)) {
+			constraints.audio = {
 				autoGainControl: true,
 				echoCancellation: true,
 				noiseSuppression: true,
-			},
-			video: {
+			};
+		} else {
+			peer.removeAudioTracks();
+			if (lastStream) {
+				for (const track of lastStream.getAudioTracks()) {
+					track.stop();
+				}
+			}
+		}
+
+		if (get(videoEnabled)) {
+			constraints.video = {
 				width: { ideal: 360, max: 360 },
 				height: { ideal: 360, max: 360 },
 				facingMode: { ideal: 'user' },
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
-			},
-		});
-		peer.addTrack(localStream);
-
-		audioEnabled.subscribe((enabled) => {
-			for (const track of localStream.getAudioTracks()) {
-				track.enabled = enabled;
+			};
+		} else {
+			peer.removeVideoTracks();
+			if (lastStream) {
+				for (const track of lastStream.getVideoTracks()) {
+					track.stop();
+				}
 			}
-		});
+		}
 
-		videoEnabled.subscribe((enabled) => {
-			for (const track of localStream.getVideoTracks()) {
-				track.enabled = enabled;
-			}
-		});
-	});
+		if (constraints.audio || constraints.video) {
+			lastStream = await navigator.mediaDevices.getUserMedia(constraints);
+			videoStream = constraints.video ? lastStream : null;
+		}
+	}
 </script>
 
 <Badge
@@ -181,22 +204,12 @@
 		"
 	>
 		<header style="background: repeat url({leatherPng});">
-			{#each topEntities as [_, component, props], i}
-				{#if i < topEntities.length / 2}
-					<div>
-						<svelte:component this={component} {...props} />
-					</div>
-				{/if}
-			{/each}
+			<EntityVideo srcObject={videoStream} muted={true} toggles={true} />
 
-			<EntityVideo srcObject={localStream} muted={true} toggles={true} />
-
-			{#each topEntities as [_, component, props], i}
-				{#if i >= topEntities.length / 2}
-					<div>
-						<svelte:component this={component} {...props} />
-					</div>
-				{/if}
+			{#each topEntities as [_, component, props]}
+				<div>
+					<svelte:component this={component} {...props} />
+				</div>
 			{/each}
 		</header>
 

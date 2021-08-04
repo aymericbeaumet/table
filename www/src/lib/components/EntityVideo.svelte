@@ -4,12 +4,11 @@
 
 	export let label = '';
 	export let muted = false;
-	export let poster = videoPosterPng;
 	export let srcObject = null;
 	export let toggles = false;
 
 	let video;
-	$: if (srcObject && video && video.srcObject !== srcObject) {
+	$: if (video && video.srcObject !== srcObject) {
 		video.srcObject = srcObject;
 	}
 
@@ -33,7 +32,7 @@
 		disableremoteplayback
 		bind:muted
 		playsinline
-		{poster}
+		style="background: repeat url({videoPosterPng});"
 	/>
 
 	<footer>
@@ -57,7 +56,6 @@
 		border-radius: 50%;
 		width: 150px;
 		height: 150px;
-		background: #997447;
 		border: 1px solid #997447;
 	}
 
