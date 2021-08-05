@@ -165,7 +165,7 @@
 			simulcast: true,
 		};
 
-		const { LocalStream } = await import('ion-sdk-js');
+		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
 		const stream = await LocalStream.getUserMedia(constraints);
 		if (!lastStream) {
 			lastStream = stream;
