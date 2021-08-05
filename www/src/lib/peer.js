@@ -1,6 +1,6 @@
 import { encode, decode } from '@msgpack/msgpack';
 import * as env from '$lib/env';
-import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl';
+import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
 
 export default class Peer {
 	constructor(Client, name, { onMouse, onPeer, onTrack, onTrackRemoved }) {

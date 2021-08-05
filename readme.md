@@ -20,7 +20,7 @@ cd outpost && make update
 
 - [`www`](./www)
   * automatically deployed via Netlify CI when a new commit is pushed on master
-  * https://app.netlify.com/sites/table-production/settings/general
+  * https://app.netlify.com/sites/tables-app
   * https://table.aymericbeaumet.com
 
 - [`outpost`](./outpost)
