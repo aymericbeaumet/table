@@ -65,21 +65,23 @@ export default class Peer {
 
 		this._client.ontrack = (track, stream) => {
 			const peerID = parseInt(stream.id, 10);
-			console.log(`[ontrack] peer:${peerID} ${track.id}`);
-			onTrack(peerID, track, stream);
+			if (track.kind === 'video') {
+				console.log(`[ontrack] peer:${peerID} ${track.id}`);
+				onTrack(peerID, track, stream);
+			}
 		};
 	}
 
-	addTracks(stream) {
+	publish(stream) {
 		this._client.publish(stream);
 	}
 
 	reliable(payload) {
 		// TODO: buffer any message that couldn't be sent
-		//this._reliable.send(encode(payload));
+		this._reliable && this._reliable.send(encode(payload));
 	}
 
 	unreliable(payload) {
-		//this._unreliable.send(encode(payload));
+		this._unreliable && this._unreliable.send(encode(payload));
 	}
 }

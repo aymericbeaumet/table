@@ -183,7 +183,7 @@
 			const { LocalStream } = await import('ion-sdk-js');
 			lastStream = await LocalStream.getUserMedia(constraints);
 			videoStream = constraints.video ? lastStream : null;
-			peer.addTracks(lastStream);
+			peer.publish(lastStream);
 		}
 	}
 </script>
