@@ -75,6 +75,7 @@ func main() {
 	conf.WebRTC.Timeouts.ICEFailedTimeout = 25
 	conf.WebRTC.Timeouts.ICEKeepaliveInterval = 2
 	conf.Turn.Enabled = false
+
 	s := sfu.NewSFU(conf)
 	dc := s.NewDatachannel(sfu.APIChannelLabel)
 	dc.Use(datachannel.SubscriberAPI)
