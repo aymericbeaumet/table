@@ -30,7 +30,9 @@ export default class Peer {
 		});
 
 		signal.onopen = async () => {
+			console.log('[webrtc] opened');
 			await this._client.join(name);
+			console.log('[webrtc] joined');
 
 			/* Publish any pending stream */
 

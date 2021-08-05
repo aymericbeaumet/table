@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/pion/ion-sfu/cmd/signal/json-rpc/server"
 	log "github.com/pion/ion-sfu/pkg/logger"
+	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
 	"github.com/pion/ion-sfu/pkg/sfu"
 	webrtc "github.com/pion/webrtc/v3"
 	"github.com/sourcegraph/jsonrpc2"
@@ -76,24 +76,8 @@ func main() {
 	conf.WebRTC.Timeouts.ICEKeepaliveInterval = 2
 	conf.Turn.Enabled = false
 	s := sfu.NewSFU(conf)
-
-	reliable := s.NewDatachannel("reliable")
-	reliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
-		for _, peer := range args.Peer.Session().Peers() {
-			if peer.ID() != args.Peer.ID() {
-				peer.SendDCMessage(args.DataChannel.Label(), args.Message.Data)
-			}
-		}
-	})
-
-	unreliable := s.NewDatachannel("unreliable")
-	unreliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
-		for _, peer := range args.Peer.Session().Peers() {
-			if peer.ID() != args.Peer.ID() {
-				peer.SendDCMessage(args.DataChannel.Label(), args.Message.Data)
-			}
-		}
-	})
+	dc := s.NewDatachannel(sfu.APIChannelLabel)
+	dc.Use(datachannel.SubscriberAPI)
 
 	// HTTP server
 
