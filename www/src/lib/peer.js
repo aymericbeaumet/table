@@ -30,17 +30,6 @@ export default class Peer {
 		});
 
 		signal.onopen = async () => {
-			console.log('[webrtc] opened');
-			await this._client.join(name);
-			console.log('[webrtc] joined');
-
-			/* Publish any pending stream */
-
-			if (this._pendingStream) {
-				this.publish(this._pendingStream);
-				this._pendingStream = null;
-			}
-
 			/* Create pre-negotiated data channels */
 
 			this._reliable = this._client.createDataChannel('reliable', {
@@ -59,6 +48,17 @@ export default class Peer {
 				maxRetransmits: 0,
 			});
 			this._unreliable.onmessage = onmessage;
+
+			console.log('[webrtc] opened');
+			await this._client.join(name);
+			console.log('[webrtc] joined');
+
+			/* Publish any pending stream */
+
+			if (this._pendingStream) {
+				this.publish(this._pendingStream);
+				this._pendingStream = null;
+			}
 		};
 
 		/* Listen for tracks */
