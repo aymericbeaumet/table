@@ -49,13 +49,15 @@
 <style>
 	div {
 		padding: 5px;
+		width: 150px;
+		height: 150px;
 	}
 
 	video {
 		transform: scale(-1, 1);
 		border-radius: 50%;
-		width: 150px;
-		height: 150px;
+		width: 100%;
+		height: 100%;
 		border: 1px solid #997447;
 	}
 

@@ -3,7 +3,7 @@ import * as env from '$lib/env';
 import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl';
 
 export default class Peer {
-	constructor(Client, name, { onMouse, onPeer, onTrack }) {
+	constructor(Client, name, { onMouse, onPeer, onTrack, onTrackRemoved }) {
 		const onmessage = (event) => {
 			const { peerID, data } = decode(event.data);
 
@@ -59,21 +59,18 @@ export default class Peer {
 
 		/* Join the room */
 
-		signal.onopen = () => this._client.join(name, '');
+		signal.onopen = () => this._client.join(name);
 
 		/* Listen for tracks */
 
 		this._client.ontrack = (track, stream) => {
-			const peerID = parseInt(stream.id, 10);
-			if (track.kind === 'video') {
-				console.log(`[ontrack] peer:${peerID} ${track.id}`);
-				onTrack(peerID, track, stream);
-			}
+			stream.onremovetrack = (track) => onTrackRemoved('', track, stream);
+			onTrack('', track, stream);
 		};
 	}
 
 	publish(stream) {
-		this._client.publish(stream);
+		return this._client.publish(stream);
 	}
 
 	reliable(payload) {

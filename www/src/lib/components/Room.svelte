@@ -102,15 +102,23 @@
 				}
 			},
 
-			onTrack: function (peerID, _track, stream) {
-				let entity = videoEntities[peerID];
+			onTrack: function (_peerID, _track, stream) {
+				let entity = videoEntities[stream.id];
 				if (!entity) {
-					entity = ['peer', EntityVideo, { label: `peer:${peerID}` }];
-					videoEntities[peerID] = entity;
+					entity = ['peer', EntityVideo, { label: `peer:${stream.id}` }];
+					videoEntities[stream.id] = entity;
 					topEntities = [...topEntities, entity];
 				}
 				entity[2].srcObject = stream;
 				topEntities = topEntities;
+			},
+
+			onTrackRemoved: function (_peerID, _track, stream) {
+				const videoEntity = videoEntities[stream.id];
+				if (videoEntity) {
+					delete videoEntities[stream.id];
+					topEntities = removeFromArray(topEntities, videoEntity);
+				}
 			},
 		});
 
@@ -144,46 +152,26 @@
 
 	async function initLocalStream(peer) {
 		const constraints = {
-			audio: false,
-			video: false,
-		};
-
-		if (get(audioEnabled)) {
-			constraints.audio = {
+			audio: {
 				autoGainControl: true,
 				echoCancellation: true,
 				noiseSuppression: true,
-			};
-		} else {
-			peer.removeAudioTracks();
-			if (lastStream) {
-				for (const track of lastStream.getAudioTracks()) {
-					track.stop();
-				}
-			}
-		}
-
-		if (get(videoEnabled)) {
-			constraints.video = {
+			},
+			video: {
 				width: { ideal: 360, max: 360 },
 				height: { ideal: 360, max: 360 },
 				facingMode: { ideal: 'user' },
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
-			};
-		} else {
-			peer.removeVideoTracks();
-			if (lastStream) {
-				for (const track of lastStream.getVideoTracks()) {
-					track.stop();
-				}
-			}
-		}
+			},
+			simulcast: true,
+		};
 
-		if (constraints.audio || constraints.video) {
-			const { LocalStream } = await import('ion-sdk-js');
-			lastStream = await LocalStream.getUserMedia(constraints);
-			videoStream = constraints.video ? lastStream : null;
-			peer.publish(lastStream);
+		const { LocalStream } = await import('ion-sdk-js');
+		const stream = await LocalStream.getUserMedia(constraints);
+		if (!lastStream) {
+			lastStream = stream;
+			videoStream = stream;
+			peer.publish(stream);
 		}
 	}
 </script>

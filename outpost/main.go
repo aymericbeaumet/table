@@ -78,10 +78,22 @@ func main() {
 	s := sfu.NewSFU(conf)
 
 	reliable := s.NewDatachannel("reliable")
-	reliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {})
+	reliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
+		for _, peer := range args.Peer.Session().Peers() {
+			if peer.ID() != args.Peer.ID() {
+				peer.SendDCMessage(args.DataChannel.Label(), args.Message.Data)
+			}
+		}
+	})
 
 	unreliable := s.NewDatachannel("unreliable")
-	unreliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {})
+	unreliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
+		for _, peer := range args.Peer.Session().Peers() {
+			if peer.ID() != args.Peer.ID() {
+				peer.SendDCMessage(args.DataChannel.Label(), args.Message.Data)
+			}
+		}
+	})
 
 	// HTTP server
 
@@ -113,10 +125,10 @@ func main() {
 		defer ws.Close()
 		ws.EnableWriteCompression(true)
 
-		p := server.NewJSONSignal(sfu.NewPeer(s), logger)
-		defer p.Close()
+		peer := server.NewJSONSignal(sfu.NewPeer(s), logger)
+		defer peer.Close()
 
-		jc := jsonrpc2.NewConn(c, websocketjsonrpc2.NewObjectStream(ws), p)
+		jc := jsonrpc2.NewConn(c, websocketjsonrpc2.NewObjectStream(ws), peer)
 		<-jc.DisconnectNotify()
 	})
 
