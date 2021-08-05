@@ -74,7 +74,7 @@
 					peerAudioPlayer.play(murlocOGG);
 
 					if (!videoEntities[peerID]) {
-						const entity = ['peer', EntityVideo, { label: `peer:${peerID}` }];
+						const entity = ['peer', EntityVideo, {}];
 						videoEntities[peerID] = entity;
 						topEntities = [...topEntities, entity];
 					}
@@ -104,7 +104,7 @@
 			onTrack: function (_peerID, _track, stream) {
 				let entity = videoEntities[stream.id];
 				if (!entity) {
-					entity = ['peer', EntityVideo, { label: `peer:${stream.id}` }];
+					entity = ['peer', EntityVideo, {}];
 					videoEntities[stream.id] = entity;
 					topEntities = [...topEntities, entity];
 				}

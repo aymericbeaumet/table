@@ -36,9 +36,6 @@
 	/>
 
 	<footer>
-		{#if label}
-			<legend>{label}</legend>
-		{/if}
 		{#if toggles}
 			<button on:click={onAudioToggleClick} class:active={$audioEnabled}>A</button>
 			<button on:click={onVideoToggleClick} class:active={$videoEnabled}>V</button>
@@ -67,15 +64,6 @@
 		margin-top: 3px;
 		padding: 3px;
 		text-align: center;
-	}
-
-	legend {
-		user-select: none;
-		padding: 0 3px;
-		margin: 0 3px;
-		background: #997447;
-		width: 100%;
-		border-radius: 30px;
 	}
 
 	button {
