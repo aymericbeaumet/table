@@ -44,7 +44,9 @@ table-outpost-%: build
 	scp $(BIN) $@:/usr/local/bin/$(BIN)-next
 	scp .env.production $@:/usr/local/bin/
 	scp outpost.service $@:/etc/systemd/system/
-	ssh $@ "systemctl enable outpost.service"
-	ssh $@ "systemctl stop outpost.service"
-	ssh $@ "mv /usr/local/bin/$(BIN)-next /usr/local/bin/$(BIN)"
-	ssh $@ "systemctl start outpost.service"
+	ssh $@ " \
+		systemctl enable outpost.service; \
+		systemctl stop outpost.service; \
+		mv /usr/local/bin/$(BIN)-next /usr/local/bin/$(BIN); \
+		systemctl start outpost.service; \
+	"
