@@ -69,6 +69,9 @@ func main() {
 	conf.Router.Simulcast.BestQualityFirst = true
 	conf.Router.Simulcast.EnableTemporalLayer = true
 	conf.WebRTC.ICEPortRange = []uint16{5000, 5200}
+	conf.WebRTC.ICEServers = []sfu.ICEServerConfig{
+		{URLs: strings.Split(os.Getenv("STUN_SERVERS_URLS"), ",")},
+	}
 	conf.WebRTC.SDPSemantics = "unified-plan"
 	conf.WebRTC.MDNS = true
 	conf.WebRTC.Timeouts.ICEDisconnectedTimeout = 5

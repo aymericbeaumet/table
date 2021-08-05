@@ -29,7 +29,7 @@ export default class Peer {
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
-		signal.onopen = async () => await this._client.join(name);
+		signal.onopen = () => this._client.join(name);
 
 		/* Create pre-negotiated data channels */
 
