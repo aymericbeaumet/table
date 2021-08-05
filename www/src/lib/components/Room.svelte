@@ -15,7 +15,6 @@
 	import leatherPng from '$lib/assets/leather.png';
 	import campfireMp3 from '$lib/assets/campfire.mp3';
 	import { audioEnabled, videoEnabled, backgroundURL } from '$lib/stores';
-	import { get } from 'svelte/store';
 
 	const MAX_FPS = 30;
 

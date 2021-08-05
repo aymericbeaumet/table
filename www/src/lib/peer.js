@@ -33,13 +33,6 @@ export default class Peer {
 			console.log(`[webrtc] ${this._client.connectionState}`);
 
 			if (this._client.connectionState === 'connected') {
-				/* Publish any pending stream */
-
-				if (this._pendingStream) {
-					this.publish(this._pendingStream);
-					this._pendingStream = null;
-				}
-
 				/* Create pre-negotiated data channels */
 
 				this._reliable = this._client.createDataChannel('reliable', {
@@ -77,10 +70,11 @@ export default class Peer {
 	}
 
 	publish(stream) {
+		clearInterval(this._publishTimeout);
 		try {
 			return this._client.publish(stream);
 		} catch (error) {
-			this._pendingStream = stream;
+			this._publishTimeout = setTimeout(() => this.publish(stream), 1000);
 		}
 	}
 
