@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,33 +10,41 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/aymericbeaumet/table/outpost/sfu"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
+	"github.com/lucsky/cuid"
+	"github.com/pion/ion-sfu/pkg/sfu"
 	webrtc "github.com/pion/webrtc/v3"
 )
 
 type InboundSignalingMessage struct {
+	SignalingMessageAnswer
 	SignalingMessageCandidate
-	SignalingMessageDescription
+	SignalingMessageNegotiate
+}
+
+type SignalingMessageAnswer struct {
+	Answer *webrtc.SessionDescription `json:"answer"`
 }
 
 type SignalingMessageCandidate struct {
 	Candidate *webrtc.ICECandidateInit `json:"candidate"`
 }
 
-type SignalingMessageDescription struct {
-	Description *webrtc.SessionDescription `json:"description"`
+type SignalingMessageNegotiate struct {
+	Negotiate *bool `json:"negotiate"`
 }
 
-type SignalingMessageNegotiationNeeded struct {
-	NegotiationNeeded bool `json:"negotiationneeded"`
+type SignalingMessageOffer struct {
+	Offer *webrtc.SessionDescription `json:"offer"`
 }
 
 func main() {
+	// Load env
+
 	mode := os.Getenv("MODE")
 	if len(mode) == 0 {
 		mode = "development"
@@ -43,7 +52,34 @@ func main() {
 	_ = godotenv.Load(".env")
 	_ = godotenv.Load(".env." + mode)
 
-	s := sfu.New()
+	// Prepare SFU
+
+	conf := sfu.Config{}
+	conf.SFU.Ballast = 0
+	conf.SFU.WithStats = false
+	conf.Router.MaxBandwidth = 1500
+	conf.Router.MaxPacketTrack = 500
+	conf.Router.AudioLevelThreshold = 40
+	conf.Router.AudioLevelInterval = 1000
+	conf.Router.AudioLevelFilter = 20
+	conf.Router.Simulcast.BestQualityFirst = true
+	conf.Router.Simulcast.EnableTemporalLayer = true
+	conf.WebRTC.ICEPortRange = []uint16{5000, 5200}
+	conf.WebRTC.SDPSemantics = "unified-plan"
+	conf.WebRTC.MDNS = true
+	conf.WebRTC.Timeouts.ICEDisconnectedTimeout = 5
+	conf.WebRTC.Timeouts.ICEFailedTimeout = 25
+	conf.WebRTC.Timeouts.ICEKeepaliveInterval = 2
+	conf.Turn.Enabled = false
+	s := sfu.NewSFU(conf)
+
+	reliable := s.NewDatachannel("reliable")
+	reliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {})
+
+	unreliable := s.NewDatachannel("unreliable")
+	unreliable.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {})
+
+	// HTTP server
 
 	r := gin.Default()
 
@@ -52,31 +88,18 @@ func main() {
 	r.Use(cors.New(config))
 
 	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
+		CheckOrigin:     func(r *http.Request) bool { return true },
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 	}
 
-	r.GET("/rooms/:name", func(c *gin.Context) {
+	r.GET("/sessions/:name", func(c *gin.Context) {
 		var params struct {
-			Name string `uri:"name"`
+			SessionName string `uri:"name"`
 		}
 		if c.BindUri(&params) != nil {
 			return
 		}
-
-		room, err := s.UpsertRoom(params.Name)
-		if err != nil {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		peer, err := sfu.NewPeer()
-		if err != nil {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-		defer peer.Close() // TODO: remove and make the webrtc independant from websocket
-
-		peerID := room.RegisterPeer(peer)
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -93,29 +116,33 @@ func main() {
 			return ws.WriteJSON(v)
 		}
 
-		peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-			var c *webrtc.ICECandidateInit
-			if candidate != nil {
-				j := candidate.ToJSON()
-				c = &j
-			}
-			if err := writeJSON(
-				&SignalingMessageCandidate{Candidate: c},
-			); err != nil {
-				fmt.Println("error:", err)
-				return
-			}
-		})
+		peerID := cuid.New()
 
-		peer.OnNegotiationNeeded(func() {
-			if err := writeJSON(
-				&SignalingMessageNegotiationNeeded{NegotiationNeeded: true},
-			); err != nil {
+		peer := sfu.NewPeer(s)
+		defer peer.Close()
+
+		peer.OnOffer = func(offer *webrtc.SessionDescription) {
+			if err := writeJSON(&SignalingMessageOffer{Offer: offer}); err != nil {
 				fmt.Println("error:", err)
 				return
 			}
-			fmt.Printf("triggered negotiation for peer:%d\n", peerID)
-		})
+		}
+
+		peer.OnIceCandidate = func(candidate *webrtc.ICECandidateInit, _ int) {
+			if err := writeJSON(&SignalingMessageCandidate{Candidate: candidate}); err != nil {
+				fmt.Println("error:", err)
+				return
+			}
+		}
+
+		if err := peer.Join(params.SessionName, peerID, sfu.JoinConfig{
+			NoAutoSubscribe: false,
+			NoPublish:       false,
+			NoSubscribe:     false,
+		}); err != nil {
+			fmt.Println("error:", err)
+			return
+		}
 
 		for {
 			var message InboundSignalingMessage
@@ -126,23 +153,19 @@ func main() {
 				return
 			}
 
-			if message.Description != nil {
-				localDesc, err := peer.Answer(*message.Description)
-				if err != nil {
-					panic(err)
-				}
-				if err := writeJSON(
-					&SignalingMessageDescription{Description: localDesc},
-				); err != nil {
+			if message.Negotiate != nil {
+				peer.Subscriber().Negotiate()
+			} else if message.Answer != nil {
+				if err = peer.SetRemoteDescription(*message.Answer); err != nil {
 					fmt.Println("error:", err)
 					return
 				}
 			} else {
-				var c webrtc.ICECandidateInit
+				var candidate webrtc.ICECandidateInit
 				if message.Candidate != nil {
-					c = *message.Candidate
+					candidate = *message.Candidate
 				}
-				if err := peer.AddICECandidate(c); err != nil {
+				if err := peer.Trickle(candidate, 0); err != nil {
 					panic(err)
 				}
 			}
@@ -153,6 +176,11 @@ func main() {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
 
+		sessionsByID := map[string]int{}
+		for _, session := range s.GetSessions() {
+			sessionsByID[session.ID()] = len(session.Peers())
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"runtime": struct {
 				AllocMegabyte uint64 `json:"alloc_megabyte"`
@@ -161,7 +189,7 @@ func main() {
 				AllocMegabyte: m.Alloc / 1_000_000,
 				NumGoroutine:  runtime.NumGoroutine(),
 			},
-			"sfu": s,
+			"sessions": sessionsByID,
 		})
 	})
 

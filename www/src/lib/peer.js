@@ -1,7 +1,6 @@
 import { encode, decode } from '@msgpack/msgpack';
 import * as env from '$lib/env';
 import Signaling from '$lib/signaling';
-import { debounce } from 'lodash';
 
 export default class Peer {
 	constructor(name, { onMouse, onPeer, onTrack }) {
@@ -18,23 +17,9 @@ export default class Peer {
 			}
 		};
 
-		/* Debounced onnegotiationneeded handler */
-
-		this._onnegotiationneeded = debounce(async () => {
-			if (this._isOfferPending) {
-				this._isNegotiationNeeded = true;
-				return;
-			}
-			this._isNegotiationNeeded = false;
-			this._isOfferPending = true;
-			const offer = await this._peerConnection.createOffer();
-			await this._peerConnection.setLocalDescription(offer);
-			this._signaling.send({ description: this._peerConnection.localDescription });
-		}, 250);
-
 		/* Initialize signaling */
 
-		this._signaling = new Signaling(`${env.OUTPOST_BASE_URL}/rooms/${encodeURIComponent(name)}`);
+		this._signaling = new Signaling(`${env.OUTPOST_BASE_URL}/sessions/${encodeURIComponent(name)}`);
 
 		/* Create and initialize WebRTC */
 
@@ -67,8 +52,6 @@ export default class Peer {
 		});
 		this._unreliable.onmessage = onmessage;
 
-		this._onnegotiationneeded();
-
 		/* Listen for tracks */
 
 		this._peerConnection.ontrack = ({ track, streams }) => {
@@ -80,31 +63,30 @@ export default class Peer {
 
 		/* WebRTC negotiation mecanism */
 
-		this._isNegotiationNeeded = false;
-		this._isOfferPending = false;
-
 		this._peerConnection.onicecandidate = ({ candidate }) => this._signaling.send({ candidate });
 
 		this._signaling.onmessage = async (data) => {
-			if ('negotiationneeded' in data) {
-				this._onnegotiationneeded();
-			} else if ('description' in data) {
-				await this._peerConnection.setRemoteDescription(data.description);
-				this._isOfferPending = false;
-				if (this._isNegotiationNeeded) {
-					await this._onnegotiationneeded();
-				}
+			if ('offer' in data) {
+				await this._peerConnection.setRemoteDescription(data.offer);
+				await this._peerConnection.setLocalDescription(await this._peerConnection.createAnswer());
+				this._signaling.send({ answer: this._peerConnection.localDescription });
 			} else if ('candidate' in data) {
 				await this._peerConnection.addIceCandidate(data.candidate);
 			}
 		};
+
+		this.negotiate();
+	}
+
+	negotiate() {
+		return this._signaling.send({ negotiate: true });
 	}
 
 	addTracks(stream) {
 		for (const track of stream.getTracks()) {
 			this._peerConnection.addTrack(track, stream);
 		}
-		this._onnegotiationneeded();
+		this.negotiate();
 	}
 
 	removeAudioTracks() {
