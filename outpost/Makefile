@@ -37,9 +37,9 @@ format:
 	gofmt -s -w .
 
 .PHONY: deploy
-deploy: table-outpost-0
+deploy: outpost-0
 
-.PHONY: table-outpost-%
+.PHONY: outpost-0
 table-outpost-%: build
 	scp $(BIN) $@:/usr/local/bin/$(BIN)-next
 	scp .env.production $@:/usr/local/bin/
