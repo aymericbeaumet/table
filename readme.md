@@ -21,12 +21,12 @@ cd outpost && make update
 - [`www`](./www)
   * automatically deployed via Netlify CI when a new commit is pushed on master
   * https://app.netlify.com/sites/tables-app
-  * https://table.aymericbeaumet.com
+  * https://tables.aymericbeaumet.com
 
 - [`outpost`](./outpost)
   * `make deploy`
   * https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview
-  * https://table-outpost-0.aymericbeaumet.com/debug
+  * https://outpost-0.tables.aymericbeaumet.com/debug
 
 ## Ideas
 

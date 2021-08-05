@@ -5,7 +5,7 @@
 	"scripts": {
 		"update": "npm i -D @sveltejs/kit@next @sveltejs/adapter-static@next && npx ncu -u && npm i",
 		"dev": "svelte-kit dev",
-		"build": "rm -rf build && svelte-kit build",
+		"build": "svelte-kit build",
 		"preview": "svelte-kit preview",
 		"test": "true",
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
