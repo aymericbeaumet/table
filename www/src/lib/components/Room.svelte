@@ -162,6 +162,7 @@
 				facingMode: { ideal: 'user' },
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
+			simulcast: true,
 		};
 
 		const { LocalStream } = await import('ion-sdk-js');
