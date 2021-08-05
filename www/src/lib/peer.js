@@ -29,37 +29,26 @@ export default class Peer {
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
-		signal.onopen = async () => {
-			console.log('[webrtc] opened');
-			await this._client.join(name);
-			console.log('[webrtc] joined');
+		signal.onopen = async () => await this._client.join(name);
 
-			/* Publish any pending stream */
+		/* Create pre-negotiated data channels */
 
-			if (this._pendingStream) {
-				this.publish(this._pendingStream);
-				this._pendingStream = null;
-			}
+		//this._reliable = this._client.createDataChannel('reliable', {
+		//negotiated: true,
+		//id: 0,
+		////
+		//ordered: false,
+		//});
+		//this._reliable.onmessage = onmessage;
 
-			/* Create pre-negotiated data channels */
-
-			this._reliable = this._client.createDataChannel('reliable', {
-				negotiated: true,
-				id: 0,
-				//
-				ordered: false,
-			});
-			this._reliable.onmessage = onmessage;
-
-			this._unreliable = this._client.createDataChannel('unreliable', {
-				negotiated: true,
-				id: 1,
-				//
-				ordered: false,
-				maxRetransmits: 0,
-			});
-			this._unreliable.onmessage = onmessage;
-		};
+		//this._unreliable = this._client.createDataChannel('unreliable', {
+		//negotiated: true,
+		//id: 1,
+		////
+		//ordered: false,
+		//maxRetransmits: 0,
+		//});
+		//this._unreliable.onmessage = onmessage;
 
 		/* Listen for tracks */
 
