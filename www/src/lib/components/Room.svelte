@@ -49,7 +49,8 @@
 
 		const peerAudioPlayer = new AudioPlayer();
 
-		const peer = new Peer(name, {
+		const { Client } = await import('ion-sdk-js'); // TODO: top import
+		const peer = new Peer(Client, name, {
 			onMouse: throttle(function (peerID, data) {
 				let entity = cursorEntities[peerID];
 				if (!entity) {
@@ -179,7 +180,8 @@
 		}
 
 		if (constraints.audio || constraints.video) {
-			lastStream = await navigator.mediaDevices.getUserMedia(constraints);
+			const { LocalStream } = await import('ion-sdk-js');
+			lastStream = await LocalStream.getUserMedia(constraints);
 			videoStream = constraints.video ? lastStream : null;
 			peer.addTracks(lastStream);
 		}

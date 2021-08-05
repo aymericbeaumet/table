@@ -3,21 +3,22 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
-	"github.com/lucsky/cuid"
+	"github.com/pion/ion-sfu/cmd/signal/json-rpc/server"
+	log "github.com/pion/ion-sfu/pkg/logger"
 	"github.com/pion/ion-sfu/pkg/sfu"
 	webrtc "github.com/pion/webrtc/v3"
+	"github.com/sourcegraph/jsonrpc2"
+	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
 )
 
 type InboundSignalingMessage struct {
@@ -53,6 +54,9 @@ func main() {
 	_ = godotenv.Load(".env." + mode)
 
 	// Prepare SFU
+
+	logger := log.New()
+	sfu.Logger = logger
 
 	conf := sfu.Config{}
 	conf.SFU.Ballast = 0
@@ -109,67 +113,11 @@ func main() {
 		defer ws.Close()
 		ws.EnableWriteCompression(true)
 
-		var mu sync.Mutex
-		writeJSON := func(v interface{}) error {
-			mu.Lock()
-			defer mu.Unlock()
-			return ws.WriteJSON(v)
-		}
+		p := server.NewJSONSignal(sfu.NewPeer(s), logger)
+		defer p.Close()
 
-		peerID := cuid.New()
-
-		peer := sfu.NewPeer(s)
-		defer peer.Close()
-
-		peer.OnOffer = func(offer *webrtc.SessionDescription) {
-			if err := writeJSON(&SignalingMessageOffer{Offer: offer}); err != nil {
-				fmt.Println("error:", err)
-				return
-			}
-		}
-
-		peer.OnIceCandidate = func(candidate *webrtc.ICECandidateInit, _ int) {
-			if err := writeJSON(&SignalingMessageCandidate{Candidate: candidate}); err != nil {
-				fmt.Println("error:", err)
-				return
-			}
-		}
-
-		if err := peer.Join(params.SessionName, peerID, sfu.JoinConfig{
-			NoAutoSubscribe: false,
-			NoPublish:       false,
-			NoSubscribe:     false,
-		}); err != nil {
-			fmt.Println("error:", err)
-			return
-		}
-
-		for {
-			var message InboundSignalingMessage
-			if err := ws.ReadJSON(&message); err != nil {
-				if _, ok := err.(*websocket.CloseError); !ok {
-					panic(err)
-				}
-				return
-			}
-
-			if message.Negotiate != nil {
-				peer.Subscriber().Negotiate()
-			} else if message.Answer != nil {
-				if err = peer.SetRemoteDescription(*message.Answer); err != nil {
-					fmt.Println("error:", err)
-					return
-				}
-			} else {
-				var candidate webrtc.ICECandidateInit
-				if message.Candidate != nil {
-					candidate = *message.Candidate
-				}
-				if err := peer.Trickle(candidate, 0); err != nil {
-					panic(err)
-				}
-			}
-		}
+		jc := jsonrpc2.NewConn(c, websocketjsonrpc2.NewObjectStream(ws), p)
+		<-jc.DisconnectNotify()
 	})
 
 	r.GET("/debug", func(c *gin.Context) {
@@ -203,8 +151,8 @@ func main() {
 	}
 
 	if port == "letsencrypt" {
-		log.Fatal(autotls.Run(r, hostname))
+		panic(autotls.Run(r, hostname))
 	} else {
-		log.Fatal(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
+		panic(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
 	}
 }

@@ -12,10 +12,10 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.11 // indirect
-	github.com/lucsky/cuid v1.0.2
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/pion/ion-sfu v1.10.8
 	github.com/pion/webrtc/v3 v3.0.32
+	github.com/sourcegraph/jsonrpc2 v0.0.0-20210201082850-366fbb520750
 	github.com/ugorji/go v1.2.6 // indirect
 	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
