@@ -29,37 +29,35 @@ export default class Peer {
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
-		this._client.onconnectionstatechange = () => {
-			console.log(`[webrtc] ${this._client.connectionState}`);
+		signal.onopen = async () => {
+			await this._client.join(name);
 
-			if (this._client.connectionState === 'connected') {
-				/* Create pre-negotiated data channels */
+			/* Publish any pending stream */
 
-				this._reliable = this._client.createDataChannel('reliable', {
-					negotiated: true,
-					id: 0,
-					//
-					ordered: false,
-				});
-				this._reliable.onmessage = onmessage;
-
-				this._unreliable = this._client.createDataChannel('unreliable', {
-					negotiated: true,
-					id: 1,
-					//
-					ordered: false,
-					maxRetransmits: 0,
-				});
-				this._unreliable.onmessage = onmessage;
+			if (this._pendingStream) {
+				this.publish(this._pendingStream);
+				this._pendingStream = null;
 			}
+
+			/* Create pre-negotiated data channels */
+
+			this._reliable = this._client.createDataChannel('reliable', {
+				negotiated: true,
+				id: 0,
+				//
+				ordered: false,
+			});
+			this._reliable.onmessage = onmessage;
+
+			this._unreliable = this._client.createDataChannel('unreliable', {
+				negotiated: true,
+				id: 1,
+				//
+				ordered: false,
+				maxRetransmits: 0,
+			});
+			this._unreliable.onmessage = onmessage;
 		};
-
-		this._client.onsignalingstatechange = () =>
-			console.log(`[signal] ${this._client.signalingState}`);
-
-		/* Join the room */
-
-		signal.onopen = () => this._client.join(name);
 
 		/* Listen for tracks */
 
@@ -70,11 +68,17 @@ export default class Peer {
 	}
 
 	publish(stream) {
-		clearInterval(this._publishTimeout);
+		if (this._publishedStream) {
+			this._publishedStream.unpublish();
+			this._publishedStream = null;
+		}
+
 		try {
-			return this._client.publish(stream);
+			this._client.publish(stream);
+			this._pendingStream = null;
+			this._publishedStream = stream;
 		} catch (error) {
-			this._publishTimeout = setTimeout(() => this.publish(stream), 1000);
+			this._pendingStream = stream;
 		}
 	}
 
