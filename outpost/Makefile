@@ -1,4 +1,4 @@
-BIN := outpost
+BIN := outpost-production
 
 .PHONY: all
 all: build test lint
@@ -39,14 +39,13 @@ format:
 .PHONY: deploy
 deploy: outpost-0
 
-.PHONY: outpost-0
-table-outpost-%: build
-	scp $(BIN) $@:/usr/local/bin/$(BIN)-next
-	scp .env.production $@:/usr/local/bin/
+.PHONY: outpost-%
+outpost-%: build
+	scp $(BIN) .env.production $@:/usr/local/bin/
 	scp outpost.service $@:/etc/systemd/system/
 	ssh $@ " \
 		systemctl enable outpost.service; \
 		systemctl stop outpost.service; \
-		mv /usr/local/bin/$(BIN)-next /usr/local/bin/$(BIN); \
+		mv /usr/local/bin/$(BIN) /usr/local/bin/outpost; \
 		systemctl start outpost.service; \
 	"
