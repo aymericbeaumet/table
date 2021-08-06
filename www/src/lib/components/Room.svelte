@@ -35,12 +35,12 @@
 	let isMouseDown = false;
 	let onMouseMove, onMouseDown, onMouseUp;
 
-	onMount(async function () {
-		// Some hashmaps indexed by peer ids
-		const latestKnownStatus = {};
-		const cursorEntities = {};
-		const videoEntities = {};
+	// Some hashmaps indexed by peer ids
+	const latestKnownStatus = {};
+	const cursorEntities = {};
+	const videoEntities = {};
 
+	onMount(async function () {
 		const backgroundAudioPlayer = new AudioPlayer();
 		backgroundAudioPlayer.setLoop(true);
 		backgroundAudioPlayer.setVolume(0.3);
@@ -101,6 +101,21 @@
 				}
 			},
 
+			onSpeaker: function (streamIDs) {
+				for (const topEntity of topEntities) {
+					topEntity[2].active = false;
+				}
+
+				for (const streamID of streamIDs) {
+					let entity = videoEntities[streamID];
+					if (entity) {
+						entity[2].active = true;
+					}
+				}
+
+				topEntities = topEntities;
+			},
+
 			onTrack: function (_peerID, _track, stream) {
 				let entity = videoEntities[stream.id];
 				if (!entity) {
@@ -147,7 +162,6 @@
 	});
 
 	let lastStream = null;
-	let videoStream = null;
 
 	async function initLocalStream(peer) {
 		const constraints = {
@@ -169,14 +183,16 @@
 		const stream = await LocalStream.getUserMedia(constraints);
 		if (!lastStream) {
 			lastStream = stream;
-			videoStream = stream;
 			peer.publish(stream);
+			const entity = ['local', EntityVideo, { srcObject: stream, muted: true, toggles: true }];
+			videoEntities[stream.id] = entity;
+			topEntities = [...topEntities, entity];
 		}
 	}
 </script>
 
 <Badge
-	count={1 + topEntities.length}
+	count={topEntities.length}
 	color={faviconColor}
 	background={faviconBackground}
 	href="/favicon.png"
@@ -194,8 +210,6 @@
 		"
 	>
 		<header style="background: repeat url({leatherPng});">
-			<EntityVideo srcObject={videoStream} muted={true} toggles={true} />
-
 			{#each topEntities as [_, component, props]}
 				<div>
 					<svelte:component this={component} {...props} />

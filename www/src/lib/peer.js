@@ -3,7 +3,7 @@ import * as env from '$lib/env';
 import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
 
 export default class Peer {
-	constructor(Client, name, { onMouse, onPeer, onTrack, onTrackRemoved }) {
+	constructor(Client, name, { onMouse, onPeer, onSpeaker, onTrack, onTrackRemoved }) {
 		const onmessage = (event) => {
 			const { peerID, payload } = decode(event.data);
 
@@ -28,12 +28,7 @@ export default class Peer {
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
-		/* Listen for tracks and data channels */
-
-		this._client.ontrack = (track, stream) => {
-			stream.onremovetrack = (track) => onTrackRemoved('', track, stream);
-			onTrack('', track, stream);
-		};
+		/* Listen for datachannels, speakers and tracks */
 
 		this._client.ondatachannel = (event) => {
 			const dc = event.channel;
@@ -49,6 +44,13 @@ export default class Peer {
 				default:
 					throw new Error(`implementation error: unexpected channel "${dc.label}"`);
 			}
+		};
+
+		this._client.onspeaker = onSpeaker;
+
+		this._client.ontrack = (track, stream) => {
+			stream.onremovetrack = (track) => onTrackRemoved('', track, stream);
+			onTrack('', track, stream);
 		};
 
 		/* Join when the signaling channel is ready */

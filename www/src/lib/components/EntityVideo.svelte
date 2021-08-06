@@ -2,6 +2,7 @@
 	import videoPosterPng from '$lib/assets/video-poster.png';
 	import { audioEnabled, videoEnabled } from '$lib/stores';
 
+	export let active = false;
 	export let muted = false;
 	export let srcObject = null;
 	export let toggles = false;
@@ -26,6 +27,7 @@
 	<!-- svelte-ignore a11y-media-has-caption -->
 	<video
 		bind:this={video}
+		class:active
 		autoplay
 		disablepictureinpicture
 		disableremoteplayback
@@ -55,6 +57,10 @@
 		width: 100%;
 		height: 100%;
 		border: 1px solid #997447;
+	}
+
+	video.active {
+		border: 1px solid red;
 	}
 
 	footer {
