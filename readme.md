@@ -1,4 +1,4 @@
-# table
+# tables
 
 ## Commands
 
