@@ -2,7 +2,6 @@
 	import videoPosterPng from '$lib/assets/video-poster.png';
 	import { audioEnabled, videoEnabled } from '$lib/stores';
 
-	export let label = '';
 	export let muted = false;
 	export let srcObject = null;
 	export let toggles = false;
