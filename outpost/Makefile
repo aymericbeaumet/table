@@ -51,5 +51,5 @@ outpost-%: build
 		systemctl enable outpost.service; \
 		systemctl stop outpost.service; \
 		mv /usr/local/bin/$(BIN) /usr/local/bin/outpost; \
-		systemctl start outpost.service; \
+		systemctl restart outpost.service; \
 	"
