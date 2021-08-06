@@ -19,7 +19,7 @@
 		"svelte-favicon-badge": "^1.0.0"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-static": "^1.0.0-next.15",
+		"@sveltejs/adapter-static": "^1.0.0-next.16",
 		"@sveltejs/kit": "^1.0.0-next.142",
 		"eslint": "^7.32.0",
 		"eslint-config-prettier": "^8.3.0",
