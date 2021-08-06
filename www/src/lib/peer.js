@@ -6,7 +6,6 @@ export default class Peer {
 	constructor(Client, name, { onMouse, onSpeaker, onTrack, onTrackRemoved }) {
 		const onmessage = (event) => {
 			const { streamID, payload } = decode(event.data);
-			console.log({ streamID, payload });
 
 			if (payload.MOUSE) {
 				onMouse(streamID, payload.MOUSE);
