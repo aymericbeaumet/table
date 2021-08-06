@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { inferEntities } from '$lib/entity';
+	import Entity from '$lib/entity';
 	import { throttle } from 'lodash';
 
 	let visible = false;
@@ -45,7 +45,7 @@
 
 	function onInput(event) {
 		const value = event.target.value.trim();
-		entities = inferEntities(value);
+		entities = Entity.infer(value);
 		selectedIndex = 0;
 	}
 
@@ -116,8 +116,8 @@
 				/>
 
 				<ul on:mousemove={onMouseMove}>
-					{#each entities as [kind, _, props], i}
-						<li class:selected={i === selectedIndex}>{kind} {JSON.stringify(props)}</li>
+					{#each entities as entity, i}
+						<li class:selected={i === selectedIndex}>{JSON.stringify(entity)}</li>
 					{/each}
 				</ul>
 

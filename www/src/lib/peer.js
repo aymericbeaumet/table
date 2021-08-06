@@ -1,14 +1,17 @@
 import { encode, decode } from '@msgpack/msgpack';
 import * as env from '$lib/env';
 import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
+import Entity from '$lib/entity';
 
 export default class Peer {
-	constructor(Client, name, { onMouse, onSpeaker, onTrack, onTrackRemoved }) {
+	constructor(Client, name, { onEntity, onSpeaker, onTrack, onTrackRemoved }) {
 		const onmessage = (event) => {
 			const { streamID, payload } = decode(event.data);
 
-			if (payload.MOUSE) {
-				onMouse(streamID, payload.MOUSE);
+			if (payload.ENTITY) {
+				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);
+				entity.id = payload.ENTITY.id || streamID;
+				onEntity(streamID, entity);
 			}
 		};
 

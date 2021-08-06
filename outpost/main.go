@@ -30,8 +30,18 @@ type DataChannelEnvelope struct {
 func attachBroadcastChannel(s *sfu.SFU, label string) {
 	dc := s.NewDatachannel(label)
 	dc.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
+		p := args.Peer.Publisher()
+		if p == nil {
+			return
+		}
+
+		tracks := p.Tracks()
+		if len(tracks) == 0 {
+			return
+		}
+
 		data, err := msgpack.Marshal(DataChannelEnvelope{
-			StreamID: args.Peer.Publisher().Tracks()[0].StreamID(),
+			StreamID: tracks[0].StreamID(),
 			Payload:  args.Message.Data,
 		})
 		if err != nil {

@@ -1,10 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
-	import EntityVideo from './EntityVideo.svelte';
+	import Avatar from './Avatar.svelte';
 	import SmartBar from './SmartBar.svelte';
 	import Peer from '$lib/peer';
 	import { throttle } from 'lodash';
-	import EntityCursor from './EntityCursor.svelte';
 	import { removeFromArray } from '$lib/utils';
 	import AudioPlayer from '$lib/audio-player';
 	import murlocOGG from '$lib/assets/murloc.ogg';
@@ -15,6 +14,7 @@
 	import leatherPng from '$lib/assets/leather.png';
 	import campfireMp3 from '$lib/assets/campfire.mp3';
 	import { backgroundURL } from '$lib/stores';
+	import Entity from '$lib/entity';
 
 	const MAX_FPS = 30;
 	const faviconBackground = '#FF0000';
@@ -22,20 +22,17 @@
 
 	export let name;
 
-	const cursorEntitiesByStreamID = {};
-	const videoEntitiesByStreamID = {};
+	const avatarsByStreamID = {};
+	let avatars = [];
 
-	let topEntities = [];
+	const entitiesByKey = {};
 	let entities = [];
 
-	function onSmartBarEntity(event) {
-		const entity = event.detail;
-		entities = [...entities, entity];
-		// TODO: send entity through network
-	}
-
+	const cursor = new Entity('cursor');
 	let isMouseDown = false;
 	let onMouseMove, onMouseDown, onMouseUp;
+
+	let onSmartBarEntity;
 
 	onMount(async function () {
 		const backgroundAudioPlayer = new AudioPlayer();
@@ -47,82 +44,80 @@
 
 		const { Client } = await import('ion-sdk-js'); // TODO: top import
 		const peer = new Peer(Client, name, {
-			onMouse: throttle(function (streamID, data) {
-				let entity = cursorEntitiesByStreamID[streamID];
-				if (!entity) {
-					entity = ['cursor', EntityCursor, { fps: MAX_FPS }];
-					cursorEntitiesByStreamID[streamID] = entity;
-					entities = [...entities, entity];
+			onEntity: function (_streamID, entity) {
+				const key = `${entity.kind}:${entity.id}`;
+				let e = entitiesByKey[key];
+				if (!e) {
+					e = entity.asComponentProps();
+					entitiesByKey[key] = e;
+					entities = [...entities, e];
 				}
-				entity[2].x = data.clientX;
-				entity[2].y = data.clientY;
-				entity[2].isDown = data.isDown;
+				e[1] = entity.props;
 				entities = entities;
-			}, 1000 / MAX_FPS),
+			},
 
 			onSpeaker: function (streamIDs) {
-				for (const topEntity of topEntities) {
-					topEntity[2].active = false;
+				for (const avatar of avatars) {
+					avatar.active = false;
 				}
 				for (const streamID of streamIDs) {
-					let entity = videoEntitiesByStreamID[streamID];
-					if (entity) {
-						entity[2].active = true;
-					}
+					avatarsByStreamID[streamID].active = true;
 				}
-				topEntities = topEntities;
+				avatars = avatars;
 			},
 
 			onTrack: function (stream) {
-				let entity = videoEntitiesByStreamID[stream.id];
-				if (!entity) {
-					entity = ['peer', EntityVideo, {}];
-					videoEntitiesByStreamID[stream.id] = entity;
-					topEntities = [...topEntities, entity];
+				let avatar = avatarsByStreamID[stream.id];
+				if (!avatar) {
+					avatar = {};
+					avatarsByStreamID[stream.id] = avatar;
+					avatars = [...avatars, avatar];
 
 					peerAudioPlayer.play(murlocOGG);
 				}
-				entity[2].srcObject = stream;
-				topEntities = topEntities;
+				avatar.srcObject = stream;
+				avatars = avatars;
 			},
 
 			onTrackRemoved: function (stream) {
-				const cursorEntity = cursorEntitiesByStreamID[stream.id];
-				if (cursorEntity) {
-					delete cursorEntitiesByStreamID[stream.id];
-					entities = removeFromArray(entities, cursorEntity);
-				}
-
-				const videoEntity = videoEntitiesByStreamID[stream.id];
-				if (videoEntity) {
-					delete videoEntitiesByStreamID[stream.id];
-					topEntities = removeFromArray(topEntities, videoEntity);
+				const avatar = avatarsByStreamID[stream.id];
+				if (avatar) {
+					delete avatarsByStreamID[stream.id];
+					avatars = removeFromArray(avatars, avatar);
 				}
 
 				peerAudioPlayer.play(stealthOGG);
 			},
 		});
 
-		function sendMouseEvent(event) {
-			peer.unreliable({
-				MOUSE: { clientX: event.clientX, clientY: event.clientY, isDown: isMouseDown },
-			});
+		function onMouseEvent(event) {
+			cursor.props.clientX = event.clientX;
+			cursor.props.clientY = event.clientY;
+			cursor.props.isDown = isMouseDown;
+			peer.unreliable({ ENTITY: cursor });
 		}
 
 		onMouseDown = function (event) {
 			isMouseDown = event.which === 1;
-			sendMouseEvent(event);
+			onMouseEvent(event);
 		};
 
 		onMouseMove = throttle(function (event) {
-			sendMouseEvent(event);
+			onMouseEvent(event);
 		}, 1000 / MAX_FPS);
 
 		onMouseUp = function (event) {
 			isMouseDown = false;
-			sendMouseEvent(event);
+			onMouseEvent(event);
 		};
 
+		onSmartBarEntity = function (event) {
+			const entity = event.detail;
+			entities = [...entities, entity.asComponentProps()];
+			peer.reliable({ ENTITY: entity });
+		};
+
+		// Acquire stream
 		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
 		const stream = await LocalStream.getUserMedia({
 			audio: {
@@ -138,15 +133,17 @@
 			},
 			simulcast: true,
 		});
+		// Immediate UI feedback
+		const avatar = { srcObject: stream, muted: true };
+		avatarsByStreamID[stream.id] = avatar;
+		avatars = [...avatars, avatar];
+		// WebRTC publish
 		peer.publish(stream);
-		const entity = ['local', EntityVideo, { srcObject: stream, muted: true }];
-		videoEntitiesByStreamID[stream.id] = entity;
-		topEntities = [...topEntities, entity];
 	});
 </script>
 
 <Badge
-	count={topEntities.length}
+	count={avatars.length}
 	color={faviconColor}
 	background={faviconBackground}
 	href="/favicon.png"
@@ -164,14 +161,12 @@
 		"
 	>
 		<header style="background: repeat url({leatherPng});">
-			{#each topEntities as [_, component, props]}
-				<div>
-					<svelte:component this={component} {...props} />
-				</div>
+			{#each avatars as props}
+				<Avatar {...props} />
 			{/each}
 		</header>
 
-		{#each entities as [_, component, props]}
+		{#each entities as [component, props]}
 			<div class="entity">
 				<svelte:component this={component} {...props} />
 			</div>

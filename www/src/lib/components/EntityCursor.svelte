@@ -4,8 +4,8 @@
 
 	export let fps;
 
-	export let x;
-	export let y;
+	export let clientX;
+	export let clientY;
 	export let isDown = false;
 </script>
 
@@ -20,8 +20,8 @@
 	  transition-property: top, left;
 	  transition-duration: ${1 / fps}s;
 	  transition-timing-function: linear;
-	  left: ${x}px;
-	  top: ${y}px;
+	  left: ${clientX}px;
+	  top: ${clientY}px;
 	  pointer-events: none;
 	  user-select: none;
 	`}
