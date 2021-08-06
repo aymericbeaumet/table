@@ -3,16 +3,13 @@ import * as env from '$lib/env';
 import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
 
 export default class Peer {
-	constructor(Client, name, { onMouse, onPeer, onSpeaker, onTrack, onTrackRemoved }) {
+	constructor(Client, name, { onMouse, onSpeaker, onTrack, onTrackRemoved }) {
 		const onmessage = (event) => {
-			const { peerID, payload } = decode(event.data);
+			const { streamID, payload } = decode(event.data);
+			console.log({ streamID, payload });
 
 			if (payload.MOUSE) {
-				onMouse(peerID, payload.MOUSE);
-			}
-
-			if (payload.PEER) {
-				onPeer(peerID, payload.PEER);
+				onMouse(streamID, payload.MOUSE);
 			}
 		};
 
@@ -48,9 +45,9 @@ export default class Peer {
 
 		this._client.onspeaker = onSpeaker;
 
-		this._client.ontrack = (track, stream) => {
-			stream.onremovetrack = (track) => onTrackRemoved('', track, stream);
-			onTrack('', track, stream);
+		this._client.ontrack = (_track, stream) => {
+			stream.onremovetrack = () => onTrackRemoved(stream);
+			onTrack(stream);
 		};
 
 		/* Join when the signaling channel is ready */

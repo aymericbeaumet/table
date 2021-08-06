@@ -17,14 +17,16 @@
 	import { audioEnabled, videoEnabled, backgroundURL } from '$lib/stores';
 
 	const MAX_FPS = 30;
+	const faviconBackground = '#FF0000';
+	const faviconColor = '#FFFFFF';
 
 	export let name;
 
+	const cursorEntitiesByStreamID = {};
+	const videoEntitiesByStreamID = {};
+
 	let topEntities = [];
 	let entities = [];
-
-	let faviconBackground = '#FF0000';
-	let faviconColor = '#FFFFFF';
 
 	function onSmartBarEntity(event) {
 		const entity = event.detail;
@@ -34,11 +36,6 @@
 
 	let isMouseDown = false;
 	let onMouseMove, onMouseDown, onMouseUp;
-
-	// Some hashmaps indexed by peer ids
-	const latestKnownStatus = {};
-	const cursorEntities = {};
-	const videoEntities = {};
 
 	onMount(async function () {
 		const backgroundAudioPlayer = new AudioPlayer();
@@ -50,11 +47,11 @@
 
 		const { Client } = await import('ion-sdk-js'); // TODO: top import
 		const peer = new Peer(Client, name, {
-			onMouse: throttle(function (peerID, data) {
-				let entity = cursorEntities[peerID];
+			onMouse: throttle(function (streamID, data) {
+				let entity = cursorEntitiesByStreamID[streamID];
 				if (!entity) {
 					entity = ['cursor', EntityCursor, { fps: MAX_FPS }];
-					cursorEntities[peerID] = entity;
+					cursorEntitiesByStreamID[streamID] = entity;
 					entities = [...entities, entity];
 				}
 				entity[2].x = data.clientX;
@@ -63,76 +60,46 @@
 				entities = entities;
 			}, 1000 / MAX_FPS),
 
-			onPeer: function (peerID, data) {
-				// Make this handler idempotent
-				if (latestKnownStatus[peerID] === data.status) {
-					return;
-				}
-				latestKnownStatus[peerID] = data.status;
-
-				if (data.status === 'online') {
-					peerAudioPlayer.play(murlocOGG);
-
-					if (!videoEntities[peerID]) {
-						const entity = ['peer', EntityVideo, {}];
-						videoEntities[peerID] = entity;
-						topEntities = [...topEntities, entity];
-					}
-
-					return;
-				}
-
-				if (data.status === 'offline') {
-					peerAudioPlayer.play(stealthOGG);
-
-					const cursorEntity = cursorEntities[peerID];
-					if (cursorEntity) {
-						delete cursorEntities[peerID];
-						entities = removeFromArray(entities, cursorEntity);
-					}
-
-					const videoEntity = videoEntities[peerID];
-					if (videoEntity) {
-						delete videoEntities[peerID];
-						topEntities = removeFromArray(topEntities, videoEntity);
-					}
-
-					return;
-				}
-			},
-
 			onSpeaker: function (streamIDs) {
 				for (const topEntity of topEntities) {
 					topEntity[2].active = false;
 				}
-
 				for (const streamID of streamIDs) {
-					let entity = videoEntities[streamID];
+					let entity = videoEntitiesByStreamID[streamID];
 					if (entity) {
 						entity[2].active = true;
 					}
 				}
-
 				topEntities = topEntities;
 			},
 
-			onTrack: function (_peerID, _track, stream) {
-				let entity = videoEntities[stream.id];
+			onTrack: function (stream) {
+				let entity = videoEntitiesByStreamID[stream.id];
 				if (!entity) {
 					entity = ['peer', EntityVideo, {}];
-					videoEntities[stream.id] = entity;
+					videoEntitiesByStreamID[stream.id] = entity;
 					topEntities = [...topEntities, entity];
+
+					peerAudioPlayer.play(murlocOGG);
 				}
 				entity[2].srcObject = stream;
 				topEntities = topEntities;
 			},
 
-			onTrackRemoved: function (_peerID, _track, stream) {
-				const videoEntity = videoEntities[stream.id];
+			onTrackRemoved: function (stream) {
+				const cursorEntity = cursorEntitiesByStreamID[stream.id];
+				if (cursorEntity) {
+					delete cursorEntitiesByStreamID[stream.id];
+					entities = removeFromArray(entities, cursorEntity);
+				}
+
+				const videoEntity = videoEntitiesByStreamID[stream.id];
 				if (videoEntity) {
-					delete videoEntities[stream.id];
+					delete videoEntitiesByStreamID[stream.id];
 					topEntities = removeFromArray(topEntities, videoEntity);
 				}
+
+				peerAudioPlayer.play(stealthOGG);
 			},
 		});
 
@@ -185,7 +152,7 @@
 			lastStream = stream;
 			peer.publish(stream);
 			const entity = ['local', EntityVideo, { srcObject: stream, muted: true, toggles: true }];
-			videoEntities[stream.id] = entity;
+			videoEntitiesByStreamID[stream.id] = entity;
 			topEntities = [...topEntities, entity];
 		}
 	}

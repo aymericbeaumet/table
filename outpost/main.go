@@ -23,20 +23,21 @@ import (
 )
 
 type DataChannelEnvelope struct {
-	PeerID  string             `msgpack:"peerID"`
-	Payload msgpack.RawMessage `msgpack:"payload"`
+	StreamID string             `msgpack:"streamID"`
+	Payload  msgpack.RawMessage `msgpack:"payload"`
 }
 
 func attachBroadcastChannel(s *sfu.SFU, label string) {
 	dc := s.NewDatachannel(label)
 	dc.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
 		data, err := msgpack.Marshal(DataChannelEnvelope{
-			PeerID:  args.Peer.ID(),
-			Payload: args.Message.Data,
+			StreamID: args.Peer.Publisher().Tracks()[0].StreamID(),
+			Payload:  args.Message.Data,
 		})
 		if err != nil {
 			return
 		}
+
 		for _, dc := range args.Peer.Session().GetDataChannels("", label) {
 			if dc != args.DataChannel {
 				_ = dc.Send(data)
