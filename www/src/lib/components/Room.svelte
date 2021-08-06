@@ -14,7 +14,7 @@
 	import Badge from 'svelte-favicon-badge';
 	import leatherPng from '$lib/assets/leather.png';
 	import campfireMp3 from '$lib/assets/campfire.mp3';
-	import { audioEnabled, videoEnabled, backgroundURL } from '$lib/stores';
+	import { backgroundURL } from '$lib/stores';
 
 	const MAX_FPS = 30;
 	const faviconBackground = '#FF0000';
@@ -123,15 +123,8 @@
 			sendMouseEvent(event);
 		};
 
-		initLocalStream(peer);
-		audioEnabled.subscribe(() => initLocalStream(peer));
-		videoEnabled.subscribe(() => initLocalStream(peer));
-	});
-
-	let lastStream = null;
-
-	async function initLocalStream(peer) {
-		const constraints = {
+		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
+		const stream = await LocalStream.getUserMedia({
 			audio: {
 				autoGainControl: true,
 				echoCancellation: true,
@@ -144,18 +137,12 @@
 				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
 			},
 			simulcast: true,
-		};
-
-		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
-		const stream = await LocalStream.getUserMedia(constraints);
-		if (!lastStream) {
-			lastStream = stream;
-			peer.publish(stream);
-			const entity = ['local', EntityVideo, { srcObject: stream, muted: true, toggles: true }];
-			videoEntitiesByStreamID[stream.id] = entity;
-			topEntities = [...topEntities, entity];
-		}
-	}
+		});
+		peer.publish(stream);
+		const entity = ['local', EntityVideo, { srcObject: stream, muted: true }];
+		videoEntitiesByStreamID[stream.id] = entity;
+		topEntities = [...topEntities, entity];
+	});
 </script>
 
 <Badge
