@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,31 +17,32 @@ import (
 	log "github.com/pion/ion-sfu/pkg/logger"
 	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
 	"github.com/pion/ion-sfu/pkg/sfu"
-	webrtc "github.com/pion/webrtc/v3"
 	"github.com/sourcegraph/jsonrpc2"
 	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
-type InboundSignalingMessage struct {
-	SignalingMessageAnswer
-	SignalingMessageCandidate
-	SignalingMessageNegotiate
+type DataChannelEnvelope struct {
+	PeerID  string             `msgpack:"peerID"`
+	Payload msgpack.RawMessage `msgpack:"payload"`
 }
 
-type SignalingMessageAnswer struct {
-	Answer *webrtc.SessionDescription `json:"answer"`
-}
-
-type SignalingMessageCandidate struct {
-	Candidate *webrtc.ICECandidateInit `json:"candidate"`
-}
-
-type SignalingMessageNegotiate struct {
-	Negotiate *bool `json:"negotiate"`
-}
-
-type SignalingMessageOffer struct {
-	Offer *webrtc.SessionDescription `json:"offer"`
+func attachBroadcastChannel(s *sfu.SFU, label string) {
+	dc := s.NewDatachannel(label)
+	dc.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
+		data, err := msgpack.Marshal(DataChannelEnvelope{
+			PeerID:  args.Peer.ID(),
+			Payload: args.Message.Data,
+		})
+		if err != nil {
+			return
+		}
+		for _, dc := range args.Peer.Session().GetDataChannels("", label) {
+			if dc != args.DataChannel {
+				dc.Send(data)
+			}
+		}
+	})
 }
 
 func main() {
@@ -80,8 +82,12 @@ func main() {
 	conf.Turn.Enabled = false
 
 	s := sfu.NewSFU(conf)
-	dc := s.NewDatachannel(sfu.APIChannelLabel)
-	dc.Use(datachannel.SubscriberAPI)
+
+	apiDC := s.NewDatachannel(sfu.APIChannelLabel)
+	apiDC.Use(datachannel.SubscriberAPI)
+
+	attachBroadcastChannel(s, "reliable")   // TODO: ordered=false
+	attachBroadcastChannel(s, "unreliable") // TODO: ordered=false, maxRetransmits=0
 
 	// HTTP server
 

@@ -5,15 +5,14 @@ import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
 export default class Peer {
 	constructor(Client, name, { onMouse, onPeer, onTrack, onTrackRemoved }) {
 		const onmessage = (event) => {
-			const { peerID, data } = decode(event.data);
+			const { peerID, payload } = decode(event.data);
 
-			if (data.MOUSE) {
-				onMouse(peerID, data.MOUSE);
+			if (payload.MOUSE) {
+				onMouse(peerID, payload.MOUSE);
 			}
 
-			if (data.PEER) {
-				console.log(`[onpeer] peer:${peerID} ${data.PEER.status}`);
-				onPeer(peerID, data.PEER);
+			if (payload.PEER) {
+				onPeer(peerID, payload.PEER);
 			}
 		};
 
@@ -29,33 +28,32 @@ export default class Peer {
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
 		});
 
-		signal.onopen = () => this._client.join(name);
-
-		/* Create pre-negotiated data channels */
-
-		//this._reliable = this._client.createDataChannel('reliable', {
-		//negotiated: true,
-		//id: 0,
-		////
-		//ordered: false,
-		//});
-		//this._reliable.onmessage = onmessage;
-
-		//this._unreliable = this._client.createDataChannel('unreliable', {
-		//negotiated: true,
-		//id: 1,
-		////
-		//ordered: false,
-		//maxRetransmits: 0,
-		//});
-		//this._unreliable.onmessage = onmessage;
-
-		/* Listen for tracks */
+		/* Listen for tracks and data channels */
 
 		this._client.ontrack = (track, stream) => {
 			stream.onremovetrack = (track) => onTrackRemoved('', track, stream);
 			onTrack('', track, stream);
 		};
+
+		this._client.ondatachannel = (event) => {
+			const dc = event.channel;
+			switch (dc.label) {
+				case 'reliable':
+					this._reliable = dc;
+					dc.onmessage = onmessage;
+					return;
+				case 'unreliable':
+					this._unreliable = dc;
+					dc.onmessage = onmessage;
+					return;
+				default:
+					throw new Error(`implementation error: unexpected channel "${dc.label}"`);
+			}
+		};
+
+		/* Join when the signaling channel is ready */
+
+		signal.onopen = () => this._client.join(name);
 	}
 
 	publish(stream) {

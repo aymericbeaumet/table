@@ -21,6 +21,7 @@ require (
 	github.com/prometheus/procfs v0.7.1 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.1.0
 	github.com/ugorji/go v1.2.6 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.3.4
 	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )
