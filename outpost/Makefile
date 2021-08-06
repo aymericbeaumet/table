@@ -7,6 +7,10 @@ all: build test lint
 dependencies:
 	brew install go golangci/tap/golangci-lint watchexec
 
+.PHONY: ci
+ci:
+	go mod download
+
 .PHONY: update
 update:
 	go get -u && go mod tidy

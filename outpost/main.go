@@ -39,7 +39,7 @@ func attachBroadcastChannel(s *sfu.SFU, label string) {
 		}
 		for _, dc := range args.Peer.Session().GetDataChannels("", label) {
 			if dc != args.DataChannel {
-				dc.Send(data)
+				_ = dc.Send(data)
 			}
 		}
 	})
