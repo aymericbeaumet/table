@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
@@ -167,9 +166,5 @@ func main() {
 		port = "8080"
 	}
 
-	if port == "letsencrypt" {
-		panic(autotls.Run(r, hostname))
-	} else {
-		panic(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
-	}
+	panic(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
 }
