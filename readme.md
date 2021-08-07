@@ -56,10 +56,14 @@ cd outpost && make update
 - EntityPDF to read documents synchronously
 - Add border around cameras + cursors to know who each cursor belongs to
 - Settings screen to change background + music and share to all people
-- tables.quest
-- tables.app
-- tabl.es
-- tables.club
+- plug jointable.io
+- specialize Iframe entity for YouTube with pause/advance capabilities (
+https://developers.google.com/youtube/iframe_api_reference)
+- Specialize Iframe entity for Twitch to make sure it cannot be paused
+https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-for-live-streams-and-vods
+- Restrict to YouTube videos + twitch live
+- integrate YouTube lives
+- integrate YouTube videos
 
 ## Pro Plan
 
