@@ -13,7 +13,7 @@
 
 	<section>
 		<h3>Background image</h3>
-		{#each Object.values(backgroundImages) as resource}
+		{#each backgroundImages as resource}
 			<label>
 				<input type="radio" bind:group={$backgroundImage} value={resource} />
 				<img src={resource.url} alt={resource.name} />
@@ -23,7 +23,7 @@
 
 	<section>
 		<h3>Background sound</h3>
-		{#each Object.values(backgroundSounds) as resource}
+		{#each backgroundSounds as resource}
 			<label>
 				<input type="radio" bind:group={$backgroundSound} value={resource} />
 				{resource.name}

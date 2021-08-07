@@ -3,7 +3,7 @@
 	import Avatar from './Avatar.svelte';
 	import SmartBar from './SmartBar.svelte';
 	import Peer from '$lib/peer';
-	import { throttle } from 'lodash';
+	import { after, throttle } from 'lodash';
 	import { removeFromArray } from '$lib/utils';
 	import AudioPlayer from '$lib/audio-player';
 	import murlocOGG from '$lib/assets/murloc.ogg';
@@ -17,6 +17,7 @@
 	import { MAX_FPS } from '$lib/env';
 	import SettingsSVG from '$lib/assets/settings.svg';
 	import Settings from '$lib/components/Settings.svelte';
+	import { backgroundImages, backgroundSounds } from '$lib/resources';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -47,6 +48,14 @@
 
 		const { Client } = await import('ion-sdk-js'); // TODO: top import
 		const peer = new Peer(Client, name, {
+			onBackgroundImage: function (_streamID, id) {
+				backgroundImage.set(backgroundImages.find((r) => r.id === id));
+			},
+
+			onBackgroundSound: function (_streamID, id) {
+				backgroundSound.set(backgroundSounds.find((r) => r.id === id));
+			},
+
 			onEntity: function (_streamID, entity) {
 				let e = entitiesByKey[entity.key];
 				if (!e) {
@@ -89,6 +98,18 @@
 				}
 			},
 		});
+
+		backgroundImage.subscribe(
+			after(1, (resource) => {
+				peer.reliable({ BACKGROUND_IMAGE: resource.id });
+			}),
+		);
+
+		backgroundSound.subscribe(
+			after(1, (resource) => {
+				peer.reliable({ BACKGROUND_SOUND: resource.id });
+			}),
+		);
 
 		function onMouseEvent(event) {
 			cursor.props.clientX = event.clientX;

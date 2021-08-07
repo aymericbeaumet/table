@@ -4,11 +4,23 @@ import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
 import Entity from '$lib/entity';
 
 export default class Peer {
-	constructor(Client, name, { onEntity, onSpeaker, onTrack, onTrackRemoved }) {
+	constructor(
+		Client,
+		name,
+		{ onBackgroundImage, onBackgroundSound, onEntity, onSpeaker, onTrack, onTrackRemoved },
+	) {
 		const lastSeqByKey = {};
 
 		const onmessage = (event) => {
 			const { seq, streamID, payload } = decode(event.data);
+
+			if (payload.BACKGROUND_IMAGE) {
+				return onBackgroundImage(streamID, payload.BACKGROUND_IMAGE);
+			}
+
+			if (payload.BACKGROUND_SOUND) {
+				return onBackgroundSound(streamID, payload.BACKGROUND_SOUND);
+			}
 
 			if (payload.ENTITY) {
 				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);
@@ -21,7 +33,7 @@ export default class Peer {
 				}
 				lastSeqByKey[entity.key] = seq;
 
-				onEntity(streamID, entity);
+				return onEntity(streamID, entity);
 			}
 		};
 
