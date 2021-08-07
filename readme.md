@@ -64,6 +64,7 @@ https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-f
 - Restrict to YouTube videos + twitch live
 - integrate YouTube lives
 - integrate YouTube videos
+- stream the music as radios instead of short looping sounds
 
 ## Pro Plan
 

@@ -5,8 +5,8 @@ import EntityText from '$lib/components/EntityText.svelte';
 
 export default class Entity {
 	constructor(kind, props = {}) {
-		this.id = undefined;
 		this.kind = kind;
+		this.id = undefined;
 		this.props = props;
 	}
 

@@ -12,10 +12,11 @@
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import Badge from 'svelte-favicon-badge';
 	import leatherPng from '$lib/assets/leather.png';
-	import campfireMp3 from '$lib/assets/campfire.mp3';
-	import { backgroundURL } from '$lib/stores';
+	import { backgroundImage, backgroundSound } from '$lib/stores';
 	import Entity from '$lib/entity';
 	import { MAX_FPS } from '$lib/env';
+	import SettingsSVG from '$lib/assets/settings.svg';
+	import Settings from '$lib/components/Settings.svelte';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -32,14 +33,16 @@
 	let isMouseDown = false;
 	let onMouseMove, onMouseDown, onMouseUp;
 
+	let showSettings = false;
+
 	let onSmartBarEntity;
 
-	onMount(async function () {
-		const backgroundAudioPlayer = new AudioPlayer();
-		backgroundAudioPlayer.setLoop(true);
-		backgroundAudioPlayer.setVolume(0.3);
-		backgroundAudioPlayer.play(campfireMp3);
+	const backgroundAudioPlayer = new AudioPlayer();
+	backgroundAudioPlayer.setLoop(true);
+	backgroundAudioPlayer.setVolume(0.3);
+	backgroundSound.subscribe((resource) => backgroundAudioPlayer.play(resource.url));
 
+	onMount(async function () {
 		const peerAudioPlayer = new AudioPlayer();
 
 		const { Client } = await import('ion-sdk-js'); // TODO: top import
@@ -153,7 +156,7 @@
 		on:mousemove={onMouseMove}
 		on:mouseup={onMouseUp}
 		style="
-		  background: repeat url({$backgroundURL});
+		  background: repeat url({$backgroundImage.url});
 		  cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;
 		"
 	>
@@ -161,6 +164,7 @@
 			{#each avatars as props}
 				<Avatar {...props} />
 			{/each}
+			<div />
 		</header>
 
 		{#each entities as [component, props]}
@@ -168,6 +172,16 @@
 				<svelte:component this={component} {...props} />
 			</div>
 		{/each}
+
+		<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
+			<img src={SettingsSVG} alt="Settings" />
+		</div>
+
+		{#if showSettings}
+			<div class="settings-wrapper">
+				<Settings on:close={() => (showSettings = false)} />
+			</div>
+		{/if}
 	</div>
 </SmartBar>
 
@@ -188,5 +202,30 @@
 		border-radius: 20px;
 		border-top-left-radius: 0;
 		border-top-right-radius: 0;
+	}
+
+	.settings-button {
+		position: absolute;
+		top: 30px;
+		right: 30px;
+		border-radius: 50%;
+		padding: 5px;
+		background-color: orange;
+	}
+
+	.settings-button:hover {
+		cursor: pointer;
+		background-color: brown;
+	}
+
+	.settings-button img {
+		width: 30px;
+		height: 30px;
+	}
+
+	.settings-wrapper {
+		width: 100%;
+		height: 100%;
+		position: absolute;
 	}
 </style>
