@@ -5,12 +5,22 @@ import Entity from '$lib/entity';
 
 export default class Peer {
 	constructor(Client, name, { onEntity, onSpeaker, onTrack, onTrackRemoved }) {
+		const lastSeqByKey = {};
+
 		const onmessage = (event) => {
-			const { streamID, payload } = decode(event.data);
+			const { seq, streamID, payload } = decode(event.data);
 
 			if (payload.ENTITY) {
 				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);
 				entity.id = payload.ENTITY.id || streamID;
+				entity.key = `${entity.kind}:${entity.id}`;
+
+				const lastSeq = lastSeqByKey[entity.key];
+				if (lastSeq >= seq) {
+					return;
+				}
+				lastSeqByKey[entity.key] = seq;
+
 				onEntity(streamID, entity);
 			}
 		};

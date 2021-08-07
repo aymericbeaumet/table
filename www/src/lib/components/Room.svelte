@@ -15,8 +15,8 @@
 	import campfireMp3 from '$lib/assets/campfire.mp3';
 	import { backgroundURL } from '$lib/stores';
 	import Entity from '$lib/entity';
+	import { MAX_FPS } from '$lib/env';
 
-	const MAX_FPS = 30;
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
 
@@ -45,11 +45,10 @@
 		const { Client } = await import('ion-sdk-js'); // TODO: top import
 		const peer = new Peer(Client, name, {
 			onEntity: function (_streamID, entity) {
-				const key = `${entity.kind}:${entity.id}`;
-				let e = entitiesByKey[key];
+				let e = entitiesByKey[entity.key];
 				if (!e) {
 					e = entity.asComponentProps();
-					entitiesByKey[key] = e;
+					entitiesByKey[entity.key] = e;
 					entities = [...entities, e];
 				}
 				e[1] = entity.props;

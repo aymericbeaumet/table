@@ -1,8 +1,7 @@
 <script>
 	import gauntletPNG from '$lib/assets/gauntlet.png';
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
-
-	export let fps;
+	import { MAX_FPS } from '$lib/env';
 
 	export let clientX;
 	export let clientY;
@@ -18,7 +17,7 @@
 	  height: 32px;
 	  position: absolute;
 	  transition-property: top, left;
-	  transition-duration: ${1 / fps}s;
+	  transition-duration: ${1 / MAX_FPS}s;
 	  transition-timing-function: linear;
 	  left: ${clientX}px;
 	  top: ${clientY}px;
