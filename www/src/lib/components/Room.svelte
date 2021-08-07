@@ -72,7 +72,6 @@
 					avatar = {};
 					avatarsByStreamID[stream.id] = avatar;
 					avatars = [...avatars, avatar];
-
 					peerAudioPlayer.play(murlocOGG);
 				}
 				avatar.srcObject = stream;
@@ -84,9 +83,8 @@
 				if (avatar) {
 					delete avatarsByStreamID[stream.id];
 					avatars = removeFromArray(avatars, avatar);
+					peerAudioPlayer.play(stealthOGG);
 				}
-
-				peerAudioPlayer.play(stealthOGG);
 			},
 		});
 
