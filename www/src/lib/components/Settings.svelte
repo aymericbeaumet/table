@@ -8,7 +8,7 @@
 
 <div>
 	<header>
-		<h2>settings</h2>
+		<h2>Settings</h2>
 	</header>
 
 	<section>
@@ -53,5 +53,6 @@
 		border: 1px solid grey;
 		width: 64px;
 		height: 64px;
+		overflow: hidden;
 	}
 </style>
