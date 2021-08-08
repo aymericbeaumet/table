@@ -25,7 +25,7 @@ cd outpost && make update
 
 - [`outpost`](./outpost)
   * `make deploy`
-  * https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview
+  * https://console.scaleway.com/instance/servers
   * https://outpost-0.jointable.io/debug
 
 ## Ideas
