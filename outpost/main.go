@@ -10,7 +10,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync/atomic"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -26,14 +25,11 @@ import (
 )
 
 type DataChannelEnvelope struct {
-	Seq      uint32             `msgpack:"seq"`
 	StreamID string             `msgpack:"streamID"`
 	Payload  msgpack.RawMessage `msgpack:"payload"`
 }
 
 func attachBroadcastChannel(s *sfu.SFU, label string) {
-	var seq uint32
-
 	dc := s.NewDatachannel(label)
 	dc.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
 		p := args.Peer.Publisher()
@@ -47,7 +43,6 @@ func attachBroadcastChannel(s *sfu.SFU, label string) {
 		}
 
 		data, err := msgpack.Marshal(DataChannelEnvelope{
-			Seq:      atomic.AddUint32(&seq, 1),
 			StreamID: tracks[0].StreamID(),
 			Payload:  args.Message.Data,
 		})

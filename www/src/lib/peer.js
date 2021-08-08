@@ -9,10 +9,8 @@ export default class Peer {
 		name,
 		{ onBackgroundImage, onBackgroundSound, onEntity, onSpeaker, onTrack, onTrackRemoved },
 	) {
-		const lastSeqByKey = {};
-
 		const onmessage = (event) => {
-			const { seq, streamID, payload } = decode(event.data);
+			const { streamID, payload } = decode(event.data);
 
 			if (payload.BACKGROUND_IMAGE) {
 				return onBackgroundImage(streamID, payload.BACKGROUND_IMAGE);
@@ -26,12 +24,6 @@ export default class Peer {
 				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);
 				entity.id = payload.ENTITY.id || streamID;
 				entity.key = `${entity.kind}:${entity.id}`;
-
-				const lastSeq = lastSeqByKey[entity.key];
-				if (lastSeq >= seq) {
-					return;
-				}
-				lastSeqByKey[entity.key] = seq;
 
 				return onEntity(streamID, entity);
 			}
