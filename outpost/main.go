@@ -39,6 +39,7 @@ func attachBroadcastChannel(s *sfu.SFU, label string) {
 
 		tracks := p.Tracks()
 		if len(tracks) == 0 {
+			fmt.Println("warning: missing tracks for peer:", p)
 			return
 		}
 
@@ -47,6 +48,7 @@ func attachBroadcastChannel(s *sfu.SFU, label string) {
 			Payload:  args.Message.Data,
 		})
 		if err != nil {
+			fmt.Println("error:", err)
 			return
 		}
 
