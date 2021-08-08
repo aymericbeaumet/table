@@ -1,1 +1,3 @@
-/* /room/index.html 200
+https://table-www.netlify.app/* https://jointable.io/:splat 301
+https://www.jointable.io/*      https://jointable.io/:splat 301
+/*                              /room/index.html            200
