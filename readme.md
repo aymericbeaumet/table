@@ -70,8 +70,8 @@ https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-f
 - generate seq client side
 - fix infinite loop issue following update -> network -> update, etc
 - add commands:
-* copy link to table
-* screenshot table
+  - copy link to table
+  - screenshot table
 - add a persistent note features
 - Zapier integration
 - Slack integration
