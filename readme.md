@@ -1,4 +1,4 @@
-# tables
+# table
 
 ## Commands
 
@@ -20,13 +20,13 @@ cd outpost && make update
 
 - [`www`](./www)
   * automatically deployed via Netlify CI when a new commit is pushed on master
-  * https://app.netlify.com/sites/tables-app
-  * https://tables.aymericbeaumet.com
+  * https://app.netlify.com/sites/table-www
+  * https://jointable.io
 
 - [`outpost`](./outpost)
   * `make deploy`
   * https://console.scaleway.com/instance/servers/nl-ams-1/604b56fa-ed98-459f-a120-f3033c7a9c2b/overview
-  * https://outpost-0.tables.aymericbeaumet.com/debug
+  * https://outpost-0.jointable.io/debug
 
 ## Ideas
 
@@ -78,7 +78,6 @@ https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-f
 
 - Configure cloud flare origin certificate + enable strict mode (
 https://dash.cloudflare.com/a794a0792e9c7686cfb79297b6929644/jointable.io/ssl-tls/origin)
-- rename tables to table
 
 ## Pro Plan
 
