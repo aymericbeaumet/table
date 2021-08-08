@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -167,11 +170,31 @@ func main() {
 	if len(port) == 0 {
 		port = "8080"
 	}
-	addr := fmt.Sprintf("%s:%s", hostname, port)
-
-	if cf, kf := os.Getenv("CERT_FILE"), os.Getenv("KEY_FILE"); len(cf) > 0 && len(kf) > 0 {
-		panic(r.RunTLS(addr, cf, kf))
-	} else {
-		panic(r.Run(addr))
+	server := &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", hostname, port),
+		Handler: r,
 	}
+
+	// If possible, run with HTTPS + check origin certificate
+	if cf, kf := os.Getenv("CERT_FILE"), os.Getenv("KEY_FILE"); len(cf) > 0 && len(kf) > 0 {
+		origin, err := os.ReadFile(os.Getenv("ORIGIN_CERT_FILE"))
+		if err != nil {
+			panic(err)
+		}
+
+		clientsCAs := x509.NewCertPool()
+		if !clientsCAs.AppendCertsFromPEM(origin) {
+			panic(errors.New("failed to parse origin certificate"))
+		}
+
+		server.TLSConfig = &tls.Config{
+			ClientAuth: tls.RequireAndVerifyClientCert,
+			ClientCAs:  clientsCAs,
+		}
+
+		panic(server.ListenAndServeTLS(cf, kf))
+	}
+
+	// Otherwise run with HTTP
+	panic(server.ListenAndServe())
 }
