@@ -9,6 +9,7 @@
 		"preview": "svelte-kit preview",
 		"test": "true",
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
+		"deploy": "netlify deploy --prod -d build",
 		"format": "prettier --write --plugin-search-dir=. ."
 	},
 	"dependencies": {
@@ -24,6 +25,7 @@
 		"eslint": "^7.32.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-plugin-svelte3": "^3.2.0",
+		"netlify-cli": "^6.0.8",
 		"prettier": "~2.3.2",
 		"prettier-plugin-svelte": "^2.3.1",
 		"svelte": "^3.42.1"
