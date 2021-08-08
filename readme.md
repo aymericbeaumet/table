@@ -65,6 +65,20 @@ https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-f
 - integrate YouTube lives
 - integrate YouTube videos
 - stream the music as radios instead of short looping sounds
+- photo/video/image/gif
+- giffy entity integration
+- generate seq client side
+- fix infinite loop issue following update -> network -> update, etc
+- add commands:
+* copy link to table
+* screenshot table
+- add a persistent note features
+- Zapier integration
+- Slack integration
+
+- Configure cloud flare origin certificate + enable strict mode (
+https://dash.cloudflare.com/a794a0792e9c7686cfb79297b6929644/jointable.io/ssl-tls/origin)
+- rename tables to table
 
 ## Pro Plan
 
