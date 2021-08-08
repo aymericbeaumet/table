@@ -19,7 +19,7 @@ cd outpost && make update
 ### Deploy
 
 - [`www`](./www)
-  * automatically deployed via Netlify CI when a new commit is pushed on master
+  * automatically deployed to Netlify by GitHub Actions (master branch)
   * https://app.netlify.com/sites/table-www
   * https://jointable.io
 
