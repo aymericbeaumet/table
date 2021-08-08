@@ -28,56 +28,51 @@ cd outpost && make update
   * https://console.scaleway.com/instance/servers
   * https://outpost-0.jointable.io/debug
 
+## Bugs
+
+- Fix connections between peers
+- Fix fork bomb issue following update -> network -> update, etc
+
 ## Ideas
 
-- Ephemeral messages
-- Pin videos, images, etc
-- Settings: configure Mic, Speakers, Camera
 - Allow to move / resize
-- Play background music / radio / spotify / podcast
-- Play background video / youtube / stream
-- Share files
-- Highlight the person who talks
-- Change background (image, video)
-- Add some background music
-- Virtual background/audio on the whole table
 - Animate mouse click
-- Allow to send wizz
-- Allow to play alliance / horse musics
 - Explore non verbal feedbacks (emojis, etc)
 - Metrics + Achievements when someone within the company does something
-- Meeting timer in background since the first participant joined
-- Share screen
-- Embed Netflix/Spotify/arbitrary websites
 - Around emojis:
   - Right click on the table to pin an emoji and start an ephemeral emoji fountain
   - Allow to replace cursor by emoji for N seconds
-- Only show the camera on mobile (hide the table)
-- EntityPDF to read documents synchronously
+- Only show avatars on mobile (hide entities)
 - Add border around cameras + cursors to know who each cursor belongs to
-- Settings screen to change background + music and share to all people
-- plug jointable.io
-- specialize Iframe entity for YouTube with pause/advance capabilities (
-https://developers.google.com/youtube/iframe_api_reference)
-- Specialize Iframe entity for Twitch to make sure it cannot be paused
-https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-for-live-streams-and-vods
-- Restrict to YouTube videos + twitch live
-- integrate YouTube lives
-- integrate YouTube videos
-- stream the music as radios instead of short looping sounds
-- photo/video/image/gif
-- giffy entity integration
-- generate seq client side
-- fix infinite loop issue following update -> network -> update, etc
-- add commands:
-  - copy link to table
-  - screenshot table
-- add a persistent note features
-- Zapier integration
-- Slack integration
+- Stream the music as radios instead of short looping sounds
+- Generate seq client side
 
-- Configure cloud flare origin certificate + enable strict mode (
-https://dash.cloudflare.com/a794a0792e9c7686cfb79297b6929644/jointable.io/ssl-tls/origin)
+Entities:
+- file
+- image (jpg, png, gif, etc)
+- netflix
+- notes
+- podcast
+- pdf
+- radio
+- screen sharing
+- spotify
+- video (mp4, wmv, etc)
+- twitch (live + clips: https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-for-live-streams-and-vods)
+- youtube (videos + live: https://developers.google.com/youtube/iframe_api_reference)
+
+Commands:
+- copy link of table
+- giffy
+- screenshot table
+- wizz
+
+Settings:
+- configure Mic, Speakers, Camera
+
+Integrations:
+- Slack
+- Zapier
 
 ## Pro Plan
 
