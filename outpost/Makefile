@@ -42,7 +42,7 @@ deploy: outpost-0
 
 .PHONY: outpost-%
 outpost-%: build
-	scp $(BIN) .env.$(MODE) $@:/usr/local/bin/
+	scp $(BIN) .env.$(MODE) cloudflare.{crt,key} $@:/usr/local/bin/
 	scp outpost.service $@:/etc/systemd/system/
 	ssh $@ " \
 		systemctl enable outpost.service; \

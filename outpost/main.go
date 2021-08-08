@@ -171,5 +171,9 @@ func main() {
 		port = "8080"
 	}
 
-	panic(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
+	if cf, kf := os.Getenv("CERT_FILE"), os.Getenv("KEY_FILE"); len(cf) > 0 && len(kf) > 0 {
+		panic(r.RunTLS(fmt.Sprintf("%s:%s", hostname, port), cf, kf))
+	} else {
+		panic(r.Run(fmt.Sprintf("%s:%s", hostname, port)))
+	}
 }
