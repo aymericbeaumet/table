@@ -140,13 +140,18 @@ func main() {
 		})
 	})
 
+	hostname := os.Getenv("HOSTNAME")
+	if len(hostname) == 0 {
+		hostname = "localhost"
+	}
+
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		port = "8080"
 	}
 
 	server := &http.Server{
-		Addr:    ":" + port,
+		Addr:    fmt.Sprintf("%s:%s", hostname, port),
 		Handler: r,
 	}
 
