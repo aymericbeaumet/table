@@ -140,18 +140,8 @@ func main() {
 		})
 	})
 
-	hostname := os.Getenv("HOSTNAME")
-	if len(hostname) == 0 {
-		hostname = "localhost"
-	}
-
-	port := os.Getenv("PORT")
-	if len(port) == 0 {
-		port = "8080"
-	}
-
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", hostname, port),
+		Addr:    fmt.Sprintf("%s:%s", os.Getenv("HOSTNAME"), os.Getenv("PORT")),
 		Handler: r,
 	}
 
@@ -183,9 +173,6 @@ func main() {
 
 func getBallastMiB() (int64, error) {
 	pctString := os.Getenv("WEBRTC_BALLAST_PCT")
-	if len(pctString) == 0 {
-		pctString = "0"
-	}
 
 	pct, err := strconv.ParseInt(pctString, 10, 64)
 	if err != nil {
@@ -202,7 +189,7 @@ func getBallastMiB() (int64, error) {
 
 func getNAT1TO1IP(ctx context.Context) (string, error) {
 	switch v := os.Getenv("WEBRTC_NAT1TO1IP"); v {
-	case "", "local":
+	case "local":
 		return GetLocalIP()
 	case "public":
 		return GetPublicIP(ctx)
