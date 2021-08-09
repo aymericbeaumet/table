@@ -24,42 +24,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-type DataChannelEnvelope struct {
-	StreamID string             `msgpack:"streamID"`
-	Payload  msgpack.RawMessage `msgpack:"payload"`
-}
-
-func attachBroadcastChannel(s *sfu.SFU, label string) {
-	dc := s.NewDatachannel(label)
-	dc.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
-		p := args.Peer.Publisher()
-		if p == nil {
-			return
-		}
-
-		tracks := p.Tracks()
-		if len(tracks) == 0 {
-			fmt.Println("warning: missing tracks for peer:", p)
-			return
-		}
-
-		data, err := msgpack.Marshal(DataChannelEnvelope{
-			StreamID: tracks[0].StreamID(),
-			Payload:  args.Message.Data,
-		})
-		if err != nil {
-			fmt.Println("error:", err)
-			return
-		}
-
-		for _, dc := range args.Peer.Session().GetDataChannels("", label) {
-			if dc != args.DataChannel {
-				_ = dc.Send(data)
-			}
-		}
-	})
-}
-
 func main() {
 	// Load env
 
@@ -212,4 +176,40 @@ func getNAT1TO1IP(ctx context.Context) (string, error) {
 	default:
 		return "", fmt.Errorf("implementation error: unexpected WEBRTC_NAT1TO1IP %#v", v)
 	}
+}
+
+type DataChannelEnvelope struct {
+	StreamID string             `msgpack:"streamID"`
+	Payload  msgpack.RawMessage `msgpack:"payload"`
+}
+
+func attachBroadcastChannel(s *sfu.SFU, label string) {
+	dc := s.NewDatachannel(label)
+	dc.OnMessage(func(ctx context.Context, args sfu.ProcessArgs) {
+		p := args.Peer.Publisher()
+		if p == nil {
+			return
+		}
+
+		tracks := p.Tracks()
+		if len(tracks) == 0 {
+			fmt.Println("warning: missing tracks for peer:", p)
+			return
+		}
+
+		data, err := msgpack.Marshal(DataChannelEnvelope{
+			StreamID: tracks[0].StreamID(),
+			Payload:  args.Message.Data,
+		})
+		if err != nil {
+			fmt.Println("error:", err)
+			return
+		}
+
+		for _, dc := range args.Peer.Session().GetDataChannels("", label) {
+			if dc != args.DataChannel {
+				_ = dc.Send(data)
+			}
+		}
+	})
 }
