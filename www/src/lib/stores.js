@@ -3,9 +3,8 @@ import * as resources from '$lib/resources';
 
 // Local settings
 
-export const audioInputDeviceID = writable(undefined);
-export const audioOutputDeviceID = writable(undefined);
-export const videoInputDeviceID = writable(undefined);
+export const audioInputDeviceID = writable('default');
+export const videoInputDeviceID = writable('default');
 
 // Room settings
 

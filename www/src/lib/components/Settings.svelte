@@ -2,7 +2,6 @@
 	import { createEventDispatcher } from 'svelte';
 	import {
 		audioInputDeviceID,
-		audioOutputDeviceID,
 		videoInputDeviceID,
 		backgroundImage,
 		backgroundSound,
@@ -22,27 +21,16 @@
 		<table>
 			<tr>
 				<td>Microphone</td>
-				<td>Speakers</td>
 				<td>Camera</td>
 			</tr>
 			<tr>
 				{#await devicesPromise}
-					<td colspan="3">loading...</td>
+					<td colspan="2">loading...</td>
 				{:then devices}
 					<td>
 						<select bind:value={$audioInputDeviceID}>
 							{#each devices as device}
 								{#if device.kind === 'audioinput'}
-									<option value={device.deviceId}>{device.label}</option>
-								{/if}
-							{/each}
-						</select>
-					</td>
-
-					<td>
-						<select bind:value={$audioOutputDeviceID}>
-							{#each devices as device}
-								{#if device.kind === 'audiooutput'}
 									<option value={device.deviceId}>{device.label}</option>
 								{/if}
 							{/each}
@@ -63,7 +51,7 @@
 		</table>
 	</section>
 
-	<h2>Room Settings</h2>
+	<h2>Room Settings (synced)</h2>
 
 	<section>
 		<h3>Background image</h3>

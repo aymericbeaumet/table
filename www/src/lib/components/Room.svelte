@@ -78,7 +78,10 @@
 					avatar.active = false;
 				}
 				for (const streamID of streamIDs) {
-					avatarsByStreamID[streamID].active = true;
+					const avatar = avatarsByStreamID[streamID];
+					if (avatar) {
+						avatar.active = true;
+					}
 				}
 				avatars = avatars;
 			},
@@ -134,38 +137,53 @@
 
 		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
 
-		audioInputDeviceID.subscribe(initStream);
-		videoInputDeviceID.subscribe(initStream);
+		let lastAudioInputDeviceID, lastVideoInputDeviceID;
 
-		async function initStream() {
+		audioInputDeviceID.subscribe(resetStream);
+		videoInputDeviceID.subscribe(resetStream);
+
+		async function resetStream() {
+			// Idempotent
+			const aID = get(audioInputDeviceID);
+			const vID = get(videoInputDeviceID);
+			const hasAudioChanged = aID !== lastAudioInputDeviceID;
+			const hasVideoChanged = vID !== lastVideoInputDeviceID;
+			if (!hasAudioChanged && !hasVideoChanged) {
+				return;
+			}
+			lastAudioInputDeviceID = aID;
+			lastVideoInputDeviceID = vID;
+
 			// Get user media
 			const stream = await LocalStream.getUserMedia({
 				audio: {
 					autoGainControl: true,
 					echoCancellation: true,
 					noiseSuppression: true,
-					deviceId: get(audioInputDeviceID),
+					deviceId: aID,
 				},
 				video: {
 					width: { ideal: 360, max: 360 },
 					height: { ideal: 360, max: 360 },
 					facingMode: { ideal: 'user' },
 					frameRate: { ideal: MAX_FPS, max: MAX_FPS },
-					deviceId: get(videoInputDeviceID),
+					deviceId: vID,
 				},
 				simulcast: true,
 			});
 
 			// Immediate UI feedback
-			let avatar = avatarsByStreamID['__LOCAL_STREAM__'];
-			if (!avatar) {
-				avatar = { muted: true };
-				avatars = [...avatars, avatar];
+			if (hasVideoChanged) {
+				let avatar = avatarsByStreamID['__LOCAL_STREAM__'];
+				if (!avatar) {
+					avatar = { muted: true };
+					avatars = [...avatars, avatar];
+				}
+				avatarsByStreamID['__LOCAL_STREAM__'] = avatar;
+				avatarsByStreamID[stream.id] = avatar;
+				avatar.srcObject = stream;
+				avatars = avatars;
 			}
-			avatarsByStreamID['__LOCAL_STREAM__'] = avatar;
-			avatarsByStreamID[stream.id] = avatar;
-			avatar.srcObject = stream;
-			avatars = avatars;
 
 			// WebRTC publish
 			peer.publish(stream);
