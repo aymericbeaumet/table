@@ -71,18 +71,7 @@ export default class Peer {
 	}
 
 	publish(stream) {
-		if (this._publishedStream) {
-			this._publishedStream.unpublish();
-			this._publishedStream = null;
-		}
-
-		try {
-			this._client.publish(stream);
-			this._pendingStream = null;
-			this._publishedStream = stream;
-		} catch (error) {
-			this._pendingStream = stream;
-		}
+		this._client.publish(stream);
 	}
 
 	reliable(payload) {
