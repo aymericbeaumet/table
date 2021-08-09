@@ -183,6 +183,9 @@ func main() {
 
 func getBallastMiB() (int64, error) {
 	pctString := os.Getenv("WEBRTC_BALLAST_PCT")
+	if len(pctString) == 0 {
+		pctString = "0"
+	}
 
 	pct, err := strconv.ParseInt(pctString, 10, 64)
 	if err != nil {
