@@ -1,15 +1,69 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { backgroundImage, backgroundSound } from '$lib/stores';
+	import {
+		audioInputDeviceID,
+		audioOutputDeviceID,
+		videoInputDeviceID,
+		backgroundImage,
+		backgroundSound,
+	} from '$lib/stores';
 	import { backgroundImages, backgroundSounds } from '$lib/resources';
 
 	const dispatch = createEventDispatcher();
+
+	const devicesPromise = navigator.mediaDevices.enumerateDevices();
 </script>
 
 <div>
-	<header>
-		<h2>Settings</h2>
-	</header>
+	<h2>Local Settings</h2>
+
+	<section>
+		<h3>Audio & Video</h3>
+		<table>
+			<tr>
+				<td>Microphone</td>
+				<td>Speakers</td>
+				<td>Camera</td>
+			</tr>
+			<tr>
+				{#await devicesPromise}
+					<td colspan="3">loading...</td>
+				{:then devices}
+					<td>
+						<select bind:value={$audioInputDeviceID}>
+							{#each devices as device}
+								{#if device.kind === 'audioinput'}
+									<option value={device.deviceId}>{device.label}</option>
+								{/if}
+							{/each}
+						</select>
+					</td>
+
+					<td>
+						<select bind:value={$audioOutputDeviceID}>
+							{#each devices as device}
+								{#if device.kind === 'audiooutput'}
+									<option value={device.deviceId}>{device.label}</option>
+								{/if}
+							{/each}
+						</select>
+					</td>
+
+					<td>
+						<select bind:value={$videoInputDeviceID}>
+							{#each devices as device}
+								{#if device.kind === 'videoinput'}
+									<option value={device.deviceId}>{device.label}</option>
+								{/if}
+							{/each}
+						</select>
+					</td>
+				{/await}
+			</tr>
+		</table>
+	</section>
+
+	<h2>Room Settings</h2>
 
 	<section>
 		<h3>Background image</h3>

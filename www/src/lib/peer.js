@@ -73,8 +73,13 @@ export default class Peer {
 	publish(stream) {
 		clearTimeout(this._publishTimeout);
 
+		if (this._publishedStream) {
+			this._publishedStream.unpublish();
+		}
+
 		try {
 			this._client.publish(stream);
+			this._publishedStream = stream;
 		} catch (error) {
 			console.error(error);
 			this._publishTimeout = setTimeout(() => {

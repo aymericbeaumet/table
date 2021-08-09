@@ -12,12 +12,18 @@
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import Badge from 'svelte-favicon-badge';
 	import leatherPng from '$lib/assets/leather.png';
-	import { backgroundImage, backgroundSound } from '$lib/stores';
+	import {
+		audioInputDeviceID,
+		videoInputDeviceID,
+		backgroundImage,
+		backgroundSound,
+	} from '$lib/stores';
 	import Entity from '$lib/entity';
 	import { MAX_FPS } from '$lib/env';
 	import SettingsSVG from '$lib/assets/settings.svg';
 	import Settings from '$lib/components/Settings.svelte';
 	import { backgroundImages, backgroundSounds } from '$lib/resources';
+	import { get } from 'svelte/store';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -126,28 +132,44 @@
 			peer.reliable({ ENTITY: entity });
 		};
 
-		// Acquire stream
 		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
-		const stream = await LocalStream.getUserMedia({
-			audio: {
-				autoGainControl: true,
-				echoCancellation: true,
-				noiseSuppression: true,
-			},
-			video: {
-				width: { ideal: 360, max: 360 },
-				height: { ideal: 360, max: 360 },
-				facingMode: { ideal: 'user' },
-				frameRate: { ideal: MAX_FPS, max: MAX_FPS },
-			},
-			simulcast: true,
-		});
-		// Immediate UI feedback
-		const avatar = { srcObject: stream, muted: true };
-		avatarsByStreamID[stream.id] = avatar;
-		avatars = [...avatars, avatar];
-		// WebRTC publish
-		peer.publish(stream);
+
+		audioInputDeviceID.subscribe(initStream);
+		videoInputDeviceID.subscribe(initStream);
+
+		async function initStream() {
+			// Get user media
+			const stream = await LocalStream.getUserMedia({
+				audio: {
+					autoGainControl: true,
+					echoCancellation: true,
+					noiseSuppression: true,
+					deviceId: get(audioInputDeviceID),
+				},
+				video: {
+					width: { ideal: 360, max: 360 },
+					height: { ideal: 360, max: 360 },
+					facingMode: { ideal: 'user' },
+					frameRate: { ideal: MAX_FPS, max: MAX_FPS },
+					deviceId: get(videoInputDeviceID),
+				},
+				simulcast: true,
+			});
+
+			// Immediate UI feedback
+			let avatar = avatarsByStreamID['__LOCAL_STREAM__'];
+			if (!avatar) {
+				avatar = { muted: true };
+				avatars = [...avatars, avatar];
+			}
+			avatarsByStreamID['__LOCAL_STREAM__'] = avatar;
+			avatarsByStreamID[stream.id] = avatar;
+			avatar.srcObject = stream;
+			avatars = avatars;
+
+			// WebRTC publish
+			peer.publish(stream);
+		}
 	});
 </script>
 
