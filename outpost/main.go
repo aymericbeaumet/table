@@ -205,7 +205,7 @@ func main() {
 
 func getNAT1TO1IP(ctx context.Context) (string, error) {
 	switch v := os.Getenv("WEBRTC_NAT1TO1IP"); v {
-	case "local":
+	case "", "local":
 		return GetLocalIP()
 	case "public":
 		return GetPublicIP(ctx)
