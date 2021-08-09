@@ -3,7 +3,7 @@
 	import Avatar from './Avatar.svelte';
 	import SmartBar from './SmartBar.svelte';
 	import Peer from '$lib/peer';
-	import { after, throttle } from 'lodash';
+	import { throttle } from 'lodash';
 	import { removeFromArray } from '$lib/utils';
 	import AudioPlayer from '$lib/audio-player';
 	import murlocOGG from '$lib/assets/murloc.ogg';
@@ -98,18 +98,6 @@
 				}
 			},
 		});
-
-		/*backgroundImage.subscribe(*/
-		/*after(1, (resource) => {*/
-		/*peer.reliable({ BACKGROUND_IMAGE: resource.id });*/
-		/*}),*/
-		/*);*/
-
-		/*backgroundSound.subscribe(*/
-		/*after(1, (resource) => {*/
-		/*peer.reliable({ BACKGROUND_SOUND: resource.id });*/
-		/*}),*/
-		/*);*/
 
 		function onMouseEvent(event) {
 			cursor.props.clientX = event.clientX;
