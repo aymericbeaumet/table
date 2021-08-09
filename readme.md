@@ -40,6 +40,8 @@ cd outpost && make update
 - Only show avatars on mobile (hide entities)
 - Add border around cameras + cursors to know who each cursor belongs to
 - Stream the music as radios instead of short looping sounds
+- Save events and forward to newcomers
+- Persist state in Redis
 
 Entities:
 - file
