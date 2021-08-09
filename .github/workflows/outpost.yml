@@ -30,7 +30,11 @@ jobs:
       - run: make ci
       - run: make build
       - run: make test
-      - name: make lint
-        uses: golangci/golangci-lint-action@v2
+      - uses: golangci/golangci-lint-action@v2
         with:
+          version: v1.41.1
           working-directory: outpost # TODO: this should already be using the default working directory
+          skip-pkg-cache: true       # conflicts with actions/cache
+          skip-build-cache: true     # conflicts with actions/cache
+
+      # TODO: make deploy
