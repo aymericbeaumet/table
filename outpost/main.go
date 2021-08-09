@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/gin-contrib/cors"
@@ -19,6 +20,7 @@ import (
 	log "github.com/pion/ion-sfu/pkg/logger"
 	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
 	"github.com/pion/ion-sfu/pkg/sfu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/sourcegraph/jsonrpc2"
 	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
 	"github.com/vmihailenco/msgpack/v5"
@@ -34,7 +36,14 @@ func main() {
 	_ = godotenv.Load(".env")
 	_ = godotenv.Load(".env." + mode)
 
-	// Guess NAT1TO1IP
+	// Compute ballast
+
+	ballast, err := getBallastMiB()
+	if err != nil {
+		panic(err)
+	}
+
+	// Infer nat1To1IP
 
 	nat1To1IP, err := getNAT1TO1IP(context.Background())
 	if err != nil {
@@ -54,7 +63,7 @@ func main() {
 	conf.Router.MaxPacketTrack = 500
 	conf.Router.Simulcast.BestQualityFirst = true
 	conf.Router.Simulcast.EnableTemporalLayer = true
-	conf.SFU.Ballast = 0 // TODO: allocate max 50% of the RAM
+	conf.SFU.Ballast = ballast
 	conf.WebRTC.Candidates.IceLite = true
 	conf.WebRTC.Candidates.NAT1To1IPs = []string{nat1To1IP}
 	conf.WebRTC.ICEPortRange = []uint16{40000, 49999}
@@ -167,6 +176,22 @@ func main() {
 	panic(server.ListenAndServe())
 }
 
+func getBallastMiB() (int64, error) {
+	pctString := os.Getenv("WEBRTC_BALLAST_PCT")
+
+	pct, err := strconv.ParseInt(pctString, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	memory, err := mem.VirtualMemory()
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(memory.Total) * pct / 100 / 1024 / 1024, nil
+}
+
 func getNAT1TO1IP(ctx context.Context) (string, error) {
 	switch v := os.Getenv("WEBRTC_NAT1TO1IP"); v {
 	case "", "local":
@@ -176,11 +201,6 @@ func getNAT1TO1IP(ctx context.Context) (string, error) {
 	default:
 		return "", fmt.Errorf("implementation error: unexpected WEBRTC_NAT1TO1IP %#v", v)
 	}
-}
-
-type DataChannelEnvelope struct {
-	StreamID string             `msgpack:"streamID"`
-	Payload  msgpack.RawMessage `msgpack:"payload"`
 }
 
 func attachBroadcastChannel(s *sfu.SFU, label string) {
@@ -197,7 +217,10 @@ func attachBroadcastChannel(s *sfu.SFU, label string) {
 			return
 		}
 
-		data, err := msgpack.Marshal(DataChannelEnvelope{
+		data, err := msgpack.Marshal(struct {
+			StreamID string             `msgpack:"streamID"`
+			Payload  msgpack.RawMessage `msgpack:"payload"`
+		}{
 			StreamID: tracks[0].StreamID(),
 			Payload:  args.Message.Data,
 		})
