@@ -40,7 +40,6 @@ cd outpost && make update
 - Only show avatars on mobile (hide entities)
 - Add border around cameras + cursors to know who each cursor belongs to
 - Stream the music as radios instead of short looping sounds
-- Generate seq client side
 
 Entities:
 - file
@@ -61,9 +60,6 @@ Commands:
 - giffy
 - screenshot table
 - wizz
-
-Settings:
-- configure Mic, Speakers, Camera
 
 Integrations:
 - Slack
