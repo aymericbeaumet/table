@@ -99,17 +99,17 @@
 			},
 		});
 
-		backgroundImage.subscribe(
-			after(1, (resource) => {
-				peer.reliable({ BACKGROUND_IMAGE: resource.id });
-			}),
-		);
+		/*backgroundImage.subscribe(*/
+		/*after(1, (resource) => {*/
+		/*peer.reliable({ BACKGROUND_IMAGE: resource.id });*/
+		/*}),*/
+		/*);*/
 
-		backgroundSound.subscribe(
-			after(1, (resource) => {
-				peer.reliable({ BACKGROUND_SOUND: resource.id });
-			}),
-		);
+		/*backgroundSound.subscribe(*/
+		/*after(1, (resource) => {*/
+		/*peer.reliable({ BACKGROUND_SOUND: resource.id });*/
+		/*}),*/
+		/*);*/
 
 		function onMouseEvent(event) {
 			cursor.props.clientX = event.clientX;

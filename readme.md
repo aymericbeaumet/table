@@ -28,11 +28,6 @@ cd outpost && make update
   * https://console.scaleway.com/instance/servers
   * https://outpost-0.jointable.io/debug
 
-## Bugs
-
-- Fix connections between peers
-- Fix fork bomb issue following update -> network -> update, etc
-
 ## Ideas
 
 - Allow to move / resize
