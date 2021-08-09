@@ -1,5 +1,5 @@
-MODE ?= production
-BIN := outpost-$(MODE)
+NAME := outpost
+SYSTEMCTL_SERVICE := $(NAME).service
 
 .PHONY: all
 all:
@@ -22,15 +22,11 @@ dev:
 
 .PHONY: build
 build:
-	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(BIN) .
-
-.PHONY: preview
-preview:
-	./$(BIN)
+	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(NAME) .
 
 .PHONY: test
 test:
-	go test -v -failfast -vet=off -race ./...
+	go test -race -v -failfast -vet=off ./...
 
 .PHONY: lint
 lint:
@@ -42,14 +38,24 @@ deploy: outpost-0
 
 .PHONY: outpost-%
 outpost-%: build
-	scp $(BIN) .env.$(MODE) $(MODE).{crt,key} cloudflare.crt $@:/usr/local/bin/
-	scp outpost.service $@:/etc/systemd/system/
+	# prepare service
+	scp $(SYSTEMCTL_SERVICE) $@:/etc/systemd/system/
+	# prepare binary
+	scp $(NAME) $@:/usr/local/bin/$(NAME).next
+	# prepare config
+	ssh $@ "mkdir -p /usr/local/etc/$(NAME)"
+	scp .env.production production.crt production.key cloudflare.crt $@:/usr/local/etc/$(NAME)/
+	# (re)start service
 	ssh $@ " \
-		systemctl enable outpost.service; \
-		systemctl stop outpost.service; \
-		mv /usr/local/bin/$(BIN) /usr/local/bin/outpost; \
-		systemctl restart outpost.service; \
+		systemctl enable $(SYSTEMCTL_SERVICE); \
+		systemctl stop $(SYSTEMCTL_SERVICE); \
+		mv /usr/local/bin/$(NAME).next /usr/local/bin/$(NAME); \
+		systemctl restart $(SYSTEMCTL_SERVICE); \
 	"
+
+.PHONY: logs
+logs:
+	@ssh outpost-0 "journalctl -f -o cat -u $(SYSTEMCTL_SERVICE)"
 
 .PHONY: format
 format:

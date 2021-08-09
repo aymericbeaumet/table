@@ -70,31 +70,36 @@ func main() {
 	_ = godotenv.Load(".env")
 	_ = godotenv.Load(".env." + mode)
 
+	// Guess NAT1TO1IP
+
+	nat1To1IP, err := getNAT1TO1IP(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
 	// Prepare SFU
 
 	logger := log.New()
 	sfu.Logger = logger
 
 	conf := sfu.Config{}
-	conf.SFU.Ballast = 0
-	conf.SFU.WithStats = false
+	conf.Router.AudioLevelFilter = 20
+	conf.Router.AudioLevelInterval = 1000
+	conf.Router.AudioLevelThreshold = 40
 	conf.Router.MaxBandwidth = 1500
 	conf.Router.MaxPacketTrack = 500
-	conf.Router.AudioLevelThreshold = 40
-	conf.Router.AudioLevelInterval = 1000
-	conf.Router.AudioLevelFilter = 20
 	conf.Router.Simulcast.BestQualityFirst = true
 	conf.Router.Simulcast.EnableTemporalLayer = true
-	conf.WebRTC.ICEPortRange = []uint16{5000, 5200}
-	conf.WebRTC.ICEServers = []sfu.ICEServerConfig{
-		{URLs: strings.Split(os.Getenv("STUN_SERVERS_URLS"), ",")},
-	}
+	conf.SFU.Ballast = 0 // TODO: allocate max 50% of the RAM
+	conf.WebRTC.Candidates.IceLite = true
+	conf.WebRTC.Candidates.NAT1To1IPs = []string{nat1To1IP}
+	conf.WebRTC.ICEPortRange = []uint16{40000, 49999}
 	conf.WebRTC.SDPSemantics = "unified-plan"
-	conf.WebRTC.MDNS = true
 	conf.WebRTC.Timeouts.ICEDisconnectedTimeout = 5
 	conf.WebRTC.Timeouts.ICEFailedTimeout = 25
 	conf.WebRTC.Timeouts.ICEKeepaliveInterval = 2
-	conf.Turn.Enabled = false
+
+	fmt.Printf("SFU conf %#v\n", conf)
 
 	s := sfu.NewSFU(conf)
 
@@ -118,7 +123,7 @@ func main() {
 		WriteBufferSize: 1024,
 	}
 
-	r.GET("/sessions/:name", func(c *gin.Context) {
+	r.GET("/tables/:name", func(c *gin.Context) {
 		var params struct {
 			SessionName string `uri:"name"`
 		}
@@ -162,13 +167,13 @@ func main() {
 		})
 	})
 
-	hostname := "0.0.0.0"
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		port = "8080"
 	}
+
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", hostname, port),
+		Addr:    ":" + port,
 		Handler: r,
 	}
 
@@ -189,9 +194,22 @@ func main() {
 			ClientCAs:  clientsCAs,
 		}
 
+		fmt.Printf("Listening on https://%s\n", server.Addr)
 		panic(server.ListenAndServeTLS(cf, kf))
 	}
 
 	// Otherwise run with HTTP
+	fmt.Printf("Listening on http://%s\n", server.Addr)
 	panic(server.ListenAndServe())
+}
+
+func getNAT1TO1IP(ctx context.Context) (string, error) {
+	switch v := os.Getenv("WEBRTC_NAT1TO1IP"); v {
+	case "local":
+		return GetLocalIP()
+	case "public":
+		return GetPublicIP(ctx)
+	default:
+		return "", fmt.Errorf("implementation error: unexpected WEBRTC_NAT1TO1IP %#v", v)
+	}
 }

@@ -24,7 +24,6 @@ export default class Peer {
 				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);
 				entity.id = payload.ENTITY.id || streamID;
 				entity.key = `${entity.kind}:${entity.id}`;
-
 				return onEntity(streamID, entity);
 			}
 		};
@@ -32,7 +31,7 @@ export default class Peer {
 		/* Initialize signaling */
 
 		const signal = new IonSFUJSONRPCSignal(
-			`${env.OUTPOST_BASE_URL}/sessions/${encodeURIComponent(name)}`,
+			`${env.OUTPOST_BASE_URL}/tables/${encodeURIComponent(name)}`,
 		);
 
 		/* Create and initialize WebRTC */

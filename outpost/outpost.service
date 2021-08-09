@@ -5,9 +5,9 @@ After=multi-user.target
 [Service]
 User=root
 Group=root
-Environment=MODE=production
-WorkingDirectory=/usr/local/bin
+WorkingDirectory=/usr/local/etc/outpost/
 ExecStart=/usr/local/bin/outpost
+Environment=MODE=production
 Restart=always
 
 [Install]
