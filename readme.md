@@ -51,6 +51,7 @@ cd outpost && make update
 - hide cursor after 10 seconds without moving
 - hide controls on iPad video
 - only show real legit tables as background images
+- persist audio/video inputs settings in local storage
 
 Entities:
 - file
