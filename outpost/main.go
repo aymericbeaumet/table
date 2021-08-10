@@ -146,14 +146,19 @@ func main() {
 
 		switch cmd.Command {
 		case "/table":
-			id := []string{"slack", cmd.TeamDomain, cmd.ChannelName}
-			if t := cmd.Text; len(t) > 0 {
-				id = append(id, t)
+			tableName := cmd.ChannelName
+			if text := strings.TrimSpace(cmd.Text); len(text) > 0 {
+				tableName = text
 			}
 
 			c.JSON(http.StatusOK, &slack.Msg{
 				ResponseType: "in_channel",
-				Text:         fmt.Sprintf("Join <@%s>'s <https://jointable.io/%s|table>!", cmd.UserID, strings.Join(id, "-")),
+				Text: fmt.Sprintf(
+					"Join <@%s>'s <https://jointable.io/slack:%s/%s|table>!",
+					cmd.UserID,
+					cmd.TeamDomain,
+					tableName,
+				),
 			})
 
 		default:
