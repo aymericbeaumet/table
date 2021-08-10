@@ -124,7 +124,7 @@ func main() {
 		<-jc.DisconnectNotify()
 	})
 
-	r.POST("/slack/commands", func(c *gin.Context) {
+	r.POST("/slack/command", func(c *gin.Context) {
 		sv, err := slack.NewSecretsVerifier(c.Request.Header, os.Getenv("SLACK_SIGNING_SECRET"))
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
