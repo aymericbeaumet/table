@@ -33,6 +33,7 @@ cd outpost && make update
 - auto audio doesn’t work on iOS (readiness?)
 - cannot switch front/back camera on iPad
 - scrollbar on iPad
+- websocket disconnect issue. Investigate how to reconnect as the same peer?
 
 ## Ideas
 
@@ -63,10 +64,7 @@ Entities:
 - twitch (live + clips: https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-for-live-streams-and-vods)
 - youtube (videos + live: https://developers.google.com/youtube/iframe_api_reference)
 - hide cursor after 10 seconds without moving
-- fix websocket disconnect issue. Investigate how to reconnect as the same peer?
-- baisser l’intervalle de détection de la parole
-- change the active color from red to green
-- hide controls on iPad
+- hide controls on iPad video
 - make room names case insensitive
 - only show tables as background images
 

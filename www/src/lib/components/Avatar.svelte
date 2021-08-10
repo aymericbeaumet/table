@@ -37,10 +37,10 @@
 		border-radius: 50%;
 		width: 100%;
 		height: 100%;
-		border: 1px solid #997447;
+		border: 2px solid #997447;
 	}
 
 	video.active {
-		border: 1px solid red;
+		border: 2px solid lightgrey;
 	}
 </style>

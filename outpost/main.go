@@ -50,20 +50,22 @@ func main() {
 		panic(err)
 	}
 
-	// Prepare SFU
+	// Prepare SFU (https://github.com/pion/ion-sfu/blob/master/config.toml)
 
 	logger := log.New()
 	sfu.Logger = logger
 
 	conf := sfu.Config{}
 	conf.Router.AudioLevelFilter = 20
-	conf.Router.AudioLevelInterval = 1000
-	conf.Router.AudioLevelThreshold = 40
+	conf.Router.AudioLevelInterval = 250
+	conf.Router.AudioLevelThreshold = 35
 	conf.Router.MaxBandwidth = 1500
 	conf.Router.MaxPacketTrack = 500
 	conf.Router.Simulcast.BestQualityFirst = true
 	conf.Router.Simulcast.EnableTemporalLayer = true
+	conf.Router.WithStats = true
 	conf.SFU.Ballast = ballast
+	conf.SFU.WithStats = true
 	conf.WebRTC.Candidates.IceLite = true
 	conf.WebRTC.Candidates.NAT1To1IPs = []string{nat1To1IP}
 	conf.WebRTC.ICEPortRange = []uint16{40000, 49999}
