@@ -56,12 +56,12 @@
 	backgroundImageID.subscribe((id) => (backgroundImageURL = backgroundImages[id]?.url));
 
 	onMount(async function () {
-		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
+		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
+
 		const streamManager = new StreamManager(LocalStream, MAX_FPS);
 
 		const peerAudioPlayer = new AudioPlayer();
 
-		const { Client } = await import('ion-sdk-js'); // TODO: top import
 		const peer = new Peer(Client, tableName, {
 			onBackgroundImageID: (id: string) => backgroundImageID.set(id),
 
