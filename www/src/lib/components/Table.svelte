@@ -24,6 +24,7 @@
 	import Settings from '$lib/components/Settings.svelte';
 	import { backgroundImages, backgroundSounds } from '$lib/resources';
 	import { get } from 'svelte/store';
+	import StreamManager from '$lib/StreamManager';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -55,6 +56,9 @@
 	backgroundImageID.subscribe((id) => (backgroundImageURL = backgroundImages[id]?.url));
 
 	onMount(async function () {
+		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
+		const streamManager = new StreamManager(LocalStream, MAX_FPS);
+
 		const peerAudioPlayer = new AudioPlayer();
 
 		const { Client } = await import('ion-sdk-js'); // TODO: top import
@@ -134,61 +138,32 @@
 			peer.reliable({ ENTITY: entity });
 		};
 
-		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
-
-		let lastAudioInputDeviceID: string;
-		let lastVideoInputDeviceID: string;
-
-		audioInputDeviceID.subscribe(resetStream);
-		videoInputDeviceID.subscribe(resetStream);
-
-		async function resetStream() {
-			// Idempotent
-			const aID = get(audioInputDeviceID);
-			const vID = get(videoInputDeviceID);
-			const hasAudioChanged = aID !== lastAudioInputDeviceID;
-			const hasVideoChanged = vID !== lastVideoInputDeviceID;
-			if (!hasAudioChanged && !hasVideoChanged) {
-				return;
-			}
-			lastAudioInputDeviceID = aID;
-			lastVideoInputDeviceID = vID;
-
-			// Get user media
-			const stream = await LocalStream.getUserMedia({
-				audio: {
-					deviceId: aID,
-					autoGainControl: true,
-					echoCancellation: true,
-					noiseSuppression: true,
-				},
-				video: {
-					...(vID ? { deviceId: vID } : { facingMode: { ideal: 'user' } }),
-					width: { ideal: 360, max: 360 },
-					height: { ideal: 360, max: 360 },
-					frameRate: { ideal: MAX_FPS, max: MAX_FPS },
-				},
-				codec: 'vp8',
-				resolution: 'qvga',
-				sendEmptyOnMute: true,
-				simulcast: true,
-			});
-
-			// Immediate UI feedback
-			if (hasVideoChanged) {
-				let avatar = avatarsByStreamID['__LOCAL_STREAM__'];
-				if (!avatar) {
-					avatar = { muted: true };
-					avatars = [...avatars, avatar];
+		for (const store of [audioInputDeviceID, videoInputDeviceID]) {
+			store.subscribe(async () => {
+				const out = await streamManager.reset(get(audioInputDeviceID), get(videoInputDeviceID));
+				if (!out) {
+					return;
 				}
-				avatarsByStreamID['__LOCAL_STREAM__'] = avatar;
-				avatarsByStreamID[stream.id] = avatar;
-				avatar.srcObject = stream;
-				avatars = avatars;
-			}
+				const [newStream, _hasAudioChanged, hasVideoChanged] = out;
 
-			// WebRTC publish
-			peer.publish(stream);
+				if (newStream) {
+					// Immediate UI feedback
+					if (hasVideoChanged) {
+						let avatar = avatarsByStreamID['__LOCAL_STREAM__'];
+						if (!avatar) {
+							avatar = { muted: true };
+							avatars = [...avatars, avatar];
+						}
+						avatarsByStreamID['__LOCAL_STREAM__'] = avatar;
+						avatarsByStreamID[newStream.id] = avatar;
+						avatar.srcObject = newStream;
+						avatars = avatars;
+					}
+
+					// WebRTC publish
+					peer.publish(newStream);
+				}
+			});
 		}
 	});
 </script>
