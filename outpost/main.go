@@ -145,7 +145,7 @@ func main() {
 		}
 
 		switch cmd.Command {
-		case "table":
+		case "/table":
 			id := []string{"slack", cmd.TeamDomain, cmd.ChannelName}
 			if t := cmd.Text; len(t) > 0 {
 				id = append(id, t)
