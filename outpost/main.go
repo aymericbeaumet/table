@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
@@ -21,6 +22,8 @@ import (
 	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
 	"github.com/pion/ion-sfu/pkg/sfu"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/slack-go/slack"
+	_ "github.com/slack-go/slack"
 	"github.com/sourcegraph/jsonrpc2"
 	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
 	"github.com/vmihailenco/msgpack/v5"
@@ -119,6 +122,37 @@ func main() {
 
 		jc := jsonrpc2.NewConn(c, websocketjsonrpc2.NewObjectStream(ws), peer)
 		<-jc.DisconnectNotify()
+	})
+
+	r.POST("/slack/commands/table", func(c *gin.Context) {
+		sv, err := slack.NewSecretsVerifier(c.Request.Header, os.Getenv("SLACK_SIGNING_SECRET"))
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.Request.Body = io.NopCloser(io.TeeReader(c.Request.Body, &sv))
+
+		cmd, err := slack.SlashCommandParse(c.Request)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		if err := sv.Ensure(); err != nil {
+			_ = c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
+
+		id := []string{"slack", cmd.TeamDomain, cmd.ChannelName}
+		if t := cmd.Text; len(t) > 0 {
+			id = append(id, t)
+		}
+
+		c.JSON(http.StatusOK, &slack.Msg{
+			ResponseType: "in_channel",
+			Text:         fmt.Sprintf("Join <@%s> at table https://jointable.io/%s", cmd.UserID, strings.Join(id, "-")),
+		})
 	})
 
 	r.GET("/debug", func(c *gin.Context) {

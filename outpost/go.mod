@@ -20,6 +20,7 @@ require (
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.2 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.7
+	github.com/slack-go/slack v0.9.4 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.1.0
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4
