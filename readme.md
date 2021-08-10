@@ -30,9 +30,8 @@ cd outpost && make update
 
 ## Bugs
 
-- auto audio doesn’t work on iOS (readiness?)
-- cannot switch front/back camera on iPad
-- scrollbar on iPad
+- playing audio effects doesn’t work on iOS (<Audio /> readiness? background sound ok)
+- scrollbar on iPhone/iPad
 - websocket disconnect issue. Investigate how to reconnect as the same peer?
 
 ## Ideas
@@ -47,8 +46,11 @@ cd outpost && make update
 - Only show avatars on mobile (hide entities)
 - Add border around cameras + cursors to know who each cursor belongs to
 - Stream the music as radios instead of short looping sounds
-- Save events and forward to newcomers
-- Persist state in Redis
+- Save events history for a table and forward to newly connected peers
+- Persist events history in Redis
+- hide cursor after 10 seconds without moving
+- hide controls on iPad video
+- only show real legit tables as background images
 
 Entities:
 - file
@@ -63,9 +65,6 @@ Entities:
 - video (mp4, wmv, etc)
 - twitch (live + clips: https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-for-live-streams-and-vods)
 - youtube (videos + live: https://developers.google.com/youtube/iframe_api_reference)
-- hide cursor after 10 seconds without moving
-- hide controls on iPad video
-- only show tables as background images
 
 Commands:
 - copy link of table
