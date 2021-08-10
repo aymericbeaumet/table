@@ -2,54 +2,59 @@
 	import { createEventDispatcher } from 'svelte';
 	import Entity from '$lib/entity';
 	import { throttle } from 'lodash';
+	import { MAX_FPS } from '$lib/env';
 
 	let visible = false;
-	let entities = [];
+	let entities = new Array<Entity>();
 	let selectedIndex = 0;
-	let inputTextElement;
+	let inputTextElement: HTMLInputElement;
 
 	const dispatch = createEventDispatcher();
 
-	function onClick(event) {
-		if (event.target === inputTextElement) {
+	const onClick: svelte.JSX.MouseEventHandler<HTMLDivElement> = (event) => {
+		if (event.currentTarget === inputTextElement) {
 			return;
 		}
 
-		if (event.target.nodeName === 'LI') {
-			const i = Array.prototype.indexOf.call(event.target.parentNode.children, event.target);
+		if (event.currentTarget?.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(
+				event.currentTarget.parentNode?.children,
+				event.currentTarget,
+			);
 			if (i > -1) {
 				selectedIndex = i;
 				dispatch('entity', entities[selectedIndex]);
-				hide();
-				return;
 			}
 		}
 
 		hide();
-	}
+	};
 
-	const onMouseMove = throttle((event) => {
-		if (event.target.nodeName === 'LI') {
-			const i = Array.prototype.indexOf.call(event.target.parentNode.children, event.target);
+	const onMouseMove: svelte.JSX.MouseEventHandler<HTMLUListElement> = (event) => {
+		if (event.currentTarget.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(
+				event.currentTarget.parentNode?.children,
+				event.currentTarget,
+			);
 			if (i > -1) {
 				selectedIndex = i;
 			}
 		}
-	}, 1000 / 60);
+	};
 
-	function onSubmit(event) {
+	const onSubmit: svelte.JSX.FormEventHandler<HTMLFormElement> = (event) => {
 		event.preventDefault();
 		dispatch('entity', entities[selectedIndex]);
 		hide();
-	}
+	};
 
-	function onInput(event) {
-		const value = event.target.value.trim();
+	const onInput: svelte.JSX.FormEventHandler<HTMLInputElement> = (event) => {
+		const value = event.currentTarget?.value.trim() || '';
 		entities = Entity.infer(value);
 		selectedIndex = 0;
-	}
+	};
 
-	function onKeyDown(event) {
+	const onKeyDown: svelte.JSX.KeyboardEventHandler<HTMLInputElement> = (event) => {
 		if (event.key === 'ArrowUp') {
 			event.preventDefault();
 			selectedIndex = (selectedIndex + entities.length - 1) % entities.length || 0;
@@ -61,16 +66,16 @@
 			selectedIndex = (selectedIndex + entities.length + 1) % entities.length || 0;
 			return;
 		}
-	}
+	};
 
-	function onKeyPress(event) {
+	const onKeyPress = (event: KeyboardEvent) => {
 		if (event.ctrlKey && (event.key === 'c' || event.key === 'l' || event.key === '\\')) {
 			hide();
 			return;
 		}
-	}
+	};
 
-	function onWindowKeyDown(event) {
+	const onWindowKeyDown = (event: KeyboardEvent) => {
 		if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
 			toggle();
 			return;
@@ -80,7 +85,7 @@
 			hide();
 			return;
 		}
-	}
+	};
 
 	function show() {
 		if (!visible) {
@@ -115,7 +120,7 @@
 					bind:this={inputTextElement}
 				/>
 
-				<ul on:mousemove={onMouseMove}>
+				<ul on:mousemove={throttle(onMouseMove, 1000 / MAX_FPS)}>
 					{#each entities as entity, i}
 						<li class:selected={i === selectedIndex}>{JSON.stringify(entity)}</li>
 					{/each}

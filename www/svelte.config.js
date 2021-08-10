@@ -1,8 +1,15 @@
-import adapter from '@sveltejs/adapter-static';
+import adapterStatic from '@sveltejs/adapter-static';
+import sveltePreprocess from 'svelte-preprocess';
 
 export default {
 	kit: {
 		target: '#svelte',
-		adapter: adapter(),
+		adapter: adapterStatic(),
 	},
+
+	preprocess: sveltePreprocess({
+		defaults: {
+			script: 'typescript',
+		},
+	}),
 };

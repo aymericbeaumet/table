@@ -15,8 +15,8 @@
 	import {
 		audioInputDeviceID,
 		videoInputDeviceID,
-		backgroundImage,
-		backgroundSound,
+		backgroundImageID,
+		backgroundSoundID,
 	} from '$lib/stores';
 	import Entity from '$lib/entity';
 	import { MAX_FPS } from '$lib/env';
@@ -28,41 +28,42 @@
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
 
-	export let name;
+	export let tableName: string;
 
-	const avatarsByStreamID = {};
-	let avatars = [];
+	const avatarsByStreamID: any = {};
+	let avatars: Array<any> = [];
 
-	const entitiesByKey = {};
-	let entities = [];
+	const entitiesByKey: any = {};
+	let entities: Array<any> = [];
 
 	const cursor = new Entity('cursor');
 	let isMouseDown = false;
-	let onMouseMove, onMouseDown, onMouseUp;
+	let onMouseMove: svelte.JSX.MouseEventHandler<HTMLDivElement>;
+	let onMouseDown: svelte.JSX.MouseEventHandler<HTMLDivElement>;
+	let onMouseUp: svelte.JSX.MouseEventHandler<HTMLDivElement>;
 
 	let showSettings = false;
 
-	let onSmartBarEntity;
+	let onSmartBarEntity: any;
 
 	const backgroundAudioPlayer = new AudioPlayer();
 	backgroundAudioPlayer.setLoop(true);
 	backgroundAudioPlayer.setVolume(0.3);
-	backgroundSound.subscribe((resource) => backgroundAudioPlayer.play(resource.url));
+	backgroundSoundID.subscribe((id) => backgroundAudioPlayer.play(backgroundSounds[id]?.url || ''));
+
+	let backgroundImageURL: string | undefined;
+	backgroundImageID.subscribe((id) => (backgroundImageURL = backgroundImages[id]?.url));
 
 	onMount(async function () {
 		const peerAudioPlayer = new AudioPlayer();
 
 		const { Client } = await import('ion-sdk-js'); // TODO: top import
-		const peer = new Peer(Client, name, {
-			onBackgroundImage: function (_streamID, id) {
-				backgroundImage.set(backgroundImages.find((r) => r.id === id));
-			},
+		const peer = new Peer(Client, tableName, {
+			onBackgroundImageID: (id: string) => backgroundImageID.set(id),
 
-			onBackgroundSound: function (_streamID, id) {
-				backgroundSound.set(backgroundSounds.find((r) => r.id === id));
-			},
+			onBackgroundSoundID: (id: string) => backgroundSoundID.set(id),
 
-			onEntity: function (_streamID, entity) {
+			onEntity: (_streamID: any, entity: any) => {
 				let e = entitiesByKey[entity.key];
 				if (!e) {
 					e = entity.asComponentProps();
@@ -73,7 +74,7 @@
 				entities = entities;
 			},
 
-			onSpeaker: function (streamIDs) {
+			onSpeaker: (streamIDs: any) => {
 				for (const avatar of avatars) {
 					avatar.active = false;
 				}
@@ -86,7 +87,7 @@
 				avatars = avatars;
 			},
 
-			onTrack: function (stream) {
+			onTrack: (stream: any) => {
 				let avatar = avatarsByStreamID[stream.id];
 				if (!avatar) {
 					avatar = {};
@@ -98,7 +99,7 @@
 				avatars = avatars;
 			},
 
-			onTrackRemoved: function (stream) {
+			onTrackRemoved: (stream: any) => {
 				const avatar = avatarsByStreamID[stream.id];
 				if (avatar) {
 					delete avatarsByStreamID[stream.id];
@@ -108,28 +109,26 @@
 			},
 		});
 
-		function onMouseEvent(event) {
+		function onMouseEvent(event: any) {
 			cursor.props.clientX = event.clientX;
 			cursor.props.clientY = event.clientY;
 			cursor.props.isDown = isMouseDown;
 			peer.unreliable({ ENTITY: cursor });
 		}
 
-		onMouseDown = function (event) {
-			isMouseDown = event.which === 1;
+		onMouseDown = (event) => {
+			isMouseDown = event.button === 0;
 			onMouseEvent(event);
 		};
 
-		onMouseMove = throttle(function (event) {
-			onMouseEvent(event);
-		}, 1000 / MAX_FPS);
+		onMouseMove = throttle(onMouseEvent, 1000 / MAX_FPS);
 
 		onMouseUp = function (event) {
 			isMouseDown = false;
 			onMouseEvent(event);
 		};
 
-		onSmartBarEntity = function (event) {
+		onSmartBarEntity = function (event: any) {
 			const entity = event.detail;
 			entities = [...entities, entity.asComponentProps()];
 			peer.reliable({ ENTITY: entity });
@@ -137,7 +136,8 @@
 
 		const { LocalStream } = await import('ion-sdk-js'); // TODO: top import
 
-		let lastAudioInputDeviceID, lastVideoInputDeviceID;
+		let lastAudioInputDeviceID: string;
+		let lastVideoInputDeviceID: string;
 
 		audioInputDeviceID.subscribe(resetStream);
 		videoInputDeviceID.subscribe(resetStream);
@@ -157,18 +157,20 @@
 			// Get user media
 			const stream = await LocalStream.getUserMedia({
 				audio: {
+					deviceId: aID,
 					autoGainControl: true,
 					echoCancellation: true,
 					noiseSuppression: true,
-					deviceId: aID,
 				},
 				video: {
+					...(vID ? { deviceId: vID } : { facingMode: { ideal: 'user' } }),
 					width: { ideal: 360, max: 360 },
 					height: { ideal: 360, max: 360 },
-					facingMode: { ideal: 'user' },
 					frameRate: { ideal: MAX_FPS, max: MAX_FPS },
-					deviceId: vID,
 				},
+				codec: 'vp8',
+				resolution: 'qvga',
+				sendEmptyOnMute: true,
 				simulcast: true,
 			});
 
@@ -205,7 +207,7 @@
 		on:mousemove={onMouseMove}
 		on:mouseup={onMouseUp}
 		style="
-		  background: repeat url({$backgroundImage.url});
+		  background: repeat url({backgroundImageURL});
 		  cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;
 		"
 	>

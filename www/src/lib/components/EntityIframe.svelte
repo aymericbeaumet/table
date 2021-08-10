@@ -1,5 +1,5 @@
 <script>
-	export let src;
+	export let src: string;
 </script>
 
 <iframe
@@ -8,7 +8,6 @@
 	height="360"
 	frameborder="0"
 	allow="autoplay; encrypted-media; fullscreen"
-	allowautoplay="true"
-	allowtransparency="true"
+	allowtransparency={true}
 	{src}
 />

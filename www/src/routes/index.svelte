@@ -2,12 +2,12 @@
 	import { goto, prefetchRoutes } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	let name;
+	let tableName: string;
 
-	function handleOnSubmit(event) {
+	const onFormSubmit: svelte.JSX.FormEventHandler<HTMLFormElement> = (event) => {
 		event.preventDefault();
-		goto(`/${name}`);
-	}
+		goto(`/${tableName}`);
+	};
 
 	onMount(prefetchRoutes);
 </script>
@@ -18,15 +18,7 @@
 
 <h1>Home page</h1>
 
-<form on:submit={handleOnSubmit}>
-	<!-- svelte-ignore a11y-autofocus -->
-	<input
-		type="text"
-		placeholder="Name your room"
-		autofocus
-		bind:value={name}
-		required
-		minlength="3"
-	/>
+<form on:submit={onFormSubmit}>
+	<input type="text" placeholder="Pick a table" bind:value={tableName} required minlength="3" />
 	<input type="submit" value="Join" />
 </form>

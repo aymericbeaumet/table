@@ -4,13 +4,21 @@ import EntityIframe from '$lib/components/EntityIframe.svelte';
 import EntityText from '$lib/components/EntityText.svelte';
 
 export default class Entity {
-	constructor(kind, props = {}) {
+	public kind: string;
+	public id?: string;
+	public props: any;
+
+	constructor(kind: string, props = {}) {
 		this.kind = kind;
 		this.id = undefined;
 		this.props = props;
 	}
 
-	asComponentProps() {
+	get key(): string {
+		return `${this.kind}:${this.id}`;
+	}
+
+	asComponentProps(): [any, any] {
 		switch (this.kind) {
 			case 'cursor':
 				return [EntityCursor, this.props];
@@ -23,51 +31,53 @@ export default class Entity {
 		}
 	}
 
-	static infer(value) {
-		const out = [];
+	static infer(value: string): Array<Entity> {
+		const out = new Array<Entity>();
 
 		if (value.length === 0) {
 			return out;
 		}
 
 		const { service, id } = getVideoId(value);
-		switch (service) {
-			case 'vimeo':
-				out.push(
-					new Entity('iframe', {
-						src: `https://player.vimeo.com/video/${encodeURIComponent(id)}`,
-					}),
-				);
-				break;
-			case 'youtube':
-				out.push(
-					new Entity('iframe', {
-						src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`,
-					}),
-				);
-				break;
+		if (id) {
+			switch (service) {
+				case 'vimeo':
+					out.push(
+						new Entity('iframe', {
+							src: `https://player.vimeo.com/video/${encodeURIComponent(id)}`,
+						}),
+					);
+					break;
+				case 'youtube':
+					out.push(
+						new Entity('iframe', {
+							src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`,
+						}),
+					);
+					break;
+			}
 		}
 
 		{
-			const matches = /https?:\/\/open\.spotify\.com\/([a-z]+)\/([A-Za-z0-9]+)\/?/.exec(value);
-			if (matches && matches.length === 3) {
+			const sMatches = /https?:\/\/open\.spotify\.com\/([a-z]+)\/([A-Za-z0-9]+)\/?/.exec(value);
+			if (sMatches && sMatches[1] && sMatches[2]) {
 				out.push(
 					new Entity('iframe', {
 						src: `https://open.spotify.com/embed/${encodeURIComponent(
-							matches[1],
-						)}/${encodeURIComponent(matches[2])}`,
+							sMatches[1],
+						)}/${encodeURIComponent(sMatches[2])}`,
 					}),
 				);
 			}
 		}
 
 		{
-			const matches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(value);
-			if (matches && matches.length === 2) {
+			const tMatches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(value);
+			if (tMatches && tMatches[1]) {
 				out.push(
 					new Entity('iframe', {
 						src: `https://player.twitch.tv/?channel=${encodeURIComponent(
-							matches[1],
+							tMatches[1],
 						)}&parent=${encodeURIComponent(window.location.hostname)}`,
 					}),
 				);

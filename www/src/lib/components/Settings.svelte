@@ -3,18 +3,22 @@
 	import {
 		audioInputDeviceID,
 		videoInputDeviceID,
-		backgroundImage,
-		backgroundSound,
+		backgroundImageID,
+		backgroundSoundID,
 	} from '$lib/stores';
 	import { backgroundImages, backgroundSounds } from '$lib/resources';
 
 	const dispatch = createEventDispatcher();
 
+	const onCloseButtonClick: svelte.JSX.MouseEventHandler<HTMLButtonElement> = () => {
+		dispatch('close');
+	};
+
 	const devicesPromise = navigator.mediaDevices.enumerateDevices();
 </script>
 
 <div>
-	<h2>Local Settings</h2>
+	<h2>Browser Settings</h2>
 
 	<section>
 		<h3>Audio & Video</h3>
@@ -51,13 +55,13 @@
 		</table>
 	</section>
 
-	<h2>Room Settings (synced)</h2>
+	<h2>Table Appearance (synced)</h2>
 
 	<section>
 		<h3>Background image</h3>
-		{#each backgroundImages as resource}
+		{#each Object.entries(backgroundImages) as [id, resource]}
 			<label>
-				<input type="radio" bind:group={$backgroundImage} value={resource} />
+				<input type="radio" bind:group={$backgroundImageID} value={id} />
 				<img src={resource.url} alt={resource.name} />
 			</label>
 		{/each}
@@ -65,16 +69,16 @@
 
 	<section>
 		<h3>Background sound</h3>
-		{#each backgroundSounds as resource}
+		{#each Object.entries(backgroundSounds) as [id, resource]}
 			<label>
-				<input type="radio" bind:group={$backgroundSound} value={resource} />
+				<input type="radio" bind:group={$backgroundSoundID} value={id} />
 				{resource.name}
 			</label>
 		{/each}
 	</section>
 
 	<footer>
-		<button on:click={() => dispatch('close')}>Close</button>
+		<button on:click={onCloseButtonClick}>Close</button>
 	</footer>
 </div>
 

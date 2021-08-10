@@ -3,8 +3,8 @@
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import { MAX_FPS } from '$lib/env';
 
-	export let clientX;
-	export let clientY;
+	export let clientX: number;
+	export let clientY: number;
 	export let isDown = false;
 </script>
 

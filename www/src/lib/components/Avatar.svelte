@@ -3,9 +3,9 @@
 
 	export let active = false;
 	export let muted = false;
-	export let srcObject = null;
+	export let srcObject: MediaProvider | null = null;
 
-	let video;
+	let video: HTMLVideoElement;
 	$: if (video && video.srcObject !== srcObject) {
 		video.srcObject = srcObject;
 	}
@@ -17,8 +17,6 @@
 		bind:this={video}
 		class:active
 		autoplay
-		disablepictureinpicture
-		disableremoteplayback
 		bind:muted
 		playsinline
 		style="background: repeat url({videoPosterPng});"
