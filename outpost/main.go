@@ -153,7 +153,7 @@ func main() {
 
 			c.JSON(http.StatusOK, &slack.Msg{
 				ResponseType: "in_channel",
-				Text:         fmt.Sprintf("Join <@%s>'s <table|https://jointable.io/%s>", cmd.UserID, strings.Join(id, "-")),
+				Text:         fmt.Sprintf("Join <@%s>'s <https://jointable.io/%s|table>", cmd.UserID, strings.Join(id, "-")),
 			})
 
 		default:
