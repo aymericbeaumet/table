@@ -124,7 +124,7 @@ func main() {
 		<-jc.DisconnectNotify()
 	})
 
-	r.POST("/slack/commands/table", func(c *gin.Context) {
+	r.POST("/slack/commands", func(c *gin.Context) {
 		sv, err := slack.NewSecretsVerifier(c.Request.Header, os.Getenv("SLACK_SIGNING_SECRET"))
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
@@ -144,15 +144,21 @@ func main() {
 			return
 		}
 
-		id := []string{"slack", cmd.TeamDomain, cmd.ChannelName}
-		if t := cmd.Text; len(t) > 0 {
-			id = append(id, t)
-		}
+		switch cmd.Command {
+		case "table":
+			id := []string{"slack", cmd.TeamDomain, cmd.ChannelName}
+			if t := cmd.Text; len(t) > 0 {
+				id = append(id, t)
+			}
 
-		c.JSON(http.StatusOK, &slack.Msg{
-			ResponseType: "in_channel",
-			Text:         fmt.Sprintf("Join <@%s> at table https://jointable.io/%s", cmd.UserID, strings.Join(id, "-")),
-		})
+			c.JSON(http.StatusOK, &slack.Msg{
+				ResponseType: "in_channel",
+				Text:         fmt.Sprintf("Join <@%s>'s <table|https://jointable.io/%s>", cmd.UserID, strings.Join(id, "-")),
+			})
+
+		default:
+			_ = c.AbortWithError(http.StatusBadRequest, fmt.Errorf("unsupported command: %#v", cmd.Command))
+		}
 	})
 
 	r.GET("/debug", func(c *gin.Context) {
