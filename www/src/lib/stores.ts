@@ -2,9 +2,9 @@ import { writable } from 'svelte/store';
 
 // Browser settings
 
-export const audioInputDeviceID = writable('default');
+export const audioInputDeviceID = writable(undefined as string | undefined);
 
-export const videoInputDeviceID = writable('default');
+export const videoInputDeviceID = writable(undefined as string | undefined);
 
 // Table settings
 

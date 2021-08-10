@@ -58,8 +58,6 @@
 	onMount(async function () {
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
 
-		const streamManager = new StreamManager(LocalStream, MAX_FPS);
-
 		const peerAudioPlayer = new AudioPlayer();
 
 		const peer = new Peer(Client, tableName, {
@@ -138,6 +136,7 @@
 			peer.reliable({ ENTITY: entity });
 		};
 
+		const streamManager = new StreamManager(LocalStream, MAX_FPS);
 		for (const store of [audioInputDeviceID, videoInputDeviceID]) {
 			store.subscribe(async () => {
 				const out = await streamManager.reset(get(audioInputDeviceID), get(videoInputDeviceID));
@@ -165,6 +164,10 @@
 				}
 			});
 		}
+
+		const [aDeviceID, vDeviceID] = await StreamManager.detect();
+		audioInputDeviceID.set(aDeviceID);
+		videoInputDeviceID.set(vDeviceID);
 	});
 </script>
 

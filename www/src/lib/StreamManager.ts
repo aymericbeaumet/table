@@ -41,4 +41,28 @@ export default class {
 
 		return [stream, hasAudioChanged, hasVideoChanged];
 	}
+
+	static async detect(): Promise<[string, string]> {
+		let audioInputDeviceID = '';
+		let videoInputDeviceID = '';
+
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		for (const device of devices) {
+			const isDefault = device.deviceId === 'default';
+			const isBuiltin = device.label.toLowerCase().includes('facetime');
+			const found =
+				(device.kind === 'audioinput' && audioInputDeviceID) ||
+				(device.kind === 'videoinput' && videoInputDeviceID);
+
+			if (isDefault || (isBuiltin && !found)) {
+				if (device.kind === 'audioinput') {
+					audioInputDeviceID = device.deviceId;
+				} else if (device.kind === 'videoinput') {
+					videoInputDeviceID = device.deviceId;
+				}
+			}
+		}
+
+		return [audioInputDeviceID, videoInputDeviceID];
+	}
 }
