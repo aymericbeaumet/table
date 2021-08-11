@@ -28,6 +28,10 @@ cd outpost && make update
   * https://console.scaleway.com/instance/servers
   * https://outpost-0.jointable.io/debug
 
+### Integrations
+
+- [Slack](https://api.slack.com/apps/A02ATC8ED6X) (`/table` custom command)
+
 ## Bugs
 
 - playing audio effects doesn’t work on iOS (<Audio /> readiness? background sound ok)
@@ -74,7 +78,6 @@ Commands:
 - wizz
 
 Integrations:
-- Slack
 - Zapier
 
 ## Pro Plan

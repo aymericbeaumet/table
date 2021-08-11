@@ -146,19 +146,24 @@ func main() {
 
 		switch cmd.Command {
 		case "/table":
-			text := fmt.Sprintf(
-				"Join <@%s> in the <https://jointable.io/slack-%s-%s|channel table>!",
-				cmd.UserID, cmd.TeamDomain, cmd.ChannelName,
-			)
 
-			if rurl := cmd.ResponseURL; len(rurl) > 0 {
-				if err := slack.PostWebhookContext(c, rurl, &slack.WebhookMessage{
-					Text: text,
-				}); err != nil {
-					_ = c.AbortWithError(http.StatusInternalServerError, err)
-					return
-				}
-			} else {
+			switch cmd.Text {
+			case "help", "-h", "--help":
+				c.JSON(http.StatusOK, &slack.Msg{
+					ResponseType: "ephemeral",
+					Text:         "How to use the `/table` command?",
+					Attachments: []slack.Attachment{
+						{
+							Text: "This command doesn't expect any parameter. Invoking it will post the link to this channel's table.",
+						},
+					},
+				})
+
+			default:
+				text := fmt.Sprintf(
+					"Join <@%s> in the <https://jointable.io/slack-%s-%s|channel's table>!",
+					cmd.UserID, cmd.TeamDomain, cmd.ChannelName,
+				)
 				c.JSON(http.StatusOK, &slack.Msg{
 					ResponseType: "in_channel",
 					Text:         text,
