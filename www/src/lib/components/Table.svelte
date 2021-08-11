@@ -24,6 +24,7 @@
 	import { backgroundImages, backgroundSounds } from '$lib/resources';
 	import { get } from 'svelte/store';
 	import StreamManager from '$lib/StreamManager';
+	import EntityComponent from '$lib/components/Entity.svelte';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -67,7 +68,7 @@
 			onEntity: (_streamID: any, entity: any) => {
 				let e = entitiesByKey[entity.key];
 				if (!e) {
-					e = entity.asComponentProps();
+					e = entity;
 					entitiesByKey[entity.key] = e;
 					entities = [...entities, e];
 				}
@@ -131,7 +132,7 @@
 
 		onSmartBarEntity = function (event: any) {
 			const entity = event.detail;
-			entities = [...entities, entity.asComponentProps()];
+			entities = [...entities, entity];
 			peer.reliable({ ENTITY: entity });
 		};
 
@@ -196,9 +197,9 @@
 		</header>
 
 		<div class="entities">
-			{#each entities as [component, props]}
+			{#each entities as entity}
 				<div class="entity">
-					<svelte:component this={component} {...props} />
+					<EntityComponent {entity} />
 				</div>
 			{/each}
 		</div>

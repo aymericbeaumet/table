@@ -1,7 +1,4 @@
 import getVideoId from 'get-video-id';
-import EntityCursor from '$lib/components/EntityCursor.svelte';
-import EntityIframe from '$lib/components/EntityIframe.svelte';
-import EntityText from '$lib/components/EntityText.svelte';
 
 export default class Entity {
 	public kind: string;
@@ -16,19 +13,6 @@ export default class Entity {
 
 	get key(): string {
 		return `${this.kind}:${this.id}`;
-	}
-
-	asComponentProps(): [any, any] {
-		switch (this.kind) {
-			case 'cursor':
-				return [EntityCursor, this.props];
-			case 'iframe':
-				return [EntityIframe, this.props];
-			case 'text':
-				return [EntityText, this.props];
-			default:
-				throw new Error(`implementation error: unexpected entity kind "${this.kind}"`);
-		}
 	}
 
 	static infer(value: string): Array<Entity> {
@@ -59,25 +43,41 @@ export default class Entity {
 		}
 
 		{
-			const sMatches = /https?:\/\/open\.spotify\.com\/([a-z]+)\/([A-Za-z0-9]+)\/?/.exec(value);
-			if (sMatches && sMatches[1] && sMatches[2]) {
+			const soundcloudRegex = /https?:\/\/soundcloud\.com\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+/;
+			const soundcloudMatches = soundcloudRegex.exec(value);
+			if (soundcloudMatches && soundcloudMatches[0]) {
 				out.push(
 					new Entity('iframe', {
-						src: `https://open.spotify.com/embed/${encodeURIComponent(
-							sMatches[1],
-						)}/${encodeURIComponent(sMatches[2])}`,
+						src: `https://w.soundcloud.com/player/?url=${encodeURIComponent(
+							soundcloudMatches[0],
+						)}&auto_play=false&show_artwork=true`,
 					}),
 				);
 			}
 		}
 
 		{
-			const tMatches = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/.exec(value);
-			if (tMatches && tMatches[1]) {
+			const spotifyRegex = /https?:\/\/open\.spotify\.com\/([a-z]+)\/([A-Za-z0-9]+)\/?/;
+			const spotifyMatches = spotifyRegex.exec(value);
+			if (spotifyMatches && spotifyMatches[1] && spotifyMatches[2]) {
+				out.push(
+					new Entity('iframe', {
+						src: `https://open.spotify.com/embed/${encodeURIComponent(
+							spotifyMatches[1],
+						)}/${encodeURIComponent(spotifyMatches[2])}`,
+					}),
+				);
+			}
+		}
+
+		{
+			const twitchRegex = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/;
+			const twichMatches = twitchRegex.exec(value);
+			if (twichMatches && twichMatches[1]) {
 				out.push(
 					new Entity('iframe', {
 						src: `https://player.twitch.tv/?channel=${encodeURIComponent(
-							tMatches[1],
+							twichMatches[1],
 						)}&parent=${encodeURIComponent(window.location.hostname)}`,
 					}),
 				);
