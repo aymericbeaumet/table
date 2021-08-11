@@ -20,7 +20,7 @@ cd outpost && make update
 
 - [`www`](./www)
   * automatically deployed to Netlify by GitHub Actions (master branch)
-  * https://app.netlify.com/sites/table-www
+  * https://app.netlify.com/sites/jointable
   * https://jointable.io
 
 - [`outpost`](./outpost)
