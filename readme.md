@@ -30,6 +30,7 @@ cd outpost && make update
 
 ### Integrations
 
+- [Discord](https://discord.com/developers/applications/874948277903196170) (TODO)
 - [Slack](https://api.slack.com/apps/A02ATC8ED6X) (`/table` custom command)
 
 ## Bugs
@@ -56,6 +57,13 @@ cd outpost && make update
 - hide controls on iPad video
 - only show real legit tables as background images
 - persist audio/video inputs settings in local storage
+- /table LINK (to immediately start a table with the entity shared)
+- Chat apps integrations (Discord, Teams, Zoom)
+- Integration Google Calendar
+- persist local settings in local storage
+- allow to disable audio/video in settings
+- Create webrtc data channels in the Entities svelte component, so data channels can be dynamically created/killed on demand based on whether the component is shown or not (small screens)
+- Add full screen mode for mobile https://stackoverflow.com/questions/16485919/open-webpage-in-fullscreen-in-safari-on-ios
 
 Entities:
 - file
