@@ -37,7 +37,6 @@ cd outpost && make update
 
 - playing audio effects doesn’t work on iOS (<Audio /> readiness? background sound ok)
 - scrollbar on iPhone/iPad
-- websocket disconnect issue. Investigate how to reconnect as the same peer?
 
 ## Ideas
 
