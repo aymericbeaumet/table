@@ -11,7 +11,6 @@
 	import gauntletPNG from '$lib/assets/gauntlet.png';
 	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import Badge from 'svelte-favicon-badge';
-	import leatherPng from '$lib/assets/leather.png';
 	import {
 		audioInputDeviceID,
 		videoInputDeviceID,
@@ -189,18 +188,20 @@
 		  cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;
 		"
 	>
-		<header style="background: repeat url({leatherPng});">
+		<header>
 			{#each avatars as props}
 				<Avatar {...props} />
 			{/each}
 			<div />
 		</header>
 
-		{#each entities as [component, props]}
-			<div class="entity">
-				<svelte:component this={component} {...props} />
-			</div>
-		{/each}
+		<div class="entities">
+			{#each entities as [component, props]}
+				<div class="entity">
+					<svelte:component this={component} {...props} />
+				</div>
+			{/each}
+		</div>
 
 		<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
 			<img src={SettingsSVG} alt="Settings" />
@@ -224,13 +225,13 @@
 	header {
 		display: flex;
 		justify-content: center;
-		margin: 0 auto;
-		padding: 5px;
-		border: 3px solid #281b0d;
-		border-top: 0;
-		border-radius: 20px;
-		border-top-left-radius: 0;
-		border-top-right-radius: 0;
+		flex-wrap: wrap;
+	}
+
+	@media screen and (max-width: 600px), screen and (max-height: 600px) {
+		.entities {
+			display: none;
+		}
 	}
 
 	.settings-button {
