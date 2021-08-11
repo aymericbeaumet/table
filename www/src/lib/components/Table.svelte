@@ -35,6 +35,7 @@
 	let avatars: Array<any> = [];
 
 	const entitiesByKey: any = {};
+	const entitiesByStreamID: any = {};
 	let entities: Array<any> = [];
 
 	const cursor = new Entity('cursor');
@@ -65,12 +66,14 @@
 
 			onBackgroundSoundID: (id: string) => backgroundSoundID.set(id),
 
-			onEntity: (_streamID: any, entity: any) => {
+			onEntity: (streamID: string, entity: Entity) => {
 				let e = entitiesByKey[entity.key];
 				if (!e) {
 					e = entity;
-					entitiesByKey[entity.key] = e;
-					entities = [...entities, e];
+					entitiesByKey[entity.key] = entity;
+					entitiesByStreamID[streamID] = entitiesByStreamID[streamID] || [];
+					entitiesByStreamID[streamID].push(entity);
+					entities = [...entities, entity];
 				}
 				e.props = entity.props;
 				entities = entities;
@@ -102,10 +105,19 @@
 			},
 
 			onTrackRemoved: (stream: any) => {
-				const avatar = avatarsByStreamID[stream.id];
-				if (avatar) {
+				const entitiesForStream = entitiesByStreamID[stream.id];
+				if (entitiesForStream) {
+					delete entitiesByStreamID[stream.id];
+					for (const entity of entitiesForStream) {
+						delete entitiesByKey[entity.key];
+						entities = removeFromArray(entities, entity);
+					}
+				}
+
+				const avatarForStream = avatarsByStreamID[stream.id];
+				if (avatarForStream) {
 					delete avatarsByStreamID[stream.id];
-					avatars = removeFromArray(avatars, avatar);
+					avatars = removeFromArray(avatars, avatarForStream);
 					peerAudioPlayer.play(stealthOGG);
 				}
 			},

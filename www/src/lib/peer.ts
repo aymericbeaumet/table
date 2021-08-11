@@ -24,7 +24,7 @@ export default class Peer {
 		}: {
 			onBackgroundImageID: (resourceID: string) => void;
 			onBackgroundSoundID: (resourceID: string) => void;
-			onEntity: any;
+			onEntity: (streamID: string, entity: Entity) => void;
 			onSpeaker: any;
 			onTrack: any;
 			onTrackRemoved: any;
