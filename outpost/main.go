@@ -146,20 +146,24 @@ func main() {
 
 		switch cmd.Command {
 		case "/table":
-			tableName := cmd.ChannelName
-			if text := strings.TrimSpace(cmd.Text); len(text) > 0 {
-				tableName = text
-			}
+			text := fmt.Sprintf(
+				"Join <@%s> in the <https://jointable.io/slack-%s-%s|channel table>!",
+				cmd.UserID, cmd.TeamDomain, cmd.ChannelName,
+			)
 
-			c.JSON(http.StatusOK, &slack.Msg{
-				ResponseType: "in_channel",
-				Text: fmt.Sprintf(
-					"Join <@%s>'s <https://jointable.io/slack:%s/%s|table>!",
-					cmd.UserID,
-					cmd.TeamDomain,
-					tableName,
-				),
-			})
+			if rurl := cmd.ResponseURL; len(rurl) > 0 {
+				if err := slack.PostWebhookContext(c, rurl, &slack.WebhookMessage{
+					Text: text,
+				}); err != nil {
+					_ = c.AbortWithError(http.StatusInternalServerError, err)
+					return
+				}
+			} else {
+				c.JSON(http.StatusOK, &slack.Msg{
+					ResponseType: "in_channel",
+					Text:         text,
+				})
+			}
 
 		default:
 			_ = c.AbortWithError(http.StatusBadRequest, fmt.Errorf("unsupported command: %#v", cmd.Command))

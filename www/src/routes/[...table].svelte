@@ -5,7 +5,7 @@
 	let tableName = '';
 
 	function normalize(input: string): string {
-		return input.trim().toLowerCase().replace(/\s+/g, ' ');
+		return input.split('/')[0]?.trim().toLowerCase().replace(/\s+/g, ' ') || '';
 	}
 
 	onMount(() => {
