@@ -72,7 +72,7 @@
 					entitiesByKey[entity.key] = e;
 					entities = [...entities, e];
 				}
-				e[1] = entity.props;
+				e.props = entity.props;
 				entities = entities;
 			},
 
