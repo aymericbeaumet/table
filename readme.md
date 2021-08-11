@@ -36,7 +36,6 @@ cd outpost && make update
 ## Bugs
 
 - playing audio effects doesn’t work on iOS (<Audio /> readiness? background sound ok)
-- scrollbar on iPhone/iPad
 
 ## Ideas
 
@@ -47,7 +46,6 @@ cd outpost && make update
 - Around emojis:
   - Right click on the table to pin an emoji and start an ephemeral emoji fountain
   - Allow to replace cursor by emoji for N seconds
-- Only show avatars on mobile (hide entities)
 - Add border around cameras + cursors to know who each cursor belongs to
 - Stream the music as radios instead of short looping sounds
 - Save events history for a table and forward to newly connected peers
