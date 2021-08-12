@@ -11,10 +11,6 @@
 
 	const dispatch = createEventDispatcher();
 
-	const onCloseButtonClick: svelte.JSX.MouseEventHandler<HTMLButtonElement> = () => {
-		dispatch('close');
-	};
-
 	const devicesPromise = navigator.mediaDevices.enumerateDevices();
 
 	const onWindowKeyDown = (event: KeyboardEvent) => {
@@ -92,7 +88,7 @@
 	</section>
 
 	<footer>
-		<button on:click={onCloseButtonClick}>Close</button>
+		<button on:click={() => dispatch('close')}>Close</button>
 	</footer>
 </div>
 
