@@ -14,10 +14,7 @@ export default class AudioPlayer {
 	}
 
 	setVolume(volume: number): void {
-		if (volume < 0 || volume > 100) {
-			throw new Error(`implementation error: volume should be between 0 and 100, got ${volume}`);
-		}
-		this.audio.volume = volume / 100;
+		this.audio.volume = Math.min(Math.max(volume, 0), 100) / 100;
 	}
 
 	play(src: string): void {

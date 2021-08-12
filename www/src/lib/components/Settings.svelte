@@ -87,7 +87,7 @@
 
 		<label>
 			<input type="range" bind:value={$backgroundSoundVolume} min="0" max="100" />
-			{$backgroundSoundVolume}%
+			<input type="number" bind:value={$backgroundSoundVolume} min="0" max="100" />%
 		</label>
 	</section>
 
