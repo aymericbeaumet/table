@@ -64,6 +64,9 @@ cd outpost && make update
 - P2P for audio/video unreliable data channel
 - "If just two participants are in a meeting, Zoom will utilize peer-to-peer connections for excellent speed and reliability"
 - "Zoom maintains 50% excess capacity in all aspects of our infrastructure to accommodate our growing business and to meet peak usage requirements"
+- Convey authentication mecanism through the URL:
+  - https://jointable.io/slack:join-table/dylan
+  - https://jointable.io/google:rekki.com/all-hands
 
 Entities:
 - file
