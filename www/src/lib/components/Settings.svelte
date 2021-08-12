@@ -15,7 +15,16 @@
 	};
 
 	const devicesPromise = navigator.mediaDevices.enumerateDevices();
+
+	const onWindowKeyDown = (event: KeyboardEvent) => {
+		if (event.key === 'Escape' || (event.ctrlKey && (event.key === 'c' || event.key === '\\'))) {
+			dispatch('close');
+			return;
+		}
+	};
 </script>
+
+<svelte:window on:keydown={onWindowKeyDown} />
 
 <div>
 	<h2>Browser Settings</h2>
@@ -84,11 +93,14 @@
 
 <style>
 	div {
-		margin: 0 auto;
-		margin-top: 100px;
 		background-color: white;
 		width: 800px;
+		padding: 20px;
 		border: 1px solid black;
+	}
+
+	section {
+		margin: 20px 0;
 	}
 
 	label {
@@ -100,5 +112,9 @@
 		width: 64px;
 		height: 64px;
 		overflow: hidden;
+	}
+
+	button {
+		padding: 5px;
 	}
 </style>

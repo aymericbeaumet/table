@@ -267,8 +267,9 @@
 	}
 
 	.settings-wrapper {
-		width: 100%;
-		height: 100%;
 		position: absolute;
+		left: 50%;
+		top: 30%;
+		transform: translate(-50%, -30%);
 	}
 </style>
