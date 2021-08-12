@@ -1,13 +1,8 @@
 <script>
-	import { goto, prefetchRoutes } from '$app/navigation';
+	import { prefetchRoutes } from '$app/navigation';
 	import { onMount } from 'svelte';
 
 	let tableName: string;
-
-	const onFormSubmit: svelte.JSX.FormEventHandler<HTMLFormElement> = (event) => {
-		event.preventDefault();
-		goto(`/${tableName}`);
-	};
 
 	onMount(prefetchRoutes);
 </script>
@@ -22,7 +17,7 @@
 	</header>
 
 	<main>
-		<form on:submit={onFormSubmit}>
+		<form action={`/${tableName}`}>
 			<!-- svelte-ignore a11y-autofocus -->
 			<input
 				type="text"
