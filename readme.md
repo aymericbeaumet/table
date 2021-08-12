@@ -68,6 +68,8 @@ cd outpost && make update
   - https://jointable.io/slack:join-table/dylan
   - https://jointable.io/google:rekki.com/all-hands
 - Support pasting/drag'n'dropping images/videos/docs on the table
+
+- create ambiance (with background image + sound + cursor)
 - cursor z-index (behind smartbar + settings)
 - cursor follows background
 
