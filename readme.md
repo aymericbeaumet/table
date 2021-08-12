@@ -61,6 +61,9 @@ cd outpost && make update
 - allow to disable audio/video in settings
 - Create webrtc data channels in the Entities svelte component, so data channels can be dynamically created/killed on demand based on whether the component is shown or not (small screens)
 - Add full screen mode for mobile https://stackoverflow.com/questions/16485919/open-webpage-in-fullscreen-in-safari-on-ios
+- P2P for audio/video unreliable data channel
+- "If just two participants are in a meeting, Zoom will utilize peer-to-peer connections for excellent speed and reliability"
+- "Zoom maintains 50% excess capacity in all aspects of our infrastructure to accommodate our growing business and to meet peak usage requirements"
 
 Entities:
 - file
