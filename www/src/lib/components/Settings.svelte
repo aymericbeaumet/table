@@ -27,9 +27,9 @@
 <svelte:window on:keydown={onWindowKeyDown} />
 
 <div>
-	<h2>Browser Settings</h2>
-
 	<section>
+		<h2>Browser settings</h2>
+
 		<h3>Audio & Video</h3>
 		<table>
 			<tr>
@@ -64,19 +64,17 @@
 		</table>
 	</section>
 
-	<h2>Table Appearance (synced)</h2>
-
 	<section>
-		<h3>Background image</h3>
+		<h2>Table settings (synced)</h2>
+
+		<h3>Atmosphere</h3>
 		{#each Object.entries(backgroundImages) as [id, resource]}
 			<label class="bg-image" style="background-image: url({resource.url})">
 				<input type="radio" bind:group={$backgroundImageID} value={id} />
 			</label>
 		{/each}
-	</section>
 
-	<section>
-		<h3>Background sound</h3>
+		<h3>Ambiance</h3>
 		{#each Object.entries(backgroundSounds) as [id, resource]}
 			<label>
 				<input type="radio" bind:group={$backgroundSoundID} value={id} />
@@ -94,12 +92,20 @@
 	div {
 		background-color: white;
 		width: 800px;
-		padding: 20px;
+		padding: 10px;
 		border: 1px solid black;
 	}
 
 	section {
 		margin: 20px 0;
+		border: 1px solid grey;
+		padding: 10px;
+	}
+
+	h2,
+	h3 {
+		margin-top: 5px;
+		margin-bottom: 5px;
 	}
 
 	label {
