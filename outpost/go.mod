@@ -11,7 +11,7 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/lucsky/cuid v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
-	github.com/pion/ice/v2 v2.1.11 // indirect
+	github.com/pion/ice/v2 v2.1.12 // indirect
 	github.com/pion/interceptor v0.0.15 // indirect
 	github.com/pion/ion-sfu v1.10.8
 	github.com/pion/rtp v1.7.1 // indirect
@@ -20,11 +20,10 @@ require (
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.2 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.7
-	github.com/slack-go/slack v0.9.4 // indirect
+	github.com/slack-go/slack v0.9.4
 	github.com/sourcegraph/jsonrpc2 v0.1.0
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
