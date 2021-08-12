@@ -16,6 +16,7 @@
 		videoInputDeviceID,
 		backgroundImageID,
 		backgroundSoundID,
+		backgroundSoundVolume,
 	} from '$lib/stores';
 	import Entity from '$lib/entity';
 	import { MAX_FPS } from '$lib/env';
@@ -50,7 +51,7 @@
 
 	const backgroundAudioPlayer = new AudioPlayer();
 	backgroundAudioPlayer.setLoop(true);
-	backgroundAudioPlayer.setVolume(0.3);
+	$: backgroundAudioPlayer.setVolume($backgroundSoundVolume);
 	$: backgroundAudioPlayer.play(backgroundSounds[$backgroundSoundID]?.url || '');
 
 	$: backgroundImageURL = backgroundImages[$backgroundImageID]?.url;

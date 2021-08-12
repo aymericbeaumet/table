@@ -5,6 +5,7 @@
 		videoInputDeviceID,
 		backgroundImageID,
 		backgroundSoundID,
+		backgroundSoundVolume,
 	} from '$lib/stores';
 	import { backgroundImages, backgroundSounds } from '$lib/resources';
 
@@ -81,6 +82,13 @@
 				{resource.name}
 			</label>
 		{/each}
+
+		<h3>Ambiance sound level</h3>
+
+		<label>
+			<input type="range" bind:value={$backgroundSoundVolume} min="0" max="100" />
+			{$backgroundSoundVolume}%
+		</label>
 	</section>
 
 	<footer>
@@ -123,6 +131,10 @@
 
 	label.bg-image + label.bg-image {
 		margin-left: 10px;
+	}
+
+	input[type='range'] {
+		width: 400px;
 	}
 
 	button {

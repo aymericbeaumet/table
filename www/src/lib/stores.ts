@@ -11,3 +11,5 @@ export const videoInputDeviceID = writable(undefined as string | undefined);
 export const backgroundImageID = writable('desk');
 
 export const backgroundSoundID = writable('silence');
+
+export const backgroundSoundVolume = writable(25); // [0; 100]
