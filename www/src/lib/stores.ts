@@ -8,6 +8,6 @@ export const videoInputDeviceID = writable(undefined as string | undefined);
 
 // Table settings
 
-export const backgroundImageID = writable('fantasy');
+export const backgroundImageID = writable('desk');
 
-export const backgroundSoundID = writable('medieval');
+export const backgroundSoundID = writable('silence');

@@ -69,9 +69,8 @@
 	<section>
 		<h3>Background image</h3>
 		{#each Object.entries(backgroundImages) as [id, resource]}
-			<label>
+			<label class="bg-image" style="background-image: url({resource.url})">
 				<input type="radio" bind:group={$backgroundImageID} value={id} />
-				<img src={resource.url} alt={resource.name} />
 			</label>
 		{/each}
 	</section>
@@ -107,11 +106,17 @@
 		cursor: pointer;
 	}
 
-	label > img {
+	label.bg-image {
+		display: inline-block;
 		border: 1px solid grey;
 		width: 64px;
 		height: 64px;
-		overflow: hidden;
+		background-position: center;
+		background-size: cover;
+	}
+
+	label.bg-image + label.bg-image {
+		margin-left: 10px;
 	}
 
 	button {

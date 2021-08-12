@@ -51,10 +51,9 @@
 	const backgroundAudioPlayer = new AudioPlayer();
 	backgroundAudioPlayer.setLoop(true);
 	backgroundAudioPlayer.setVolume(0.3);
-	backgroundSoundID.subscribe((id) => backgroundAudioPlayer.play(backgroundSounds[id]?.url || ''));
+	$: backgroundAudioPlayer.play(backgroundSounds[$backgroundSoundID]?.url || '');
 
-	let backgroundImageURL: string | undefined;
-	backgroundImageID.subscribe((id) => (backgroundImageURL = backgroundImages[id]?.url));
+	$: backgroundImageURL = backgroundImages[$backgroundImageID]?.url;
 
 	onMount(async function () {
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
@@ -197,7 +196,9 @@
 		on:mousemove={onMouseMove}
 		on:mouseup={onMouseUp}
 		style="
-		  background: repeat url({backgroundImageURL});
+		  background-image: url({backgroundImageURL});
+      background-position: center;
+		  background-size: cover;
 		  cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;
 		"
 	>
