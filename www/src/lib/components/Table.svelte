@@ -50,7 +50,7 @@
 	const backgroundAudioPlayer = new AudioPlayer();
 	backgroundAudioPlayer.setLoop(true);
 	$: backgroundAudioPlayer.setVolume($ambianceSoundVolume);
-	$: backgroundAudioPlayer.play(ambiances[$ambianceID]?.soundURL || '');
+	$: backgroundAudioPlayer.play(ambiances[$ambianceID]?.soundURL);
 
 	const peerAudioPlayer = new AudioPlayer();
 	$: peerAudioPlayer.setVolume($ambianceEffectsVolume);
