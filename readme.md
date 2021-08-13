@@ -75,7 +75,8 @@ cd outpost && make update
 - add full screen and smart bar buttons to menu
 - Cursor position relative to safebox
 - Allow to configure the rooms via query parameters for new rooms
-- Send to the client when he’s the first
+- Tell the client when he’s the first (so he knows the query params can be
+  broadcasted)
 - Create query parameter generator + teach people about query parameters
 
 Entities:
