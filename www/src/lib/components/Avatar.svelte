@@ -4,7 +4,7 @@
 
 	export let active = false;
 	export let muted = false;
-	export let srcObject: MediaProvider | null = null;
+	export let srcObject: HTMLMediaElement['srcObject'] | null = null;
 
 	let video: HTMLVideoElement;
 	$: if (video && video.srcObject !== srcObject) {

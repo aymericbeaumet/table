@@ -35,7 +35,7 @@
 	const entitiesByStreamID: any = {};
 	let entities: Array<any> = [];
 
-	const screenSizesByStreamID: any = {};
+	const screenSizesByStreamID: { [key: string]: { width: number; height: number } } = {};
 
 	const cursor = new Entity('cursor');
 	let isMouseDown = false;
@@ -55,8 +55,8 @@
 	const peerAudioPlayer = new AudioPlayer();
 	$: peerAudioPlayer.setVolume($ambianceEffectsVolume);
 
-	let entitiesElement;
-	let ro;
+	let entitiesElement: HTMLDivElement;
+	let ro: ResizeObserver;
 	let safeboxWidth = '100%';
 	let safeboxHeight = '100%';
 

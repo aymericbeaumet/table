@@ -6,7 +6,7 @@
 		"update": "ncu --upgrade; npm install; npm install -D @sveltejs/kit@next @sveltejs/adapter-static@next",
 		"dev": "svelte-kit dev --host localhost",
 		"build": "svelte-kit build",
-		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && svelte-check",
+		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && svelte-check --tsconfig ./tsconfig.json",
 		"test": "jest",
 		"deploy": "netlify deploy --prod -d build",
 		"format": "prettier --write --plugin-search-dir=. ."
@@ -21,6 +21,7 @@
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^1.0.0-next.16",
 		"@sveltejs/kit": "^1.0.0-next.145",
+		"@tsconfig/svelte": "^2.0.1",
 		"@types/jest": "^27.0.0",
 		"@types/lodash": "^4.14.172",
 		"@typescript-eslint/eslint-plugin": "^4.29.1",

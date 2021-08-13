@@ -81,7 +81,7 @@ export default class Peer {
 
 		/* Join when the signaling channel is ready */
 
-		signal.onopen = () => this.client.join(name);
+		signal.onopen = () => this.client.join(tableName);
 	}
 
 	publish(stream: any): void {

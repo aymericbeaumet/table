@@ -25,7 +25,7 @@ import officeClick from './office/click.png';
 import officeLogin from './office/login.mp3';
 import officeLogout from './office/logout.mp3';
 
-ambiances.office = new Ambiance(
+ambiances['office'] = new Ambiance(
 	'Office',
 	officeBackground,
 	officeSound,
@@ -46,7 +46,7 @@ import fantasyClick from './fantasy/click.png';
 import fantasyLogin from './fantasy/login.mp3';
 import fantasyLogout from './fantasy/logout.mp3';
 
-ambiances.fantasy = new Ambiance(
+ambiances['fantasy'] = new Ambiance(
 	'Fantasy',
 	fantasyBackground,
 	fantasySound,
