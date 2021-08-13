@@ -71,10 +71,17 @@
 		safeboxHeight = `${smallestHeight}px`;
 	}
 
+	let lastReceivedAmbianceID = '';
+
 	onMount(async function () {
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
 
 		const peer = new Peer(Client, tableName, {
+			onAmbiance: (streamID: string, id: string) => {
+				lastReceivedAmbianceID = id;
+				ambianceID.set(id);
+			},
+
 			onEntity: (streamID: string, entity: Entity) => {
 				let e = entitiesByKey[entity.key];
 				if (!e) {
@@ -140,6 +147,14 @@
 				delete screenSizesByStreamID[stream.id];
 				recomputeSafebox();
 			},
+		});
+
+		ambianceID.subscribe((v) => {
+			// Idempotent
+			if (v === lastReceivedAmbianceID) {
+				return;
+			}
+			peer.reliable({ AMBIANCE: v });
 		});
 
 		/* Watch for mouse events */

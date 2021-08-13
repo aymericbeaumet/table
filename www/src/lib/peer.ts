@@ -15,12 +15,14 @@ export default class Peer {
 		Client: any,
 		tableName: string,
 		{
+			onAmbiance,
 			onEntity,
 			onScreen,
 			onSpeaker,
 			onTrack,
 			onTrackRemoved,
 		}: {
+			onAmbiance: (streamID: string, id: string) => void;
 			onEntity: (streamID: string, entity: Entity) => void;
 			onScreen: (streamID: string, width: number, height: number) => void;
 			onSpeaker: any;
@@ -30,6 +32,10 @@ export default class Peer {
 	) {
 		const onmessage = (event: any) => {
 			const { streamID, payload } = decode(event.data) as any;
+
+			if (payload.AMBIANCE) {
+				return onAmbiance(streamID, payload.AMBIANCE);
+			}
 
 			if (payload.ENTITY) {
 				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);
