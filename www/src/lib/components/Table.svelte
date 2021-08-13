@@ -61,14 +61,20 @@
 	let safeboxHeight = '100%';
 
 	function recomputeSafebox() {
-		let smallestWidth = Infinity;
-		let smallestHeight = Infinity;
+		let smallestWidth: number | undefined;
+		let smallestHeight: number | undefined;
 		for (const size of Object.values(screenSizesByStreamID)) {
-			smallestWidth = Math.min(smallestWidth, size.width);
-			smallestHeight = Math.min(smallestHeight, size.height);
+			smallestWidth = smallestWidth ? Math.min(smallestWidth, size.width) : size.width;
+			smallestHeight = smallestHeight ? Math.min(smallestHeight, size.height) : size.height;
 		}
-		safeboxWidth = `${smallestWidth}px`;
-		safeboxHeight = `${smallestHeight}px`;
+
+		if (smallestWidth && smallestHeight) {
+			safeboxWidth = `${smallestWidth}px`;
+			safeboxHeight = `${smallestHeight}px`;
+		} else {
+			safeboxWidth = '100%';
+			safeboxHeight = '100%';
+		}
 	}
 
 	let lastReceivedAmbianceID = '';
