@@ -173,7 +173,7 @@
 
 		/* Watch for resize */
 
-		let screenReliable: NodeJS.Timeout;
+		let screenReliable: any;
 		ro = new ResizeObserver(
 			throttle((entries) => {
 				clearTimeout(screenReliable);
@@ -232,8 +232,6 @@
 	background={faviconBackground}
 	href="/favicon.png"
 />
-
-<svelte:body onresize={onResize} />
 
 <SmartBar on:entity={onSmartBarEntity}>
 	<div
