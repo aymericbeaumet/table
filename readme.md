@@ -77,6 +77,9 @@ cd outpost && make update
 - Relocate menu to bottom on mobile
 - add full screen and smart bar buttons to menu
 - Cursor position relative to safebox
+- Allow to configure the rooms via query parameters for new rooms
+- Send to the client when he’s the first
+- Create query parameter generator + teach people about query parameters
 
 Entities:
 - file
