@@ -77,7 +77,7 @@
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
 
 		const peer = new Peer(Client, tableName, {
-			onAmbiance: (streamID: string, id: string) => {
+			onAmbiance: (_streamID: string, id: string) => {
 				lastReceivedAmbianceID = id;
 				ambianceID.set(id);
 			},
