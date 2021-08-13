@@ -14,7 +14,10 @@ export default class AudioPlayer {
 	}
 
 	setVolume(volume: number): void {
-		this.audio.volume = Math.min(Math.max(volume, 0), 100) / 100;
+		if (volume < 0 || volume > 100) {
+			return;
+		}
+		this.audio.volume = volume / 100;
 	}
 
 	play(src: string | undefined): void {

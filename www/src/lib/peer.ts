@@ -15,14 +15,18 @@ export default class Peer {
 		Client: any,
 		tableName: string,
 		{
-			onAmbiance,
+			onAmbianceID,
+			onAmbianceSoundVolume,
+			onAmbianceEffectsVolume,
 			onEntity,
 			onScreen,
 			onSpeaker,
 			onTrack,
 			onTrackRemoved,
 		}: {
-			onAmbiance: (streamID: string, id: string) => void;
+			onAmbianceID: (streamID: string, id: string) => void;
+			onAmbianceSoundVolume: (streamID: string, volume: number) => void;
+			onAmbianceEffectsVolume: (streamID: string, volume: number) => void;
 			onEntity: (streamID: string, entity: Entity) => void;
 			onScreen: (streamID: string, width: number, height: number) => void;
 			onSpeaker: any;
@@ -33,8 +37,16 @@ export default class Peer {
 		const onmessage = (event: any) => {
 			const { streamID, payload } = decode(event.data) as any;
 
-			if (payload.AMBIANCE) {
-				return onAmbiance(streamID, payload.AMBIANCE);
+			if (payload.AMBIANCE_ID) {
+				return onAmbianceID(streamID, payload.AMBIANCE_ID);
+			}
+
+			if (payload.AMBIANCE_SOUND_VOLUME) {
+				return onAmbianceSoundVolume(streamID, payload.AMBIANCE_SOUND_VOLUME);
+			}
+
+			if (payload.AMBIANCE_EFFECTS_VOLUME) {
+				return onAmbianceEffectsVolume(streamID, payload.AMBIANCE_EFFECTS_VOLUME);
 			}
 
 			if (payload.ENTITY) {

@@ -80,14 +80,26 @@
 	}
 
 	let lastReceivedAmbianceID = '';
+	let lastReceivedAmbianceSoundVolume = 0;
+	let lastReceivedAmbianceEffectsVolume = 0;
 
 	onMount(async function () {
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
 
 		const peer = new Peer(Client, tableName, {
-			onAmbiance: (_streamID: string, id: string) => {
+			onAmbianceID: (_streamID: string, id: string) => {
 				lastReceivedAmbianceID = id;
 				ambianceID.set(id);
+			},
+
+			onAmbianceSoundVolume: (_streamID: string, volume: number) => {
+				lastReceivedAmbianceSoundVolume = volume;
+				ambianceSoundVolume.set(volume);
+			},
+
+			onAmbianceEffectsVolume: (_streamID: string, volume: number) => {
+				lastReceivedAmbianceEffectsVolume = volume;
+				ambianceEffectsVolume.set(volume);
 			},
 
 			onEntity: (streamID: string, entity: Entity) => {
@@ -158,11 +170,24 @@
 		});
 
 		ambianceID.subscribe((v) => {
-			// Idempotent
 			if (v === lastReceivedAmbianceID) {
 				return;
 			}
-			peer.reliable({ AMBIANCE: v });
+			peer.reliable({ AMBIANCE_ID: v });
+		});
+
+		ambianceSoundVolume.subscribe((v) => {
+			if (v === lastReceivedAmbianceSoundVolume) {
+				return;
+			}
+			peer.reliable({ AMBIANCE_SOUND_VOLUME: v });
+		});
+
+		ambianceEffectsVolume.subscribe((v) => {
+			if (v === lastReceivedAmbianceEffectsVolume) {
+				return;
+			}
+			peer.reliable({ AMBIANCE_EFFECTS_VOLUME: v });
 		});
 
 		/* Watch for mouse events */
