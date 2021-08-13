@@ -16,7 +16,7 @@
 	} from '$lib/stores';
 	import Entity from '$lib/entity';
 	import { MAX_FPS } from '$lib/env';
-	import SettingsSVG from '$lib/assets/settings.svg';
+	import settingsButtonURL from '$lib/assets/settings.svg';
 	import Settings from '$lib/components/Settings.svelte';
 	import ambiances from '$lib/assets/ambiances';
 	import { get } from 'svelte/store';
@@ -217,7 +217,7 @@
 		</div>
 
 		<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
-			<img src={SettingsSVG} alt="Settings" />
+			<img src={settingsButtonURL} alt="Settings" />
 		</div>
 
 		{#if showSettings}
@@ -267,6 +267,7 @@
 	}
 
 	.settings-wrapper {
+		z-index: 1000;
 		position: absolute;
 		left: 50%;
 		top: 30%;

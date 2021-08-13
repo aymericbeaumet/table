@@ -20,7 +20,7 @@
 		autoplay
 		bind:muted
 		playsinline
-		style="background: repeat url({ambiances[$ambianceID]?.posterURL});"
+		style="background: url({ambiances[$ambianceID]?.posterURL});"
 	/>
 </div>
 

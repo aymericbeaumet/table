@@ -70,14 +70,12 @@ cd outpost && make update
 - Support pasting/drag'n'dropping images/videos/docs on the table
 - Add Google/Microsoft/Slack login
 - Synchronize the background sounds between peers (absolute reference from Unix timestamp 0)
+- Draw limit of smallest screen
+- Allow people to provide custom ambiance URL as long as they follow the naming convention
 
 - Hide smart bar button on mobile
 - Relocate menu to bottom on mobile
 - add full screen and smart bar buttons to menu
-
-- create ambiance (with background image + sound + cursor)
-- cursor z-index (behind smartbar + settings)
-- cursor follows background
 
 Entities:
 - file
