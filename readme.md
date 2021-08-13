@@ -73,10 +73,10 @@ cd outpost && make update
 - Draw limit of smallest screen
 - Allow people to provide custom ambiance URL as long as they follow the naming convention
 - Go binary to stress test (video, audio, entity, mouse, etc)
-
 - Hide smart bar button on mobile
 - Relocate menu to bottom on mobile
 - add full screen and smart bar buttons to menu
+- Cursor position relative to safebox
 
 Entities:
 - file
