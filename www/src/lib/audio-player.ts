@@ -17,7 +17,7 @@ export default class AudioPlayer {
 		this.audio.volume = Math.min(Math.max(volume, 0), 100) / 100;
 	}
 
-	play(src: string): void {
-		this.audio.src = src;
+	play(src: string | undefined): void {
+		this.audio.src = src || '';
 	}
 }

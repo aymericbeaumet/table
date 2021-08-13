@@ -3,11 +3,11 @@
 	import {
 		audioInputDeviceID,
 		videoInputDeviceID,
-		backgroundImageID,
-		backgroundSoundID,
-		backgroundSoundVolume,
+		ambianceID,
+		ambianceSoundVolume,
+		ambianceEffectsVolume,
 	} from '$lib/stores';
-	import { backgroundImages, backgroundSounds } from '$lib/resources';
+	import ambiances from '$lib/assets/ambiances';
 
 	const dispatch = createEventDispatcher();
 
@@ -64,26 +64,30 @@
 	<section>
 		<h2>Table settings (synced)</h2>
 
-		<h3>Atmosphere</h3>
-		{#each Object.entries(backgroundImages) as [id, resource]}
-			<label class="bg-image" style="background-image: url({resource.url})">
-				<input type="radio" bind:group={$backgroundImageID} value={id} />
-			</label>
-		{/each}
-
 		<h3>Ambiance</h3>
-		{#each Object.entries(backgroundSounds) as [id, resource]}
-			<label>
-				<input type="radio" bind:group={$backgroundSoundID} value={id} />
-				{resource.name}
+
+		{#each Object.entries(ambiances) as [id, ambiance]}
+			<label
+				class="bg-image"
+				style="background-image: url({ambiance.backgroundURL})"
+				title={ambiance.name}
+			>
+				<input type="radio" bind:group={$ambianceID} value={id} />
 			</label>
 		{/each}
 
-		<h3>Ambiance sound level</h3>
+		<h3>Ambiance sound volume</h3>
 
 		<label>
-			<input type="range" bind:value={$backgroundSoundVolume} min="0" max="100" />
-			<input type="number" bind:value={$backgroundSoundVolume} min="0" max="100" />%
+			<input type="range" bind:value={$ambianceSoundVolume} min="0" max="100" />
+			<input type="number" bind:value={$ambianceSoundVolume} min="0" max="100" />%
+		</label>
+
+		<h3>Ambiance effect volume</h3>
+
+		<label>
+			<input type="range" bind:value={$ambianceEffectsVolume} min="0" max="100" />
+			<input type="number" bind:value={$ambianceEffectsVolume} min="0" max="100" />%
 		</label>
 	</section>
 

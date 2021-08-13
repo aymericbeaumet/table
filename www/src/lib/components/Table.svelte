@@ -6,23 +6,19 @@
 	import { throttle } from 'lodash';
 	import { removeFromArray } from '$lib/utils';
 	import AudioPlayer from '$lib/audio-player';
-	import murlocOGG from '$lib/assets/murloc.ogg';
-	import stealthOGG from '$lib/assets/stealth.ogg';
-	import gauntletPNG from '$lib/assets/gauntlet.png';
-	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import Badge from 'svelte-favicon-badge';
 	import {
 		audioInputDeviceID,
 		videoInputDeviceID,
-		backgroundImageID,
-		backgroundSoundID,
-		backgroundSoundVolume,
+		ambianceID,
+		ambianceSoundVolume,
+		ambianceEffectsVolume,
 	} from '$lib/stores';
 	import Entity from '$lib/entity';
 	import { MAX_FPS } from '$lib/env';
 	import SettingsSVG from '$lib/assets/settings.svg';
 	import Settings from '$lib/components/Settings.svelte';
-	import { backgroundImages, backgroundSounds } from '$lib/resources';
+	import ambiances from '$lib/assets/ambiances';
 	import { get } from 'svelte/store';
 	import StreamManager from '$lib/StreamManager';
 	import EntityComponent from '$lib/components/Entity.svelte';
@@ -51,10 +47,10 @@
 
 	const backgroundAudioPlayer = new AudioPlayer();
 	backgroundAudioPlayer.setLoop(true);
-	$: backgroundAudioPlayer.setVolume($backgroundSoundVolume);
-	$: backgroundAudioPlayer.play(backgroundSounds[$backgroundSoundID]?.url || '');
+	$: backgroundAudioPlayer.setVolume($ambianceSoundVolume);
+	$: backgroundAudioPlayer.play(ambiances[$ambianceID]?.soundURL || '');
 
-	$: backgroundImageURL = backgroundImages[$backgroundImageID]?.url;
+	$: backgroundImageURL = ambiances[$ambianceID]?.backgroundURL;
 
 	onMount(async function () {
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
@@ -62,10 +58,6 @@
 		const peerAudioPlayer = new AudioPlayer();
 
 		const peer = new Peer(Client, tableName, {
-			onBackgroundImageID: (id: string) => backgroundImageID.set(id),
-
-			onBackgroundSoundID: (id: string) => backgroundSoundID.set(id),
-
 			onEntity: (streamID: string, entity: Entity) => {
 				let e = entitiesByKey[entity.key];
 				if (!e) {
@@ -98,7 +90,9 @@
 					avatar = {};
 					avatarsByStreamID[stream.id] = avatar;
 					avatars = [...avatars, avatar];
-					peerAudioPlayer.play(murlocOGG);
+
+					peerAudioPlayer.setVolume(get(ambianceEffectsVolume));
+					peerAudioPlayer.play(ambiances[get(ambianceID)]?.loginURL);
 				}
 				avatar.srcObject = stream;
 				avatars = avatars;
@@ -118,7 +112,9 @@
 				if (avatarForStream) {
 					delete avatarsByStreamID[stream.id];
 					avatars = removeFromArray(avatars, avatarForStream);
-					peerAudioPlayer.play(stealthOGG);
+
+					peerAudioPlayer.setVolume(get(ambianceEffectsVolume));
+					peerAudioPlayer.play(ambiances[get(ambianceID)]?.logoutURL);
 				}
 			},
 		});
@@ -200,7 +196,9 @@
 		  background-image: url({backgroundImageURL});
       background-position: center;
 		  background-size: cover;
-		  cursor: url({isMouseDown ? gauntletGlowPNG : gauntletPNG}), auto;
+		  cursor: url({isMouseDown
+			? ambiances[$ambianceID]?.clickURL
+			: ambiances[$ambianceID]?.cursorURL}), auto;
 		"
 	>
 		<header>

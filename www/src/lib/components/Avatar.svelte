@@ -1,5 +1,6 @@
 <script>
-	import videoPosterPng from '$lib/assets/video-poster.png';
+	import ambiances from '$lib/assets/ambiances';
+	import { ambianceID } from '$lib/stores';
 
 	export let active = false;
 	export let muted = false;
@@ -19,7 +20,7 @@
 		autoplay
 		bind:muted
 		playsinline
-		style="background: repeat url({videoPosterPng});"
+		style="background: repeat url({ambiances[$ambianceID]?.posterURL});"
 	/>
 </div>
 

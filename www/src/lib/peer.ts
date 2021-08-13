@@ -15,15 +15,11 @@ export default class Peer {
 		Client: any,
 		tableName: string,
 		{
-			onBackgroundImageID,
-			onBackgroundSoundID,
 			onEntity,
 			onSpeaker,
 			onTrack,
 			onTrackRemoved,
 		}: {
-			onBackgroundImageID: (resourceID: string) => void;
-			onBackgroundSoundID: (resourceID: string) => void;
 			onEntity: (streamID: string, entity: Entity) => void;
 			onSpeaker: any;
 			onTrack: any;
@@ -32,14 +28,6 @@ export default class Peer {
 	) {
 		const onmessage = (event: any) => {
 			const { streamID, payload } = decode(event.data) as any;
-
-			if (payload.BACKGROUND_IMAGE_ID) {
-				return onBackgroundImageID(payload.BACKGROUND_IMAGE_ID);
-			}
-
-			if (payload.BACKGROUND_SOUND_ID) {
-				return onBackgroundSoundID(payload.BACKGROUND_SOUND_ID);
-			}
 
 			if (payload.ENTITY) {
 				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);

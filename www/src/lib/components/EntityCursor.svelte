@@ -1,7 +1,7 @@
 <script>
-	import gauntletPNG from '$lib/assets/gauntlet.png';
-	import gauntletGlowPNG from '$lib/assets/gauntlet-glow.png';
 	import { MAX_FPS } from '$lib/env';
+	import ambiances from '$lib/assets/ambiances';
+	import { ambianceID } from '$lib/stores';
 
 	export let clientX: number;
 	export let clientY: number;
@@ -9,7 +9,7 @@
 </script>
 
 <img
-	src={isDown ? gauntletGlowPNG : gauntletPNG}
+	src={isDown ? ambiances[$ambianceID]?.clickURL : ambiances[$ambianceID]?.clickURL}
 	alt="cursor"
 	style={`
 	  z-index: 500;
