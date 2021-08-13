@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import Avatar from './Avatar.svelte';
 	import SmartBar from './SmartBar.svelte';
 	import Peer from '$lib/peer';
@@ -35,6 +35,8 @@
 	const entitiesByStreamID: any = {};
 	let entities: Array<any> = [];
 
+	const screenSizesByStreamID: any = {};
+
 	const cursor = new Entity('cursor');
 	let isMouseDown = false;
 	let onMouseMove: svelte.JSX.MouseEventHandler<HTMLDivElement>;
@@ -50,12 +52,27 @@
 	$: backgroundAudioPlayer.setVolume($ambianceSoundVolume);
 	$: backgroundAudioPlayer.play(ambiances[$ambianceID]?.soundURL || '');
 
-	$: backgroundImageURL = ambiances[$ambianceID]?.backgroundURL;
+	const peerAudioPlayer = new AudioPlayer();
+	$: peerAudioPlayer.setVolume($ambianceEffectsVolume);
+
+	let entitiesElement;
+	let ro;
+	let safeboxWidth = '100%';
+	let safeboxHeight = '100%';
+
+	function recomputeSafebox() {
+		let smallestWidth = Infinity;
+		let smallestHeight = Infinity;
+		for (const size of Object.values(screenSizesByStreamID)) {
+			smallestWidth = Math.min(smallestWidth, size.width);
+			smallestHeight = Math.min(smallestHeight, size.height);
+		}
+		safeboxWidth = `${smallestWidth}px`;
+		safeboxHeight = `${smallestHeight}px`;
+	}
 
 	onMount(async function () {
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
-
-		const peerAudioPlayer = new AudioPlayer();
 
 		const peer = new Peer(Client, tableName, {
 			onEntity: (streamID: string, entity: Entity) => {
@@ -69,6 +86,11 @@
 				}
 				e.props = entity.props;
 				entities = entities;
+			},
+
+			onScreen: (streamID: string, width: number, height: number) => {
+				screenSizesByStreamID[streamID] = { width, height };
+				recomputeSafebox();
 			},
 
 			onSpeaker: (streamIDs: any) => {
@@ -91,7 +113,6 @@
 					avatarsByStreamID[stream.id] = avatar;
 					avatars = [...avatars, avatar];
 
-					peerAudioPlayer.setVolume(get(ambianceEffectsVolume));
 					peerAudioPlayer.play(ambiances[get(ambianceID)]?.loginURL);
 				}
 				avatar.srcObject = stream;
@@ -99,6 +120,14 @@
 			},
 
 			onTrackRemoved: (stream: any) => {
+				const avatarForStream = avatarsByStreamID[stream.id];
+				if (avatarForStream) {
+					delete avatarsByStreamID[stream.id];
+					avatars = removeFromArray(avatars, avatarForStream);
+
+					peerAudioPlayer.play(ambiances[get(ambianceID)]?.logoutURL);
+				}
+
 				const entitiesForStream = entitiesByStreamID[stream.id];
 				if (entitiesForStream) {
 					delete entitiesByStreamID[stream.id];
@@ -108,16 +137,12 @@
 					}
 				}
 
-				const avatarForStream = avatarsByStreamID[stream.id];
-				if (avatarForStream) {
-					delete avatarsByStreamID[stream.id];
-					avatars = removeFromArray(avatars, avatarForStream);
-
-					peerAudioPlayer.setVolume(get(ambianceEffectsVolume));
-					peerAudioPlayer.play(ambiances[get(ambianceID)]?.logoutURL);
-				}
+				delete screenSizesByStreamID[stream.id];
+				recomputeSafebox();
 			},
 		});
+
+		/* Watch for mouse events */
 
 		function onMouseEvent(event: any) {
 			cursor.props.clientX = event.clientX;
@@ -138,11 +163,29 @@
 			onMouseEvent(event);
 		};
 
+		/* Watch for smartbar entities */
+
 		onSmartBarEntity = function (event: any) {
 			const entity = event.detail;
 			entities = [...entities, entity];
 			peer.reliable({ ENTITY: entity });
 		};
+
+		/* Watch for resize */
+
+		let screenReliable: NodeJS.Timeout;
+		ro = new ResizeObserver(
+			throttle((entries) => {
+				clearTimeout(screenReliable);
+				const { width, height } = entries[0].contentRect;
+				const message = { SCREEN: { width, height } };
+				peer.unreliable(message);
+				screenReliable = setTimeout(() => peer.reliable(message), 250);
+			}, 1000 / MAX_FPS),
+		);
+		ro.observe(entitiesElement);
+
+		/* Detect and publish streams */
 
 		const streamManager = new StreamManager(LocalStream, MAX_FPS);
 		for (const store of [audioInputDeviceID, videoInputDeviceID]) {
@@ -177,6 +220,10 @@
 		audioInputDeviceID.set(aDeviceID);
 		videoInputDeviceID.set(vDeviceID);
 	});
+
+	onDestroy(() => {
+		ro && ro.disconnect();
+	});
 </script>
 
 <Badge
@@ -186,6 +233,8 @@
 	href="/favicon.png"
 />
 
+<svelte:body onresize={onResize} />
+
 <SmartBar on:entity={onSmartBarEntity}>
 	<div
 		class="container"
@@ -193,7 +242,7 @@
 		on:mousemove={onMouseMove}
 		on:mouseup={onMouseUp}
 		style="
-		  background-image: url({backgroundImageURL});
+		  background-image: url({ambiances[$ambianceID]?.backgroundURL});
       background-position: center;
 		  background-size: cover;
 		  cursor: url({isMouseDown
@@ -208,12 +257,14 @@
 			<div />
 		</header>
 
-		<div class="entities">
-			{#each entities as entity}
-				<div class="entity">
-					<EntityComponent {entity} />
-				</div>
-			{/each}
+		<div class="entities" bind:this={entitiesElement}>
+			<div class="safebox" style="width: {safeboxWidth}; height: {safeboxHeight};">
+				{#each entities as entity}
+					<div class="entity">
+						<EntityComponent {entity} />
+					</div>
+				{/each}
+			</div>
 		</div>
 
 		<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
@@ -241,10 +292,24 @@
 		flex-wrap: wrap;
 	}
 
+	.entities {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
 	@media screen and (max-width: 600px), screen and (max-height: 600px) {
 		.entities {
 			display: none;
 		}
+	}
+
+	.safebox {
+		max-width: 100%;
+		max-height: 100%;
+		border: 2px dashed grey;
 	}
 
 	.settings-button {

@@ -16,11 +16,13 @@ export default class Peer {
 		tableName: string,
 		{
 			onEntity,
+			onScreen,
 			onSpeaker,
 			onTrack,
 			onTrackRemoved,
 		}: {
 			onEntity: (streamID: string, entity: Entity) => void;
+			onScreen: (streamID: string, width: number, height: number) => void;
 			onSpeaker: any;
 			onTrack: any;
 			onTrackRemoved: any;
@@ -33,6 +35,10 @@ export default class Peer {
 				const entity = new Entity(payload.ENTITY.kind, payload.ENTITY.props);
 				entity.id = payload.ENTITY.id || streamID;
 				return onEntity(streamID, entity);
+			}
+
+			if (payload.SCREEN) {
+				return onScreen(streamID, payload.SCREEN.width, payload.SCREEN.height);
 			}
 		};
 
