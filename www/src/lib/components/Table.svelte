@@ -64,11 +64,13 @@
 		let smallestWidth: number | undefined;
 		let smallestHeight: number | undefined;
 		for (const size of Object.values(screenSizesByStreamID)) {
-			smallestWidth = smallestWidth ? Math.min(smallestWidth, size.width) : size.width;
-			smallestHeight = smallestHeight ? Math.min(smallestHeight, size.height) : size.height;
+			if (size.width > 0 && size.height > 0) {
+				smallestWidth = smallestWidth ? Math.min(smallestWidth, size.width) : size.width;
+				smallestHeight = smallestHeight ? Math.min(smallestHeight, size.height) : size.height;
+			}
 		}
 
-		if (smallestWidth && smallestHeight) {
+		if (typeof smallestWidth !== 'undefined' && typeof smallestHeight !== 'undefined') {
 			safeboxWidth = `${smallestWidth}px`;
 			safeboxHeight = `${smallestHeight}px`;
 		} else {
