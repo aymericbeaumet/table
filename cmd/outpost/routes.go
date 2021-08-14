@@ -1,44 +1,39 @@
-package main
+package outpost
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"runtime"
 	"strconv"
-	"strings"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/joho/godotenv"
+	"github.com/jointable/table/pkg/ip"
 	"github.com/pion/ion-sfu/cmd/signal/json-rpc/server"
 	log "github.com/pion/ion-sfu/pkg/logger"
 	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
 	"github.com/pion/ion-sfu/pkg/sfu"
 	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/slack-go/slack"
-	_ "github.com/slack-go/slack"
 	"github.com/sourcegraph/jsonrpc2"
 	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func main() {
-	// Load env
+/*
+ * `outpost` will one day become a standalone service. This will become
+ * necessary when we scale as it will give us a better control over our
+ * resources, and make the maintenance easier (the api is stateless, outpost is
+ * stateful).
+ *
+ * For now for the sake of simplicity it is embedded inside the API service,
+ * which will always be the main entrypoint. That being said, we isolate all
+ * the outpost code in this directory to minimize the cost of splitting the
+ * services in the future.
+ */
 
-	mode := os.Getenv("MODE")
-	if len(mode) == 0 {
-		mode = "development"
-	}
-	_ = godotenv.Load(".env")
-	_ = godotenv.Load(".env." + mode)
-
+func Up(r *gin.Engine) error {
 	// Compute ballast
 
 	ballast, err := getBallastMiB()
@@ -87,14 +82,6 @@ func main() {
 	attachBroadcastChannel(s, "reliable")   // TODO: ordered=false
 	attachBroadcastChannel(s, "unreliable") // TODO: ordered=false, maxRetransmits=0
 
-	// HTTP server
-
-	r := gin.Default()
-
-	config := cors.DefaultConfig()
-	config.AllowOrigins = strings.Split(os.Getenv("CORS_ALLOW_ORIGINS"), ",")
-	r.Use(cors.New(config))
-
 	upgrader := websocket.Upgrader{
 		CheckOrigin:     func(r *http.Request) bool { return true },
 		ReadBufferSize:  1024,
@@ -124,57 +111,6 @@ func main() {
 		<-jc.DisconnectNotify()
 	})
 
-	r.POST("/slack/command", func(c *gin.Context) {
-		sv, err := slack.NewSecretsVerifier(c.Request.Header, os.Getenv("SLACK_SIGNING_SECRET"))
-		if err != nil {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		c.Request.Body = io.NopCloser(io.TeeReader(c.Request.Body, &sv))
-
-		cmd, err := slack.SlashCommandParse(c.Request)
-		if err != nil {
-			_ = c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-
-		if err := sv.Ensure(); err != nil {
-			_ = c.AbortWithError(http.StatusUnauthorized, err)
-			return
-		}
-
-		switch cmd.Command {
-		case "/table":
-
-			switch cmd.Text {
-			case "help", "-h", "--help":
-				c.JSON(http.StatusOK, &slack.Msg{
-					ResponseType: "ephemeral",
-					Text:         "How to use the `/table` command?",
-					Attachments: []slack.Attachment{
-						{
-							Text: "This command doesn't expect any parameter. Invoking it will post the link to this channel's table.",
-						},
-					},
-				})
-
-			default:
-				text := fmt.Sprintf(
-					"Join <@%s> in the <https://jointable.io/slack-%s-%s|channel's table>!",
-					cmd.UserID, cmd.TeamDomain, cmd.ChannelName,
-				)
-				c.JSON(http.StatusOK, &slack.Msg{
-					ResponseType: "in_channel",
-					Text:         text,
-				})
-			}
-
-		default:
-			_ = c.AbortWithError(http.StatusBadRequest, fmt.Errorf("unsupported command: %#v", cmd.Command))
-		}
-	})
-
 	r.GET("/debug", func(c *gin.Context) {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
@@ -196,35 +132,7 @@ func main() {
 		})
 	})
 
-	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", os.Getenv("HOSTNAME"), os.Getenv("PORT")),
-		Handler: r,
-	}
-
-	// If possible, run with HTTPS + check origin certificate
-	if cf, kf := os.Getenv("CERT_FILE"), os.Getenv("KEY_FILE"); len(cf) > 0 && len(kf) > 0 {
-		origin, err := os.ReadFile(os.Getenv("ORIGIN_CERT_FILE"))
-		if err != nil {
-			panic(err)
-		}
-
-		clientsCAs := x509.NewCertPool()
-		if !clientsCAs.AppendCertsFromPEM(origin) {
-			panic(errors.New("failed to parse origin certificate"))
-		}
-
-		server.TLSConfig = &tls.Config{
-			ClientAuth: tls.RequireAndVerifyClientCert,
-			ClientCAs:  clientsCAs,
-		}
-
-		fmt.Printf("Listening on https://%s\n", server.Addr)
-		panic(server.ListenAndServeTLS(cf, kf))
-	}
-
-	// Otherwise run with HTTP
-	fmt.Printf("Listening on http://%s\n", server.Addr)
-	panic(server.ListenAndServe())
+	return nil
 }
 
 func getBallastMiB() (int64, error) {
@@ -246,9 +154,9 @@ func getBallastMiB() (int64, error) {
 func getNAT1TO1IP(ctx context.Context) (string, error) {
 	switch v := os.Getenv("WEBRTC_NAT1TO1IP"); v {
 	case "local":
-		return GetLocalIP()
+		return ip.GetLocalIP()
 	case "public":
-		return GetPublicIP(ctx)
+		return ip.GetPublicIP(ctx)
 	default:
 		return "", fmt.Errorf("implementation error: unexpected WEBRTC_NAT1TO1IP %#v", v)
 	}

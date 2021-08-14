@@ -1,4 +1,4 @@
-NAME := outpost
+NAME := api
 SYSTEMCTL_SERVICE := $(NAME).service
 
 .PHONY: all
@@ -34,10 +34,7 @@ lint:
 	golangci-lint run ./...
 
 .PHONY: deploy
-deploy: outpost-0
-
-.PHONY: outpost-%
-outpost-%: build
+deploy: api
 	# prepare service
 	scp $(SYSTEMCTL_SERVICE) $@:/etc/systemd/system/
 	# prepare binary
@@ -55,7 +52,7 @@ outpost-%: build
 
 .PHONY: logs
 logs:
-	@ssh outpost-0 "journalctl -f -o cat -u $(SYSTEMCTL_SERVICE)"
+	@ssh api "journalctl -f -o cat -u $(SYSTEMCTL_SERVICE)"
 
 .PHONY: format
 format:

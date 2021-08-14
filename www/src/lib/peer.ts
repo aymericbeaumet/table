@@ -63,7 +63,7 @@ export default class Peer {
 		/* Initialize signaling */
 
 		const signal = new IonSFUJSONRPCSignal(
-			`${env.OUTPOST_BASE_URL}/tables/${encodeURIComponent(tableName)}`,
+			`${env.API_BASE_URL}/tables/${encodeURIComponent(tableName)}`,
 		);
 
 		/* Create and initialize WebRTC */

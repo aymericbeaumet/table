@@ -1,4 +1,4 @@
-module github.com/aymericbeaumet/table/outpost
+module github.com/jointable/table
 
 go 1.16
 

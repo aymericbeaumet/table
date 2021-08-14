@@ -5,28 +5,28 @@
 ### Development
 
 ```bash
+cd cmd/api && make dev
 cd www && npm run dev
-cd outpost && make dev
 ```
 
 ### Update
 
 ```bash
+cd cmd/api && make update
 cd www && npm run update
-cd outpost && make update
 ```
 
 ### Deploy
+
+- [`api`](./cmd/api)
+  * `make deploy`
+  * https://console.scaleway.com/instance/servers
+  * https://api.jointable.io/debug
 
 - [`www`](./www)
   * automatically deployed to Netlify by GitHub Actions (master branch)
   * https://app.netlify.com/sites/jointable
   * https://jointable.io
-
-- [`outpost`](./outpost)
-  * `make deploy`
-  * https://console.scaleway.com/instance/servers
-  * https://outpost-0.jointable.io/debug
 
 ### Integrations
 
