@@ -25,7 +25,7 @@ cd www && npm run update
 
 - [`www`](./www)
   * automatically deployed to Netlify by GitHub Actions (master branch)
-  * https://app.netlify.com/sites/jointable
+  * https://app.netlify.com/sites/table-www
   * https://jointable.io
 
 ### Integrations
