@@ -12,7 +12,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/jointable/table/cmd/outpost"
+	"github.com/jointable/table/cmd/api/routes"
+	outpost "github.com/jointable/table/cmd/outpost/routes"
 	_ "github.com/slack-go/slack"
 )
 
@@ -39,7 +40,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := Up(r); err != nil {
+	if err := routes.Up(r); err != nil {
 		panic(err)
 	}
 

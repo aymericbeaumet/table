@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/joho/godotenv v1.3.0
 	github.com/lucsky/cuid v1.2.1 // indirect
+	github.com/markbates/goth v1.68.0
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/pion/ice/v2 v2.1.12 // indirect
 	github.com/pion/interceptor v0.0.15 // indirect

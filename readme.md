@@ -28,12 +28,6 @@ cd www && npm run update
   * https://app.netlify.com/sites/table-www
   * https://jointable.io
 
-### Integrations
-
-- [Discord](https://discord.com/developers/applications/874948277903196170) (TODO)
-- [Google](https://console.cloud.google.com/home/dashboard?project=table-322821)
-- [Slack](https://api.slack.com/apps/A02ATC8ED6X) (`/table` custom command)
-
 ## Bugs
 
 - playing audio effects doesn’t work on iOS (<Audio /> readiness? background sound ok)

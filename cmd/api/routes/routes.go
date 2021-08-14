@@ -1,4 +1,4 @@
-package main
+package routes
 
 import (
 	"fmt"
@@ -7,10 +7,47 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/google"
 	"github.com/slack-go/slack"
 )
 
 func Up(r *gin.Engine) error {
+	goth.UseProviders(
+		google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/google/callback"),
+	)
+
+	r.GET("/auth/:provider", func(c *gin.Context) {
+		q := c.Request.URL.Query()
+		q.Add("provider", c.Param("provider"))
+		c.Request.URL.RawQuery = q.Encode()
+
+		gothic.BeginAuthHandler(c.Writer, c.Request)
+	})
+
+	r.GET("/auth/:provider/callback", func(c *gin.Context) {
+		q := c.Request.URL.Query()
+		q.Add("provider", c.Param("provider"))
+		c.Request.URL.RawQuery = q.Encode()
+
+		user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, user)
+	})
+
+	r.GET("/auth/:provider/logout", func(c *gin.Context) {
+		q := c.Request.URL.Query()
+		q.Add("provider", c.Param("provider"))
+		c.Request.URL.RawQuery = q.Encode()
+
+		gothic.Logout(c.Writer, c.Request)
+	})
+
 	r.POST("/slack/command", func(c *gin.Context) {
 		sv, err := slack.NewSecretsVerifier(c.Request.Header, os.Getenv("SLACK_SIGNING_SECRET"))
 		if err != nil {
