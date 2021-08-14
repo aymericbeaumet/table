@@ -9,13 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/google"
+	githubProvider "github.com/markbates/goth/providers/github"
+	googleProvider "github.com/markbates/goth/providers/google"
+	slackProvider "github.com/markbates/goth/providers/slack"
 	"github.com/slack-go/slack"
 )
 
 func Up(r *gin.Engine) error {
 	goth.UseProviders(
-		google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/google/callback"),
+		githubProvider.New(os.Getenv("GITHUB_CLIENT_ID"), os.Getenv("GITHUB_CLIENT_SECRET"), os.Getenv("GOOGLE_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/github/callback"),
+		googleProvider.New(os.Getenv("GOOGLE_CLIENT_ID"), os.Getenv("GOOGLE_CLIENT_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/google/callback"),
+		slackProvider.New(os.Getenv("SLACK_CLIENT_ID"), os.Getenv("SLACK_CLIENT_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/slack/callback"),
 	)
 
 	r.GET("/auth/:provider", func(c *gin.Context) {
