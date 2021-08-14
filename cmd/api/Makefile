@@ -34,16 +34,16 @@ lint:
 	golangci-lint run ./...
 
 .PHONY: deploy
-deploy: api
+deploy: build
 	# prepare service
-	scp $(SYSTEMCTL_SERVICE) $@:/etc/systemd/system/
+	scp $(SYSTEMCTL_SERVICE) api.jointable.io:/etc/systemd/system/
 	# prepare binary
-	scp $(NAME) $@:/usr/local/bin/$(NAME).next
+	scp $(NAME) api.jointable.io:/usr/local/bin/$(NAME).next
 	# prepare config
-	ssh $@ "mkdir -p /usr/local/etc/$(NAME)"
-	scp .env.production production.crt production.key cloudflare.crt $@:/usr/local/etc/$(NAME)/
+	ssh api.jointable.io "mkdir -p /usr/local/etc/$(NAME)"
+	scp .env.production production.crt production.key cloudflare.crt api.jointable.io:/usr/local/etc/$(NAME)/
 	# (re)start service
-	ssh $@ " \
+	ssh api.jointable.io " \
 		systemctl enable $(SYSTEMCTL_SERVICE); \
 		systemctl stop $(SYSTEMCTL_SERVICE); \
 		mv /usr/local/bin/$(NAME).next /usr/local/bin/$(NAME); \
@@ -52,7 +52,7 @@ deploy: api
 
 .PHONY: logs
 logs:
-	@ssh api "journalctl -f -o cat -u $(SYSTEMCTL_SERVICE)"
+	@ssh api.jointable.io "journalctl -f -o cat -u $(SYSTEMCTL_SERVICE)"
 
 .PHONY: format
 format:
