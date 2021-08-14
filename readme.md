@@ -31,6 +31,7 @@ cd outpost && make update
 ### Integrations
 
 - [Discord](https://discord.com/developers/applications/874948277903196170) (TODO)
+- [Google](https://console.cloud.google.com/home/dashboard?project=table-322821)
 - [Slack](https://api.slack.com/apps/A02ATC8ED6X) (`/table` custom command)
 
 ## Bugs
@@ -79,6 +80,8 @@ cd outpost && make update
   broadcasted)
 - Create query parameter generator + teach people about query parameters
 
+- Google/GitHub/Slack login
+
 Entities:
 - file
 - image (jpg, png, gif, etc)
@@ -109,7 +112,7 @@ Integrations:
   * http://localhost:3000/rekki.com/All%20Hands
 - Custom domain name
 - Lift capacity limit
-- Integrations that require user to login (GitHub, Google Drive, etc)
+- Integrations that require user to provide credentials (GitHub, Google Drive, etc)
 - Table persistence
 - Easy switch between all the tables of an org
 - Configure table via URL:
