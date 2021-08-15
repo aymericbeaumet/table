@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
+	discordProvider "github.com/markbates/goth/providers/discord"
 	githubProvider "github.com/markbates/goth/providers/github"
 	googleProvider "github.com/markbates/goth/providers/google"
 	microsoftonlineProvider "github.com/markbates/goth/providers/microsoftonline"
@@ -20,6 +21,12 @@ import (
 
 func Up(r *gin.Engine) error {
 	goth.UseProviders(
+		discordProvider.New(
+			os.Getenv("DISCORD_CLIENT_ID"),
+			os.Getenv("DISCORD_CLIENT_SECRET"),
+			os.Getenv("PUBLIC_BASE_URL")+"/auth/discord/callback",
+			"guilds",
+		),
 		githubProvider.New(
 			os.Getenv("GITHUB_CLIENT_ID"),
 			os.Getenv("GITHUB_CLIENT_SECRET"),
@@ -75,6 +82,18 @@ func Up(r *gin.Engine) error {
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
+		}
+
+		// Some sanitization checks
+		for _, s := range authorizedScopes {
+			if strings.Count(s, ":") != 1 {
+				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected number of `:` in the scope %#v", s))
+				return
+			}
+			if strings.Contains(s, "/") {
+				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected presence of `/` in the scope %#v", s))
+				return
+			}
 		}
 
 		c.JSON(http.StatusOK, authorizedScopes)
@@ -149,6 +168,15 @@ func Up(r *gin.Engine) error {
 	return nil
 }
 
+type DiscordUserGuilds []struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Icon        string   `json:"icon"`
+	Owner       bool     `json:"owner"`
+	Permissions uint64   `json:"permissions"`
+	Features    []string `json:"features"`
+}
+
 type GithubUserOrgs []struct {
 	Login            string `json:"login"`
 	ID               int    `json:"id"`
@@ -166,6 +194,30 @@ type GithubUserOrgs []struct {
 
 func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) {
 	switch user.Provider {
+	case "discord":
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me/guilds", nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+user.AccessToken)
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+
+		var guilds DiscordUserGuilds
+		if err := json.NewDecoder(res.Body).Decode(&guilds); err != nil {
+			return nil, err
+		}
+
+		out := make([]string, 0, len(guilds))
+		for _, guild := range guilds {
+			out = append(out, fmt.Sprintf("discord:%s", guild.Name))
+		}
+		return out, nil
+
 	case "google":
 		splits := strings.Split(user.Email, "@")
 		if len(splits) != 2 || len(splits[1]) == 0 {
