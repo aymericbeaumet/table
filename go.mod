@@ -3,15 +3,16 @@ module github.com/jointable/table
 go 1.16
 
 require (
+	cloud.google.com/go v0.91.1 // indirect
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.7.3
+	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
-	github.com/gorilla/sessions v1.1.1
+	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/sessions v1.2.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/joho/godotenv v1.3.0
 	github.com/lucsky/cuid v1.2.1 // indirect
+	github.com/markbates/going v1.0.3 // indirect
 	github.com/markbates/goth v1.68.0
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/pion/ice/v2 v2.1.12 // indirect
@@ -29,7 +30,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.4
 	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
+	golang.org/x/oauth2 v0.0.0-20210810183815-faf39c7919d5 // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
 )
