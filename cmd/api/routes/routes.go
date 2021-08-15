@@ -24,7 +24,7 @@ func Up(r *gin.Engine) error {
 
 	r.GET("/auth/:provider", func(c *gin.Context) {
 		q := c.Request.URL.Query()
-		q.Add("provider", c.Param("provider"))
+		q.Set("provider", c.Param("provider"))
 		c.Request.URL.RawQuery = q.Encode()
 
 		gothic.BeginAuthHandler(c.Writer, c.Request)
@@ -32,7 +32,7 @@ func Up(r *gin.Engine) error {
 
 	r.GET("/auth/:provider/callback", func(c *gin.Context) {
 		q := c.Request.URL.Query()
-		q.Add("provider", c.Param("provider"))
+		q.Set("provider", c.Param("provider"))
 		c.Request.URL.RawQuery = q.Encode()
 
 		user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
@@ -46,7 +46,7 @@ func Up(r *gin.Engine) error {
 
 	r.GET("/auth/:provider/logout", func(c *gin.Context) {
 		q := c.Request.URL.Query()
-		q.Add("provider", c.Param("provider"))
+		q.Set("provider", c.Param("provider"))
 		c.Request.URL.RawQuery = q.Encode()
 
 		gothic.Logout(c.Writer, c.Request)
