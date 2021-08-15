@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,16 +11,25 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	discordProvider "github.com/markbates/goth/providers/discord"
 	githubProvider "github.com/markbates/goth/providers/github"
 	googleProvider "github.com/markbates/goth/providers/google"
 	microsoftonlineProvider "github.com/markbates/goth/providers/microsoftonline"
+	slackProvider "github.com/markbates/goth/providers/slack"
 	"github.com/slack-go/slack"
 )
 
 func Up(r *gin.Engine) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("COOKIE_SESSION_SECRET")))
+	store.MaxAge(24 * 60 * 60)
+	store.Options.Path = "/"
+	store.Options.HttpOnly = true
+	store.Options.Secure = strings.HasPrefix(os.Getenv("PUBLIC_BASE_URL"), "https://")
+	gothic.Store = store
+
 	goth.UseProviders(
 		discordProvider.New(
 			os.Getenv("DISCORD_CLIENT_ID"),
@@ -42,6 +52,12 @@ func Up(r *gin.Engine) error {
 			os.Getenv("MICROSOFTONLINE_CLIENT_ID"),
 			os.Getenv("MICROSOFTONLINE_CLIENT_SECRET"),
 			os.Getenv("PUBLIC_BASE_URL")+"/auth/microsoftonline/callback",
+		),
+		slackProvider.New(
+			os.Getenv("SLACK_CLIENT_ID"),
+			os.Getenv("SLACK_CLIENT_SECRET"),
+			os.Getenv("PUBLIC_BASE_URL")+"/auth/slack/callback",
+			"openid", "email", "profile",
 		),
 	)
 
@@ -85,13 +101,13 @@ func Up(r *gin.Engine) error {
 		}
 
 		// Some sanitization checks
-		for _, s := range authorizedScopes {
-			if strings.Count(s, ":") != 1 {
-				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected number of `:` in the scope %#v", s))
+		for _, scope := range authorizedScopes {
+			if strings.Count(scope, ":") != 1 {
+				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected number of `:` in the scope %#v", scope))
 				return
 			}
-			if strings.Contains(s, "/") {
-				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected presence of `/` in the scope %#v", s))
+			if strings.Contains(scope, "/") {
+				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected presence of `/` in the scope %#v", scope))
 				return
 			}
 		}
@@ -192,6 +208,36 @@ type GithubUserOrgs []struct {
 	Description      string `json:"description"`
 }
 
+type SlackUser struct {
+	Ok                        bool   `json:"ok"`
+	Sub                       string `json:"sub"`
+	HTTPSSlackComUserID       string `json:"https://slack.com/user_id"`
+	HTTPSSlackComTeamID       string `json:"https://slack.com/team_id"`
+	Email                     string `json:"email"`
+	EmailVerified             bool   `json:"email_verified"`
+	DateEmailVerified         int    `json:"date_email_verified"`
+	Name                      string `json:"name"`
+	Picture                   string `json:"picture"`
+	GivenName                 string `json:"given_name"`
+	FamilyName                string `json:"family_name"`
+	Locale                    string `json:"locale"`
+	HTTPSSlackComTeamName     string `json:"https://slack.com/team_name"`
+	HTTPSSlackComTeamDomain   string `json:"https://slack.com/team_domain"`
+	HTTPSSlackComUserImage24  string `json:"https://slack.com/user_image_24"`
+	HTTPSSlackComUserImage32  string `json:"https://slack.com/user_image_32"`
+	HTTPSSlackComUserImage48  string `json:"https://slack.com/user_image_48"`
+	HTTPSSlackComUserImage72  string `json:"https://slack.com/user_image_72"`
+	HTTPSSlackComUserImage192 string `json:"https://slack.com/user_image_192"`
+	HTTPSSlackComUserImage512 string `json:"https://slack.com/user_image_512"`
+	HTTPSSlackComTeamImage34  string `json:"https://slack.com/team_image_34"`
+	HTTPSSlackComTeamImage44  string `json:"https://slack.com/team_image_44"`
+	HTTPSSlackComTeamImage68  string `json:"https://slack.com/team_image_68"`
+	HTTPSSlackComTeamImage88  string `json:"https://slack.com/team_image_88"`
+	HTTPSSlackComTeamImage102 string `json:"https://slack.com/team_image_102"`
+	HTTPSSlackComTeamImage132 string `json:"https://slack.com/team_image_132"`
+	HTTPSSlackComTeamImage230 string `json:"https://slack.com/team_image_230"`
+}
+
 func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) {
 	switch user.Provider {
 	case "discord":
@@ -206,6 +252,10 @@ func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) 
 			return nil, err
 		}
 		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code from the Discord API, got %#v", res.StatusCode)
+		}
 
 		var guilds DiscordUserGuilds
 		if err := json.NewDecoder(res.Body).Decode(&guilds); err != nil {
@@ -241,6 +291,10 @@ func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) 
 		}
 		defer res.Body.Close()
 
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code from the GitHub API, got %#v", res.StatusCode)
+		}
+
 		var orgs GithubUserOrgs
 		if err := json.NewDecoder(res.Body).Decode(&orgs); err != nil {
 			return nil, err
@@ -260,6 +314,36 @@ func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) 
 		return []string{
 			fmt.Sprintf("microsoft:%s", splits[1]),
 			fmt.Sprintf("outlook:%s", splits[1]),
+		}, nil
+
+	case "slack":
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://slack.com/api/openid.connect.userInfo", nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+user.AccessToken)
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code from the Slack API, got %#v", res.StatusCode)
+		}
+
+		var slackUser SlackUser
+		if err := json.NewDecoder(res.Body).Decode(&slackUser); err != nil {
+			return nil, err
+		}
+
+		if !slackUser.Ok {
+			return nil, errors.New("got unexpected response ok == false while contacting the Slack API")
+		}
+
+		return []string{
+			fmt.Sprintf("slack:%s", slackUser.HTTPSSlackComTeamDomain),
 		}, nil
 
 	default:
