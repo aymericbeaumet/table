@@ -14,6 +14,7 @@ import (
 	"github.com/markbates/goth/gothic"
 	githubProvider "github.com/markbates/goth/providers/github"
 	googleProvider "github.com/markbates/goth/providers/google"
+	microsoftonlineProvider "github.com/markbates/goth/providers/microsoftonline"
 	"github.com/slack-go/slack"
 )
 
@@ -29,6 +30,11 @@ func Up(r *gin.Engine) error {
 			os.Getenv("GOOGLE_CLIENT_ID"),
 			os.Getenv("GOOGLE_CLIENT_SECRET"),
 			os.Getenv("PUBLIC_BASE_URL")+"/auth/google/callback",
+		),
+		microsoftonlineProvider.New(
+			os.Getenv("MICROSOFTONLINE_CLIENT_ID"),
+			os.Getenv("MICROSOFTONLINE_CLIENT_SECRET"),
+			os.Getenv("PUBLIC_BASE_URL")+"/auth/microsoftonline/callback",
 		),
 	)
 
@@ -165,7 +171,10 @@ func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) 
 		if len(splits) != 2 || len(splits[1]) == 0 {
 			return nil, fmt.Errorf("malformated email %#v", user.Email)
 		}
-		return []string{fmt.Sprintf("%s:%s", user.Provider, splits[1])}, nil
+		return []string{
+			fmt.Sprintf("gmail:%s", splits[1]),
+			fmt.Sprintf("google:%s", splits[1]),
+		}, nil
 
 	case "github":
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/user/orgs", nil)
@@ -187,9 +196,19 @@ func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) 
 
 		out := make([]string, 0, len(orgs))
 		for _, org := range orgs {
-			out = append(out, fmt.Sprintf("%s:%s", user.Provider, org.Login))
+			out = append(out, fmt.Sprintf("github:%s", org.Login))
 		}
 		return out, nil
+
+	case "microsoftonline":
+		splits := strings.Split(user.Email, "@")
+		if len(splits) != 2 || len(splits[1]) == 0 {
+			return nil, fmt.Errorf("malformated email %#v", user.Email)
+		}
+		return []string{
+			fmt.Sprintf("microsoft:%s", splits[1]),
+			fmt.Sprintf("outlook:%s", splits[1]),
+		}, nil
 
 	default:
 		return nil, fmt.Errorf("implementation error: unsupported provider %#v", user.Provider)
