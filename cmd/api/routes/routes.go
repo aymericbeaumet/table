@@ -1,38 +1,62 @@
 package routes
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	githubProvider "github.com/markbates/goth/providers/github"
 	googleProvider "github.com/markbates/goth/providers/google"
-	slackProvider "github.com/markbates/goth/providers/slack"
 	"github.com/slack-go/slack"
 )
 
 func Up(r *gin.Engine) error {
 	goth.UseProviders(
-		githubProvider.New(os.Getenv("GITHUB_CLIENT_ID"), os.Getenv("GITHUB_CLIENT_SECRET"), os.Getenv("GOOGLE_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/github/callback"),
-		googleProvider.New(os.Getenv("GOOGLE_CLIENT_ID"), os.Getenv("GOOGLE_CLIENT_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/google/callback"),
-		slackProvider.New(os.Getenv("SLACK_CLIENT_ID"), os.Getenv("SLACK_CLIENT_SECRET"), os.Getenv("PUBLIC_BASE_URL")+"/auth/slack/callback"),
+		githubProvider.New(
+			os.Getenv("GITHUB_CLIENT_ID"),
+			os.Getenv("GITHUB_CLIENT_SECRET"),
+			os.Getenv("PUBLIC_BASE_URL")+"/auth/github/callback",
+			"read:org",
+		),
+		googleProvider.New(
+			os.Getenv("GOOGLE_CLIENT_ID"),
+			os.Getenv("GOOGLE_CLIENT_SECRET"),
+			os.Getenv("PUBLIC_BASE_URL")+"/auth/google/callback",
+		),
 	)
 
 	r.GET("/auth/:provider", func(c *gin.Context) {
+		var params struct {
+			Provider string `uri:"provider" binding:"required"`
+		}
+		if c.BindUri(&params) != nil {
+			return
+		}
+
 		q := c.Request.URL.Query()
-		q.Set("provider", c.Param("provider"))
+		q.Set("provider", params.Provider)
 		c.Request.URL.RawQuery = q.Encode()
 
 		gothic.BeginAuthHandler(c.Writer, c.Request)
 	})
 
 	r.GET("/auth/:provider/callback", func(c *gin.Context) {
+		var params struct {
+			Provider string `uri:"provider" binding:"required"`
+		}
+		if c.BindUri(&params) != nil {
+			return
+		}
+
 		q := c.Request.URL.Query()
-		q.Set("provider", c.Param("provider"))
+		q.Set("provider", params.Provider)
 		c.Request.URL.RawQuery = q.Encode()
 
 		user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
@@ -41,12 +65,25 @@ func Up(r *gin.Engine) error {
 			return
 		}
 
-		c.JSON(http.StatusOK, user)
+		authorizedScopes, err := getAuthorizedScopes(c.Request.Context(), user)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, authorizedScopes)
 	})
 
 	r.GET("/auth/:provider/logout", func(c *gin.Context) {
+		var params struct {
+			Provider string `uri:"provider" binding:"required"`
+		}
+		if c.BindUri(&params) != nil {
+			return
+		}
+
 		q := c.Request.URL.Query()
-		q.Set("provider", c.Param("provider"))
+		q.Set("provider", params.Provider)
 		c.Request.URL.RawQuery = q.Encode()
 
 		gothic.Logout(c.Writer, c.Request)
@@ -104,4 +141,58 @@ func Up(r *gin.Engine) error {
 	})
 
 	return nil
+}
+
+type GithubUserOrgs []struct {
+	Login            string `json:"login"`
+	ID               int    `json:"id"`
+	NodeID           string `json:"node_id"`
+	URL              string `json:"url"`
+	ReposURL         string `json:"repos_url"`
+	EventsURL        string `json:"events_url"`
+	HooksURL         string `json:"hooks_url"`
+	IssuesURL        string `json:"issues_url"`
+	MembersURL       string `json:"members_url"`
+	PublicMembersURL string `json:"public_members_url"`
+	AvatarURL        string `json:"avatar_url"`
+	Description      string `json:"description"`
+}
+
+func getAuthorizedScopes(ctx context.Context, user goth.User) ([]string, error) {
+	switch user.Provider {
+	case "google":
+		splits := strings.Split(user.Email, "@")
+		if len(splits) != 2 || len(splits[1]) == 0 {
+			return nil, fmt.Errorf("malformated email %#v", user.Email)
+		}
+		return []string{fmt.Sprintf("%s:%s", user.Provider, splits[1])}, nil
+
+	case "github":
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/user/orgs", nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "token "+user.AccessToken)
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+
+		var orgs GithubUserOrgs
+		if err := json.NewDecoder(res.Body).Decode(&orgs); err != nil {
+			return nil, err
+		}
+
+		out := make([]string, 0, len(orgs))
+		for _, org := range orgs {
+			out = append(out, fmt.Sprintf("%s:%s", user.Provider, org.Login))
+		}
+		return out, nil
+
+	default:
+		return nil, fmt.Errorf("implementation error: unsupported provider %#v", user.Provider)
+
+	}
 }
