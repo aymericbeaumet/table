@@ -102,10 +102,16 @@ func Up(r *gin.Engine) error {
 
 		// Some sanitization checks
 		for _, scope := range authorizedScopes {
+			if len(scope) == 0 {
+				_ = c.AbortWithError(http.StatusInternalServerError, errors.New("unexpected empty scope"))
+				return
+			}
+
 			if strings.Count(scope, ":") != 1 {
 				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected number of `:` in the scope %#v", scope))
 				return
 			}
+
 			if strings.Contains(scope, "/") {
 				_ = c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("unexpected presence of `/` in the scope %#v", scope))
 				return
