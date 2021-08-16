@@ -9,8 +9,7 @@
 		<nav>
 			<ul>
 				<li><a href="/blog">Blog</a></li>
-				<li><a href="/docs">Docs</a></li>
-				<li><a href="/docs/getting-started">Getting Started</a></li>
+				<li><a href="/doc">Documentation</a></li>
 			</ul>
 		</nav>
 	</header>
@@ -21,9 +20,11 @@
 
 	<footer>
 		<ul>
+			<li><a href="/about">About</a></li>
 			<li><a href="/careers">Careers</a></li>
 			<li><a href="/terms">Terms</a></li>
 			<li><a href="/privacy">Privacy</a></li>
+			<li><a href="/security">Security</a></li>
 		</ul>
 	</footer>
 </div>
