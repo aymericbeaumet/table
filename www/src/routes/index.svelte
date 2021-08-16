@@ -14,13 +14,13 @@
 			<!-- svelte-ignore a11y-autofocus -->
 			<input
 				type="text"
-				placeholder="Pick a table"
+				placeholder="Choose a name"
 				bind:value={tableName}
 				required
 				minlength="3"
 				autofocus={true}
 			/>
-			<input type="submit" value="Join" />
+			<input type="submit" value="Join table" />
 		</form>
 
 		<a
