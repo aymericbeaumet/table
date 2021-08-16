@@ -97,3 +97,7 @@ Integrations:
 - Configure table via URL:
   * ambiance=...
   * password=...
+
+## Analytics
+
+- [Google Search Console](https://search.google.com/search-console?resource_id=sc-domain%3Ajointable.io)
