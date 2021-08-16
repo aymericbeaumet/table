@@ -16,6 +16,8 @@
 
 <svelte:head>
 	<title>Table - {tableName}</title>
+
+	<meta name="robots" content="noindex" />
 </svelte:head>
 
 {#if tableName}

@@ -1,6 +1,8 @@
 <slot />
 
 <svelte:head>
+	<meta name="description" content="Table is a new way to communicate with your team." />
+
 	<!-- https://api.slack.com/start/distributing/directory#suggestions -->
 	<meta name="slack-app-id" content="A02ATC8ED6X" />
 </svelte:head>
