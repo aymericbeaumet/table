@@ -22,6 +22,7 @@
 	import { get } from 'svelte/store';
 	import StreamManager from '$lib/StreamManager';
 	import EntityComponent from '$lib/components/Entity.svelte';
+	import Logo from '$lib/components/Logo.svelte';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -297,31 +298,37 @@
 		"
 	>
 		<header>
-			{#each avatars as props}
-				<Avatar {...props} />
-			{/each}
-			<div />
+			<Logo />
+
+			<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
+				<img src={settingsButtonURL} alt="Settings" />
+			</div>
 		</header>
 
-		<div class="entities" bind:this={entitiesElement}>
-			<div class="safebox" style="width: {safeboxWidth}; height: {safeboxHeight};">
-				{#each entities as entity}
-					<div class="entity">
-						<EntityComponent {entity} />
-					</div>
+		<main>
+			<div class="avatars">
+				{#each avatars as props}
+					<Avatar {...props} />
 				{/each}
+				<div />
 			</div>
-		</div>
 
-		<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
-			<img src={settingsButtonURL} alt="Settings" />
-		</div>
-
-		{#if showSettings}
-			<div class="settings-wrapper">
-				<Settings on:close={() => (showSettings = false)} />
+			<div class="entities" bind:this={entitiesElement}>
+				<div class="safebox" style="width: {safeboxWidth}; height: {safeboxHeight};">
+					{#each entities as entity}
+						<div class="entity">
+							<EntityComponent {entity} />
+						</div>
+					{/each}
+				</div>
 			</div>
-		{/if}
+
+			{#if showSettings}
+				<div class="settings-wrapper">
+					<Settings on:close={() => (showSettings = false)} />
+				</div>
+			{/if}
+		</main>
 	</div>
 </SmartBar>
 
@@ -332,7 +339,7 @@
 		flex-direction: column;
 	}
 
-	header {
+	.avatars {
 		display: flex;
 		justify-content: center;
 		flex-wrap: wrap;
@@ -344,12 +351,6 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-	}
-
-	@media screen and (max-width: 600px), screen and (max-height: 600px) {
-		.entities {
-			display: none;
-		}
 	}
 
 	.safebox {
@@ -383,5 +384,12 @@
 		left: 50%;
 		top: 30%;
 		transform: translate(-50%, -30%);
+	}
+
+	@media screen and (max-width: 600px), screen and (max-height: 600px) {
+		header,
+		.entities {
+			display: none;
+		}
 	}
 </style>

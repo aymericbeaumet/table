@@ -1,6 +1,10 @@
+<script>
+	import Logo from '$lib/components/Logo.svelte';
+</script>
+
 <div>
 	<header>
-		<a href="/">Table</a>
+		<Logo />
 
 		<nav>
 			<ul>
