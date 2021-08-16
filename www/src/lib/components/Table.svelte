@@ -1,4 +1,5 @@
 <script>
+	import logoURL from '$lib/assets/logo.png';
 	import { onMount, onDestroy } from 'svelte';
 	import Avatar from './Avatar.svelte';
 	import SmartBar from './SmartBar.svelte';
@@ -22,7 +23,6 @@
 	import { get } from 'svelte/store';
 	import StreamManager from '$lib/StreamManager';
 	import EntityComponent from '$lib/components/Entity.svelte';
-	import Logo from '$lib/components/Logo.svelte';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -298,7 +298,7 @@
 		"
 	>
 		<header>
-			<Logo />
+			<a class="logo" rel="external" href="/"><img src={logoURL} alt="logo" /></a>
 
 			<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
 				<img src={settingsButtonURL} alt="Settings" />
@@ -350,6 +350,11 @@
 		display: flex;
 		justify-content: space-between;
 		padding: 20px;
+	}
+
+	header img {
+		width: 32px;
+		height: 32px;
 	}
 
 	main {

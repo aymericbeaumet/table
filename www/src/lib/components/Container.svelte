@@ -1,10 +1,10 @@
 <script>
-	import Logo from '$lib/components/Logo.svelte';
+	import logoURL from '$lib/assets/logo.png';
 </script>
 
 <div>
 	<header>
-		<Logo />
+		<a class="logo" href="/"><img src={logoURL} alt="logo" />Table</a>
 
 		<nav>
 			<ul>
@@ -40,7 +40,7 @@
 		justify-content: space-between;
 		align-items: center;
 		border-bottom: 1px solid black;
-		padding: 30px;
+		padding: 20px;
 	}
 
 	header ul {
@@ -56,8 +56,27 @@
 		text-decoration: none;
 	}
 
+	header a.logo {
+		font-size: 20px;
+		text-transform: uppercase;
+		text-decoration: none;
+		font-weight: bold;
+		display: flex;
+		align-items: center;
+	}
+
+	header a:hover {
+		color: orange;
+	}
+
+	header img {
+		height: 32px;
+		width: 32px;
+		margin-right: 8px;
+	}
+
 	main {
-		padding: 30px;
+		padding: 20px;
 	}
 
 	footer {
