@@ -33,7 +33,9 @@
 	div {
 		margin: 0 auto;
 		max-width: 1000px;
-		height: 100vh;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
 	}
 
 	header {
@@ -41,7 +43,7 @@
 		justify-content: space-between;
 		align-items: center;
 		border-bottom: 1px solid black;
-		padding: 20px;
+		padding: 15px 20px;
 	}
 
 	header ul {
@@ -77,11 +79,12 @@
 	}
 
 	main {
+		flex: 1;
 		padding: 20px;
 	}
 
 	footer {
-		padding: 20px;
+		padding: 30px;
 	}
 
 	footer ul {
