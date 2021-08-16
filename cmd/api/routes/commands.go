@@ -11,7 +11,7 @@ import (
 )
 
 func upCommands(r *gin.Engine) error {
-	r.POST("/slack/command", func(c *gin.Context) {
+	r.POST("/slack/commands/table", func(c *gin.Context) {
 		sv, err := slack.NewSecretsVerifier(c.Request.Header, os.Getenv("SLACK_SIGNING_SECRET"))
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
@@ -31,34 +31,27 @@ func upCommands(r *gin.Engine) error {
 			return
 		}
 
-		switch cmd.Command {
-		case "/table":
-
-			switch cmd.Text {
-			case "help", "-h", "--help":
-				c.JSON(http.StatusOK, &slack.Msg{
-					ResponseType: "ephemeral",
-					Text:         "How to use the `/table` command?",
-					Attachments: []slack.Attachment{
-						{
-							Text: "This command doesn't expect any parameter. Invoking it will post the link to this channel's table.",
-						},
+		switch cmd.Text {
+		case "help", "-h", "--help":
+			c.JSON(http.StatusOK, &slack.Msg{
+				ResponseType: "ephemeral",
+				Text:         "How to use the `/table` command?",
+				Attachments: []slack.Attachment{
+					{
+						Text: "This command doesn't expect any parameter. Invoking it will post the link to this channel's table.",
 					},
-				})
-
-			default:
-				text := fmt.Sprintf(
-					"Join <@%s> in the <https://jointable.io/slack-%s-%s|channel's table>!",
-					cmd.UserID, cmd.TeamDomain, cmd.ChannelName,
-				)
-				c.JSON(http.StatusOK, &slack.Msg{
-					ResponseType: "in_channel",
-					Text:         text,
-				})
-			}
+				},
+			})
 
 		default:
-			_ = c.AbortWithError(http.StatusBadRequest, fmt.Errorf("unsupported command: %#v", cmd.Command))
+			text := fmt.Sprintf(
+				"Join <@%s> in the <https://jointable.io/slack:%s/%s|channel's table>!",
+				cmd.UserID, cmd.TeamDomain, cmd.ChannelName,
+			)
+			c.JSON(http.StatusOK, &slack.Msg{
+				ResponseType: "in_channel",
+				Text:         text,
+			})
 		}
 	})
 
