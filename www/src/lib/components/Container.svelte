@@ -15,7 +15,9 @@
 		</nav>
 	</header>
 
-	<slot />
+	<main>
+		<slot />
+	</main>
 
 	<footer>
 		<ul>
@@ -54,8 +56,8 @@
 		text-decoration: none;
 	}
 
-	ul {
-		list-style: none;
+	main {
+		padding: 30px;
 	}
 
 	footer {
@@ -74,5 +76,9 @@
 	footer a {
 		color: grey;
 		text-decoration: none;
+	}
+
+	ul {
+		list-style: none;
 	}
 </style>

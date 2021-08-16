@@ -339,6 +339,19 @@
 		flex-direction: column;
 	}
 
+	header {
+		position: absolute;
+		top: 0;
+		width: 100%;
+		display: flex;
+		justify-content: space-between;
+		padding: 20px;
+	}
+
+	main {
+		height: 100%;
+	}
+
 	.avatars {
 		display: flex;
 		justify-content: center;
@@ -360,9 +373,6 @@
 	}
 
 	.settings-button {
-		position: absolute;
-		top: 30px;
-		right: 30px;
 		border-radius: 50%;
 		padding: 5px;
 		background-color: orange;

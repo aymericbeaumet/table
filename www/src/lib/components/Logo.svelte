@@ -6,6 +6,7 @@
 		font-size: 20px;
 		text-transform: uppercase;
 		text-decoration: none;
+		font-weight: bold;
 	}
 
 	a:hover {
