@@ -7,7 +7,7 @@
 		'meetings',
 		'all hands',
 		'1:1s',
-		'dailies',
+		'daily standups',
 		'code reviews',
 		'coffee breaks',
 		'roleplay nights',

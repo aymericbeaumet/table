@@ -7,5 +7,5 @@ module.exports = {
 	overrides: [{ files: ['*.svelte'], processor: 'svelte3/svelte3' }],
 	settings: { 'svelte3/typescript': require('typescript') },
 	env: { browser: true, es2017: true },
-	globals: { svelte: true },
+	globals: { svelte: true, NodeJS: true },
 };
