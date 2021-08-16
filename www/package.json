@@ -5,7 +5,7 @@
 	"scripts": {
 		"update": "ncu --upgrade; npm install; npm install -D @sveltejs/kit@next @sveltejs/adapter-static@next",
 		"dev": "svelte-kit dev --host localhost",
-		"build": "svelte-kit build",
+		"build": "svelte-kit build && svelte-sitemap --domain https://jointable.io",
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && svelte-check --tsconfig ./tsconfig.json",
 		"test": "jest",
 		"deploy": "netlify deploy --prod -d build",
@@ -37,6 +37,7 @@
 		"svelte": "^3.42.1",
 		"svelte-check": "^2.2.4",
 		"svelte-preprocess": "^4.7.4",
+		"svelte-sitemap": "^1.5.0",
 		"ts-jest": "^27.0.4",
 		"typescript": "^4.3.5"
 	}

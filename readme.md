@@ -56,6 +56,7 @@ cd www && npm run update
   broadcasted)
 - Create query parameter generator + teach people about query parameters
 - Easy switch between all the tables of a scope
+- Remove `/table` from the sitemap + add descriptions
 
 - Convey authentication mecanism through the URL:
   - https://jointable.io/slack:join-table/dylan
