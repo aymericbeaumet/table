@@ -1,15 +1,21 @@
-import adapterStatic from '@sveltejs/adapter-static';
-import sveltePreprocess from 'svelte-preprocess';
+import adapter from '@sveltejs/adapter-static';
+import preprocess from 'svelte-preprocess';
+import { mdsvex } from 'mdsvex';
 
 export default {
 	kit: {
 		target: '#svelte',
-		adapter: adapterStatic(),
+		adapter: adapter(),
 	},
 
-	preprocess: sveltePreprocess({
-		defaults: {
-			script: 'typescript',
-		},
-	}),
+	extensions: ['.svelte', '.md'],
+
+	preprocess: [
+		preprocess({
+			defaults: { script: 'typescript' },
+		}),
+		mdsvex({
+			extensions: ['.md'],
+		}),
+	],
 };
