@@ -1,21 +1,14 @@
 <script>
-	import { prefetchRoutes } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import Container from '$lib/components/Container.svelte';
 
-	let tableName: string;
-
-	onMount(prefetchRoutes);
+	let tableName = '';
 </script>
 
 <svelte:head>
 	<title>Ephemeral Discussions - Table</title>
 </svelte:head>
 
-<div>
-	<header>
-		<h1>Table</h1>
-	</header>
-
+<Container>
 	<main>
 		<form action={`/${tableName}`}>
 			<!-- svelte-ignore a11y-autofocus -->
@@ -29,9 +22,7 @@
 			/>
 			<input type="submit" value="Join" />
 		</form>
-	</main>
 
-	<footer>
 		<a
 			href="https://slack.com/oauth/v2/authorize?client_id=2367199992290.2367416489235&scope=commands&user_scope="
 			><img
@@ -42,38 +33,16 @@
 				srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"
 			/></a
 		>
-	</footer>
-</div>
+	</main>
+</Container>
 
 <style>
-	:global(body) {
-		background: sandybrown;
-	}
-
-	div {
+	main {
 		max-width: 600px;
 		padding: 30px;
 		margin: 0 auto;
 		margin-top: 200px;
-	}
-
-	header {
-		background: lightcyan;
 		padding: 30px;
-	}
-
-	main {
-		background: lightyellow;
-		padding: 30px;
-	}
-
-	footer {
-		background: lightgreen;
-		padding: 30px;
-	}
-
-	h1 {
-		margin-bottom: 10px;
 	}
 
 	input[type='text'] {
