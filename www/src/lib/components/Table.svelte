@@ -314,7 +314,11 @@
 			</div>
 
 			<div class="entities" bind:this={entitiesElement}>
-				<div class="safebox" style="width: {safeboxWidth}; height: {safeboxHeight};">
+				<div
+					class="safebox"
+					class:border={safeboxWidth !== '100%' || safeboxHeight !== '100%'}
+					style="width: {safeboxWidth}; height: {safeboxHeight};"
+				>
 					{#each entities as entity}
 						<div class="entity">
 							<EntityComponent {entity} />
@@ -369,6 +373,9 @@
 	.safebox {
 		max-width: 100%;
 		max-height: 100%;
+	}
+
+	.safebox.border {
 		border: 2px dashed grey;
 	}
 
