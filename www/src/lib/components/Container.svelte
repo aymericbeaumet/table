@@ -10,6 +10,7 @@
 			<ul>
 				<li><a href="/blog">Blog</a></li>
 				<li><a href="/doc">Documentation</a></li>
+				<li><a href="/random">Start a table</a></li>
 			</ul>
 		</nav>
 	</header>

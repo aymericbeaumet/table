@@ -1,7 +1,6 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import Container from '$lib/components/Container.svelte';
-	import { hri } from 'human-readable-ids';
 
 	const goals = [
 		'meetings',
@@ -37,7 +36,7 @@
 	<section>
 		<h1>A place for your <span>{goals[goalsIndex]}</span></h1>
 
-		<form action={`/${tableName || hri.random()}`}>
+		<form action={`/${tableName || 'random'}`}>
 			<input
 				type="text"
 				placeholder="Choose a table name"

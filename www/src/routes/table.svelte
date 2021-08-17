@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import Table from '$lib/components/Table.svelte';
+	import { hri } from 'human-readable-ids';
 
 	let tableName = '';
 
@@ -9,7 +10,8 @@
 	}
 
 	onMount(() => {
-		tableName = normalize(decodeURIComponent(window.location.pathname.substring(1)));
+		tableName =
+			normalize(decodeURIComponent(window.location.pathname.substring(1))) || hri.random();
 		window.history.replaceState(null, tableName, `/${tableName}`);
 	});
 </script>
