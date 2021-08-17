@@ -10,8 +10,10 @@
 	}
 
 	onMount(() => {
-		tableName =
-			normalize(decodeURIComponent(window.location.pathname.substring(1))) || hri.random();
+		tableName = normalize(decodeURIComponent(window.location.pathname.substring(1)));
+		if (!tableName || tableName === 'table') {
+			tableName = hri.random();
+		}
 		window.history.replaceState(null, tableName, `/${tableName}`);
 	});
 </script>

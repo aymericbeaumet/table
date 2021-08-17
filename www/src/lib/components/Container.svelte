@@ -10,7 +10,7 @@
 			<ul>
 				<li><a href="/blog">Blog</a></li>
 				<li><a href="/doc">Documentation</a></li>
-				<li><a href="/random">Start a table</a></li>
+				<li class="shiny"><a href="/table">Start a table</a></li>
 			</ul>
 		</nav>
 	</header>
@@ -51,8 +51,24 @@
 		display: flex;
 	}
 
-	header li + li {
-		margin-left: 10px;
+	header a {
+		padding: 5px;
+	}
+
+	header li {
+		margin: 0 2px;
+	}
+
+	header li.shiny a {
+		background: orange;
+		border: 1px solid orange;
+		color: white;
+		border-radius: 5px;
+	}
+
+	header li.shiny a:hover {
+		border: 1px solid black;
+		color: black;
 	}
 
 	header a {

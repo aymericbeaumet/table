@@ -36,7 +36,7 @@
 	<section>
 		<h1>A place for your <span>{goals[goalsIndex]}</span></h1>
 
-		<form action={`/${tableName || 'random'}`}>
+		<form action={`/${tableName || 'table'}`}>
 			<input
 				type="text"
 				placeholder="Choose a table name"
