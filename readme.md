@@ -19,14 +19,15 @@ cd www && npm run update
 ### Deploy
 
 - [`api`](./cmd/api)
-  * `make deploy`
-  * https://console.scaleway.com/instance/servers
-  * https://api.jointable.io/debug
+
+  - `make deploy`
+  - https://console.scaleway.com/instance/servers
+  - https://api.jointable.io/debug
 
 - [`www`](./www)
-  * automatically deployed to Netlify by GitHub Actions (master branch)
-  * https://app.netlify.com/sites/table-www
-  * https://jointable.io
+  - automatically deployed to Netlify by GitHub Actions (master branch)
+  - https://app.netlify.com/sites/table-www
+  - https://jointable.io
 
 ## Ideas
 
@@ -57,6 +58,9 @@ cd www && npm run update
 - Create query parameter generator + teach people about query parameters
 - Easy switch between all the tables of a scope
 - Remove `/table` from the sitemap + add descriptions
+- Update Slack status when you join a table
+- Entity to read RSS feeds
+- Entity to open file in vscode
 
 - Convey authentication mecanism through the URL:
   - https://jointable.io/slack:join-table/dylan
@@ -65,6 +69,7 @@ cd www && npm run update
 - Slash commands: Discord
 
 Entities:
+
 - file
 - image (jpg, png, gif, etc)
 - netflix
@@ -79,12 +84,14 @@ Entities:
 - youtube (videos + live: https://developers.google.com/youtube/iframe_api_reference)
 
 Commands:
+
 - copy link of table
 - giffy
 - screenshot table
 - wizz
 
 Integrations:
+
 - Zapier
 
 ## Pro Plan
@@ -96,8 +103,8 @@ Integrations:
 - Integrations that require user to provide credentials (GitHub, Google Drive, Google Calendar, etc)
 - Table persistence
 - Configure table via URL:
-  * ambiance=...
-  * password=...
+  - ambiance=...
+  - password=...
 
 ## Analytics
 
