@@ -1,13 +1,13 @@
 https://table-www.netlify.app/* https://jointable.io/:splat 301
 https://www.jointable.io/*      https://jointable.io/:splat 301
 
-/docs                           /doc/index.html             302
-/documentation                  /doc/index.html             302
+/docs                           /doc                        302
+/documentation                  /doc                        302
 
-/career                         /careers/index.html         302
-/job                            /careers/index.html         302
-/jobs                           /careers/index.html         302
-/position                       /careers/index.html         302
-/positions                      /careers/index.html         302
+/career                         /careers                    302
+/job                            /careers                    302
+/jobs                           /careers                    302
+/position                       /careers                    302
+/positions                      /careers                    302
 
 /*                              /table/index.html           200
