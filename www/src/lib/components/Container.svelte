@@ -8,6 +8,7 @@
 
 		<nav>
 			<ul>
+				<li><a href="/why-table">Why Table</a></li>
 				<li><a href="/blog">Blog</a></li>
 				<li><a href="/doc">Documentation</a></li>
 				<li class="shiny"><a href="/start">Start a table</a></li>
@@ -56,7 +57,7 @@
 	}
 
 	header li {
-		margin: 0 2px;
+		margin: 0 5px;
 	}
 
 	header li.shiny a {
