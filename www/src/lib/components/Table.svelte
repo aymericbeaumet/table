@@ -359,6 +359,8 @@
 
 	main {
 		height: 100%;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.avatars {
@@ -369,7 +371,7 @@
 
 	.entities {
 		width: 100%;
-		height: 100%;
+		flex: 1;
 		display: flex;
 		justify-content: center;
 		align-items: center;
