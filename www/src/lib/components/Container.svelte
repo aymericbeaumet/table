@@ -10,7 +10,7 @@
 			<ul>
 				<li><a href="/blog">Blog</a></li>
 				<li><a href="/doc">Documentation</a></li>
-				<li class="shiny"><a href="/table">Start a table</a></li>
+				<li class="shiny"><a href="/start">Start a table</a></li>
 			</ul>
 		</nav>
 	</header>

@@ -5,17 +5,19 @@
 
 	let tableName = '';
 
-	function normalize(input: string): string {
-		return input.trim().toLowerCase().replace(/\s+/g, ' ') || '';
-	}
-
 	onMount(() => {
-		tableName = normalize(decodeURIComponent(window.location.pathname.substring(1)));
-		if (!tableName || tableName === 'table') {
-			tableName = hri.random();
+		let normalized = normalize(decodeURIComponent(window.location.pathname.substring(1)));
+		if (!normalized || ['new', 'rand', 'random', 'start', 'create', 'table'].includes(normalized)) {
+			normalized = hri.random();
 		}
+
+		tableName = normalized;
 		window.history.replaceState(null, tableName, `/${tableName}`);
 	});
+
+	function normalize(input: string): string {
+		return input.trim().toLowerCase().replace(/\s+/g, ' ');
+	}
 </script>
 
 <svelte:head>
