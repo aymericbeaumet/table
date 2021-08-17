@@ -10,7 +10,6 @@
 		if (!normalized || ['new', 'rand', 'random', 'start', 'create', 'table'].includes(normalized)) {
 			normalized = hri.random();
 		}
-
 		tableName = normalized;
 		window.history.replaceState(null, tableName, `/${tableName}`);
 	});
