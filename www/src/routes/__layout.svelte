@@ -1,4 +1,6 @@
 <svelte:head>
+	<html lang="en-US" />
+
 	<!-- https://api.slack.com/start/distributing/directory#suggestions -->
 	<meta name="slack-app-id" content="A02ATC8ED6X" />
 </svelte:head>
