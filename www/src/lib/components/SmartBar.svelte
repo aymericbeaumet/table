@@ -74,7 +74,10 @@
 
 			<ul on:mousemove={throttle(onMouseMove, 1000 / MAX_FPS)}>
 				{#each entities as entity, i}
-					<li class:selected={i === selectedIndex}>{JSON.stringify(entity)}</li>
+					<li class:selected={i === selectedIndex}>
+						<img src={entity.iconURL} alt={entity.kind} />
+						<p>{entity.toString()}</p>
+					</li>
 				{/each}
 			</ul>
 
@@ -122,13 +125,23 @@
 	}
 
 	li {
-		display: block;
+		display: flex;
+		align-items: center;
 		width: 100%;
 		padding: 15px;
 	}
 
 	li.selected {
 		background-color: rgb(18, 100, 163);
+	}
+
+	li img {
+		width: 32px;
+		height: 32px;
+	}
+
+	li p {
+		margin-left: 10px;
 	}
 
 	footer {
