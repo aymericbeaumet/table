@@ -1,52 +1,17 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import Entity from '$lib/entity';
 	import { throttle } from 'lodash';
 	import { MAX_FPS } from '$lib/env';
+	import Modal from '$lib/components/Modal.svelte';
 
-	let visible = false;
+	export let initialValue = '';
+
 	let entities = new Array<Entity>();
 	let selectedIndex = 0;
 	let inputTextElement: HTMLInputElement;
 
 	const dispatch = createEventDispatcher();
-
-	const onClick: svelte.JSX.MouseEventHandler<HTMLDivElement> = (event) => {
-		if (event.currentTarget === inputTextElement) {
-			return;
-		}
-
-		if (event.currentTarget?.nodeName === 'LI') {
-			const i = Array.prototype.indexOf.call(
-				event.currentTarget.parentNode?.children,
-				event.currentTarget,
-			);
-			if (i > -1) {
-				selectedIndex = i;
-				dispatch('entity', entities[selectedIndex]);
-			}
-		}
-
-		hide();
-	};
-
-	const onMouseMove: svelte.JSX.MouseEventHandler<HTMLUListElement> = (event) => {
-		if (event.currentTarget.nodeName === 'LI') {
-			const i = Array.prototype.indexOf.call(
-				event.currentTarget.parentNode?.children,
-				event.currentTarget,
-			);
-			if (i > -1) {
-				selectedIndex = i;
-			}
-		}
-	};
-
-	const onSubmit: svelte.JSX.FormEventHandler<HTMLFormElement> = (event) => {
-		event.preventDefault();
-		dispatch('entity', entities[selectedIndex]);
-		hide();
-	};
 
 	const onInput: svelte.JSX.FormEventHandler<HTMLInputElement> = (event) => {
 		const value = event.currentTarget?.value.trim() || '';
@@ -68,98 +33,67 @@
 		}
 	};
 
-	const onKeyPress = (event: KeyboardEvent) => {
-		if (event.ctrlKey && (event.key === 'c' || event.key === 'l' || event.key === '\\')) {
-			hide();
-			return;
+	const onMouseMove: svelte.JSX.MouseEventHandler<HTMLUListElement> = (event) => {
+		const target = event.target as HTMLElement;
+		if (target?.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(target.parentNode?.children, event.target);
+			if (i > -1) {
+				selectedIndex = i;
+			}
 		}
 	};
 
-	const onWindowKeyDown = (event: KeyboardEvent) => {
-		if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-			toggle();
-			return;
-		}
+	const onSubmit: svelte.JSX.FormEventHandler<HTMLFormElement> = (event) => {
+		event.preventDefault();
+		dispatch('entity', entities[selectedIndex]);
+		dispatch('close');
+	};
 
-		if (event.key === 'Escape') {
-			hide();
-			return;
+	const onClick: svelte.JSX.MouseEventHandler<HTMLDivElement> = (event) => {
+		const target = event.target as HTMLElement;
+		if (target?.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(target.parentNode?.children, event.target);
+			if (i > -1) {
+				dispatch('entity', entities[selectedIndex]);
+				dispatch('close');
+			}
 		}
 	};
 
-	function show() {
-		if (!visible) {
-			entities = [];
-			selectedIndex = 0;
-			inputTextElement.value = '';
-			setTimeout(() => inputTextElement.focus(), 0); // https://github.com/sveltejs/sapper/issues/619#issuecomment-480616597
-		}
-		visible = true;
-	}
-
-	function hide() {
-		visible = false;
-	}
-
-	function toggle() {
-		!visible ? show() : hide();
-	}
+	onMount(() => {
+		inputTextElement.value = initialValue;
+		entities = Entity.infer(initialValue);
+		setTimeout(() => inputTextElement.focus(), 0); // https://github.com/sveltejs/sapper/issues/619#issuecomment-480616597
+	});
 </script>
 
-<svelte:window on:keydown={onWindowKeyDown} />
+<Modal on:close>
+	<div on:click={onClick}>
+		<form on:submit={onSubmit}>
+			<input type="text" on:input={onInput} on:keydown={onKeyDown} bind:this={inputTextElement} />
 
-<div class="wrapper" on:click={onClick}>
-	<div class="overlay" class:visible>
-		<div>
-			<form on:submit={onSubmit}>
-				<input
-					type="text"
-					on:input={onInput}
-					on:keydown={onKeyDown}
-					on:keypress={onKeyPress}
-					bind:this={inputTextElement}
-				/>
+			<ul on:mousemove={throttle(onMouseMove, 1000 / MAX_FPS)}>
+				{#each entities as entity, i}
+					<li class:selected={i === selectedIndex}>{JSON.stringify(entity)}</li>
+				{/each}
+			</ul>
 
-				<ul on:mousemove={throttle(onMouseMove, 1000 / MAX_FPS)}>
-					{#each entities as entity, i}
-						<li class:selected={i === selectedIndex}>{JSON.stringify(entity)}</li>
-					{/each}
-				</ul>
-
-				<footer>
-					<p>Embed content within the page</p>
-				</footer>
-			</form>
-		</div>
+			<footer>
+				<p>Embed content within the page</p>
+			</footer>
+		</form>
 	</div>
-
-	<slot />
-</div>
+</Modal>
 
 <style>
-	.wrapper {
-		width: 100%;
-		height: 100%;
-	}
-
-	.overlay {
-		position: fixed;
-		z-index: 1000;
-		width: 100%;
-		height: 100%;
-		background: rgb(1, 1, 1, 0.6);
-		display: none;
-		justify-content: center;
-	}
-
-	.overlay.visible {
-		display: flex;
+	div {
+		margin: 20px auto 0;
+		width: 50%;
 	}
 
 	form {
 		margin-top: 10px;
 		min-width: 700px;
-		width: 50%;
 		background-color: rgb(26, 29, 33);
 		color: rgb(209, 210, 211);
 		border: 1px solid grey;

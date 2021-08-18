@@ -20,7 +20,7 @@
 </script>
 
 <svelte:head>
-	<title>Table - {tableName}</title>
+	<title>Table{tableName ? ` - ${tableName}` : ''}</title>
 
 	<meta name="robots" content="noindex" />
 </svelte:head>

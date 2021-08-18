@@ -18,6 +18,7 @@
 	import Entity from '$lib/entity';
 	import { MAX_FPS } from '$lib/env';
 	import settingsButtonURL from '$lib/assets/settings.svg';
+	import wandButtonURL from '$lib/assets/wand.svg';
 	import Settings from '$lib/components/Settings.svelte';
 	import ambiances from '$lib/assets/ambiances';
 	import { get } from 'svelte/store';
@@ -43,10 +44,10 @@
 	let onMouseMove: svelte.JSX.MouseEventHandler<HTMLDivElement>;
 	let onMouseDown: svelte.JSX.MouseEventHandler<HTMLDivElement>;
 	let onMouseUp: svelte.JSX.MouseEventHandler<HTMLDivElement>;
-
-	let showSettings = false;
-
 	let onSmartBarEntity: any;
+
+	let modal: 'smartbar' | 'settings' | undefined;
+	let smartbarInitialValue = '';
 
 	const backgroundAudioPlayer = new AudioPlayer();
 	backgroundAudioPlayer.setLoop(true);
@@ -273,7 +274,37 @@
 	onDestroy(() => {
 		ro && ro.disconnect();
 	});
+
+	const onKeyDown = (event: KeyboardEvent) => {
+		if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+			event.stopPropagation();
+			event.preventDefault();
+			if (modal !== 'smartbar') {
+				displaySmartbar();
+			} else {
+				modal = undefined;
+			}
+			return;
+		}
+	};
+
+	const onPaste = (event: any) => {
+		displaySmartbar(event.clipboardData.getData('text'));
+	};
+
+	function displaySmartbar(initialValue = '') {
+		if (!modal) {
+			smartbarInitialValue = initialValue;
+			modal = 'smartbar';
+		}
+	}
+
+	function displaySettings() {
+		modal = 'settings';
+	}
 </script>
+
+<svelte:window on:keydown={onKeyDown} on:paste={onPaste} />
 
 <Badge
 	count={avatars.length}
@@ -282,65 +313,71 @@
 	href="/favicon.png"
 />
 
-<SmartBar on:entity={onSmartBarEntity}>
-	<div
-		class="container"
-		on:mousedown={onMouseDown}
-		on:mousemove={onMouseMove}
-		on:mouseup={onMouseUp}
-		style="
-		  background-image: url({ambiances[$ambianceID]?.backgroundURL});
-      background-position: center;
-		  background-size: cover;
-		  cursor: url({isMouseDown
-			? ambiances[$ambianceID]?.clickURL
-			: ambiances[$ambianceID]?.cursorURL}), auto;
-		"
-	>
-		<header>
-			<a class="logo" rel="external" href="/"><img src={logoURL} alt="logo" /></a>
+<div
+	class="container"
+	on:mousedown={onMouseDown}
+	on:mousemove={onMouseMove}
+	on:mouseup={onMouseUp}
+	style="
+    background-image: url({ambiances[$ambianceID]?.backgroundURL});
+    cursor: url({isMouseDown
+		? ambiances[$ambianceID]?.clickURL
+		: ambiances[$ambianceID]?.cursorURL}), auto;
+  "
+>
+	<header>
+		<div>
+			<a class="logo" rel="external" href="/"><img src={logoURL} alt="Table" /></a>
+		</div>
 
-			<div class="settings-button" on:click={() => (showSettings = !showSettings)}>
+		<div>
+			<button class:active={modal === 'smartbar'} on:click={() => displaySmartbar()}>
+				<img src={wandButtonURL} alt="Smart Bar (CMD + K)" />
+			</button>
+
+			<button class:active={modal === 'settings'} on:click={displaySettings}>
 				<img src={settingsButtonURL} alt="Settings" />
-			</div>
-		</header>
+			</button>
+		</div>
+	</header>
 
-		<main>
-			<div class="avatars">
-				{#each avatars as props}
-					<Avatar {...props} />
+	<main>
+		{#if modal === 'smartbar'}
+			<SmartBar
+				initialValue={smartbarInitialValue}
+				on:close={() => (modal = undefined)}
+				on:entity={onSmartBarEntity}
+			/>
+		{:else if modal === 'settings'}
+			<Settings on:close={() => (modal = undefined)} />
+		{/if}
+
+		<div class="avatars">
+			{#each avatars as props}
+				<Avatar {...props} />
+			{/each}
+			<div />
+		</div>
+
+		<div class="entities" bind:this={entitiesElement}>
+			<div class="safebox" style="width: {safeboxWidth}; height: {safeboxHeight};">
+				{#each entities as entity}
+					<div class="entity">
+						<EntityComponent {entity} />
+					</div>
 				{/each}
-				<div />
 			</div>
-
-			<div class="entities" bind:this={entitiesElement}>
-				<div
-					class="safebox"
-					class:border={safeboxWidth !== '100%' || safeboxHeight !== '100%'}
-					style="width: {safeboxWidth}; height: {safeboxHeight};"
-				>
-					{#each entities as entity}
-						<div class="entity">
-							<EntityComponent {entity} />
-						</div>
-					{/each}
-				</div>
-			</div>
-
-			{#if showSettings}
-				<div class="settings-wrapper">
-					<Settings on:close={() => (showSettings = false)} />
-				</div>
-			{/if}
-		</main>
-	</div>
-</SmartBar>
+		</div>
+	</main>
+</div>
 
 <style>
 	.container {
 		height: 100vh;
 		display: flex;
 		flex-direction: column;
+		background-position: center;
+		background-size: cover;
 	}
 
 	header {
@@ -353,8 +390,30 @@
 	}
 
 	header img {
-		width: 32px;
-		height: 32px;
+		width: 48px;
+		height: 48px;
+		background: lightgrey;
+		padding: 7px;
+		border-radius: 50%;
+	}
+
+	header img:hover {
+		background: orange;
+	}
+
+	header button {
+		background: none;
+		border: none;
+		outline: none;
+		margin-left: 10px;
+	}
+
+	header button:hover {
+		cursor: pointer;
+	}
+
+	header button.active img {
+		background: orange;
 	}
 
 	main {
@@ -367,6 +426,7 @@
 		display: flex;
 		justify-content: center;
 		flex-wrap: wrap;
+		padding: 15px;
 	}
 
 	.entities {
@@ -380,34 +440,7 @@
 	.safebox {
 		max-width: 100%;
 		max-height: 100%;
-	}
-
-	.safebox.border {
-		border: 2px dashed grey;
-	}
-
-	.settings-button {
-		border-radius: 50%;
-		padding: 5px;
-		background-color: orange;
-	}
-
-	.settings-button:hover {
-		cursor: pointer;
-		background-color: brown;
-	}
-
-	.settings-button img {
-		width: 30px;
-		height: 30px;
-	}
-
-	.settings-wrapper {
-		z-index: 1000;
-		position: absolute;
-		left: 50%;
-		top: 30%;
-		transform: translate(-50%, -30%);
+		border: 1px dashed grey;
 	}
 
 	@media screen and (max-width: 600px), screen and (max-height: 600px) {
