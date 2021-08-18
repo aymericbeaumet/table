@@ -440,7 +440,7 @@
 	.safebox {
 		max-width: 100%;
 		max-height: 100%;
-		border: 1px dashed grey;
+		border: 2px dashed grey;
 	}
 
 	@media screen and (max-width: 600px), screen and (max-height: 600px) {

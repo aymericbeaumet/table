@@ -1,6 +1,4 @@
 import getVideoId from 'get-video-id';
-import iframeURL from '$lib/assets/entities/iframe.png';
-import textURL from '$lib/assets/entities/text.png';
 
 export default class Entity {
 	public kind: string;
@@ -15,17 +13,6 @@ export default class Entity {
 
 	get key(): string {
 		return `${this.kind}:${this.id}`;
-	}
-
-	get iconURL(): string {
-		switch (this.kind) {
-			case 'iframe':
-				return iframeURL;
-			case 'text':
-				return textURL;
-			default:
-				throw new Error(`implementation error: unexpected kind "${this.kind}"`);
-		}
 	}
 
 	toString(): string {

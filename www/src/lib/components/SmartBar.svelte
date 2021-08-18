@@ -4,6 +4,7 @@
 	import { throttle } from 'lodash';
 	import { MAX_FPS } from '$lib/env';
 	import Modal from '$lib/components/Modal.svelte';
+	import { getIconURL } from '$lib/assets/entities';
 
 	export let initialValue = '';
 
@@ -75,7 +76,7 @@
 			<ul on:mousemove={throttle(onMouseMove, 1000 / MAX_FPS)}>
 				{#each entities as entity, i}
 					<li class:selected={i === selectedIndex}>
-						<img src={entity.iconURL} alt={entity.kind} />
+						<img src={getIconURL(entity)} alt={entity.kind} />
 						<p>{entity.toString()}</p>
 					</li>
 				{/each}
