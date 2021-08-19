@@ -333,7 +333,9 @@
 >
 	<header>
 		<div>
-			<a class="logo" rel="external" href="/"><img src={logoURL} alt="Table" /></a>
+			<a class="logo" rel="external" href="/">
+				<img src={logoURL} alt="Table" />
+			</a>
 		</div>
 
 		<div>
@@ -395,7 +397,16 @@
 		padding: 20px;
 	}
 
-	header img {
+	header button {
+		background: lightgrey;
+		border: none;
+		outline: none;
+		margin-left: 10px;
+	}
+
+	header a,
+	header button {
+		display: inline-block;
 		width: 48px;
 		height: 48px;
 		padding: 7px;
@@ -403,29 +414,20 @@
 		border: 2px solid lightgrey;
 	}
 
-	header button img {
-		background: lightgrey;
-	}
-
-	header img:hover {
-		background: orange;
+	header a:hover {
 		border: 2px solid orange;
 	}
 
-	header button {
-		background: none;
-		border: none;
-		outline: none;
-		margin-left: 10px;
-	}
-
-	header button:hover {
+	header button:hover,
+	header button.active {
 		cursor: pointer;
-	}
-
-	header button.active img {
 		background: orange;
 		border: 2px solid orange;
+	}
+
+	header img {
+		width: 100%;
+		height: 100%;
 	}
 
 	main {

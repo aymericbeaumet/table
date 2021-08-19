@@ -103,12 +103,12 @@
 <style>
 	div {
 		margin: 20px auto 0;
-		width: 50%;
+		width: 90%;
+		max-width: 800px;
 	}
 
 	form {
 		margin-top: 10px;
-		min-width: 700px;
 		background-color: rgb(26, 29, 33);
 		color: rgb(209, 210, 211);
 		border: 1px solid grey;

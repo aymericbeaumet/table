@@ -86,7 +86,8 @@
 	div {
 		margin: 150px auto 0;
 		background-color: white;
-		width: 800px;
+		width: 90%;
+		max-width: 800px;
 		padding: 10px;
 		border: 1px solid black;
 	}
