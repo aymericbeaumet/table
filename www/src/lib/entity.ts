@@ -39,6 +39,7 @@ export default class Entity {
 				case 'vimeo':
 					out.push(
 						new Entity('iframe', {
+							icon: 'vimeo',
 							src: `https://player.vimeo.com/video/${encodeURIComponent(id)}`,
 						}),
 					);
@@ -46,6 +47,7 @@ export default class Entity {
 				case 'youtube':
 					out.push(
 						new Entity('iframe', {
+							icon: 'youtube',
 							src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`,
 						}),
 					);
@@ -59,6 +61,7 @@ export default class Entity {
 			if (soundcloudMatches && soundcloudMatches[0]) {
 				out.push(
 					new Entity('iframe', {
+						icon: 'soundcloud',
 						src: `https://w.soundcloud.com/player/?url=${encodeURIComponent(
 							soundcloudMatches[0],
 						)}&auto_play=false&show_artwork=true`,
@@ -73,6 +76,7 @@ export default class Entity {
 			if (spotifyMatches && spotifyMatches[1] && spotifyMatches[2]) {
 				out.push(
 					new Entity('iframe', {
+						icon: 'spotify',
 						src: `https://open.spotify.com/embed/${encodeURIComponent(
 							spotifyMatches[1],
 						)}/${encodeURIComponent(spotifyMatches[2])}`,
@@ -83,12 +87,13 @@ export default class Entity {
 
 		{
 			const twitchRegex = /https?:\/\/(?:www\.)?twitch\.tv\/([a-z0-9]+)/;
-			const twichMatches = twitchRegex.exec(value);
-			if (twichMatches && twichMatches[1]) {
+			const twitchMatches = twitchRegex.exec(value);
+			if (twitchMatches && twitchMatches[1]) {
 				out.push(
 					new Entity('iframe', {
+						icon: 'twitch',
 						src: `https://player.twitch.tv/?channel=${encodeURIComponent(
-							twichMatches[1],
+							twitchMatches[1],
 						)}&parent=${encodeURIComponent(window.location.hostname)}`,
 					}),
 				);
