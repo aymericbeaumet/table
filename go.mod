@@ -3,7 +3,7 @@ module github.com/jointable/table
 go 1.16
 
 require (
-	cloud.google.com/go v0.91.1 // indirect
+	cloud.google.com/go v0.93.3 // indirect
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
@@ -22,15 +22,15 @@ require (
 	github.com/pion/srtp/v2 v2.0.5 // indirect
 	github.com/pion/webrtc/v3 v3.0.32 // indirect
 	github.com/prometheus/common v0.30.0 // indirect
-	github.com/prometheus/procfs v0.7.2 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.7
 	github.com/slack-go/slack v0.9.4
 	github.com/sourcegraph/jsonrpc2 v0.1.0
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4
-	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e // indirect
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/oauth2 v0.0.0-20210810183815-faf39c7919d5 // indirect
-	golang.org/x/sys v0.0.0-20210816074244-15123e1e1f71 // indirect
+	golang.org/x/oauth2 v0.0.0-20210817223510-7df4dd6e12ab // indirect
+	golang.org/x/sys v0.0.0-20210819072135-bce67f096156 // indirect
 	golang.org/x/text v0.3.7 // indirect
 )
