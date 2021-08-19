@@ -398,13 +398,18 @@
 	header img {
 		width: 48px;
 		height: 48px;
-		background: lightgrey;
 		padding: 7px;
 		border-radius: 50%;
+		border: 2px solid lightgrey;
+	}
+
+	header button img {
+		background: lightgrey;
 	}
 
 	header img:hover {
 		background: orange;
+		border: 2px solid orange;
 	}
 
 	header button {
