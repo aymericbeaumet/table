@@ -20,6 +20,7 @@ func upWebhooks(r *gin.Engine) error {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
+
 		if !discordgo.VerifyInteraction(c.Request, ed25519.PublicKey(discordPublicKey)) {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
