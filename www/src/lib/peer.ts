@@ -9,7 +9,7 @@ export default class Peer {
 	private reliableDataChannel: any;
 	private unreliableDataChannel: any;
 
-	private publishedTimeout?: NodeJS.Timeout;
+	private publishedTimeout?: ReturnType<typeof setTimeout>;
 	private publishedStream?: any;
 
 	constructor(

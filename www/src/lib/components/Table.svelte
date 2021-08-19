@@ -224,7 +224,7 @@
 
 		/* Watch for resize */
 
-		let screenReliableTimeout: NodeJS.Timeout | undefined;
+		let screenReliableTimeout: ReturnType<typeof setTimeout> | undefined;
 		ro = new ResizeObserver(
 			throttle((entries) => {
 				if (screenReliableTimeout) {

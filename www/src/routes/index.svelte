@@ -15,7 +15,7 @@
 	let goalsIndex = 0;
 	let tableName = '';
 
-	let interval: NodeJS.Timer;
+	let interval: ReturnType<typeof setTimeout>;
 	let inputTextElement: HTMLInputElement;
 
 	onMount(() => {
