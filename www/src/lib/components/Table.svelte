@@ -425,6 +425,7 @@
 
 	header button.active img {
 		background: orange;
+		border: 2px solid orange;
 	}
 
 	main {
