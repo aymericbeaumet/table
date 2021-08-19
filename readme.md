@@ -57,19 +57,19 @@ cd www && npm run update
   broadcasted)
 - Create query parameter generator + teach people about query parameters
 - Easy switch between all the tables of a scope
-- Remove `/table` from the sitemap + add descriptions
+- Add descriptions to the sitemap
 - Update Slack status when you join a table
-- Entity to read RSS feeds
-- Entity to open file in vscode
+- Discord rich presenve vizualizer https://discord.com/developers/applications/874948277903196170/rich-presence/visualizer
+- SSO: Teams, Zoom
 
 - Convey authentication mecanism through the URL:
   - https://jointable.io/slack:join-table/dylan
   - https://jointable.io/google:rekki.com/all-hands
-- SSO: Teams, Zoom, Slack
-- Slash commands: Discord
 
 Entities:
 
+- rss feed
+- vscode
 - file
 - image (jpg, png, gif, etc)
 - netflix
