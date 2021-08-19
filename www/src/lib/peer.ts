@@ -2,17 +2,18 @@ import { encode, decode } from '@msgpack/msgpack';
 import * as env from '$lib/env';
 import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
 import Entity from '$lib/entity';
+import type { Client as ClientType, LocalStream as LocalStreamType } from 'ion-sdk-js';
 
 export default class Peer {
-	private client: any;
+	private client: ClientType;
 	private reliableDataChannel: any;
 	private unreliableDataChannel: any;
 
-	private publishedTimeout: any;
-	private publishedStream: any;
+	private publishedTimeout?: NodeJS.Timeout;
+	private publishedStream?: any;
 
 	constructor(
-		Client: any,
+		Client: typeof ClientType,
 		tableName: string,
 		{
 			onAmbianceID,
@@ -29,9 +30,9 @@ export default class Peer {
 			onAmbianceEffectsVolume: (streamID: string, volume: number) => void;
 			onEntity: (streamID: string, entity: Entity) => void;
 			onScreen: (streamID: string, width: number, height: number) => void;
-			onSpeaker: any;
-			onTrack: any;
-			onTrackRemoved: any;
+			onSpeaker: (streamIDs: Array<string>) => void;
+			onTrack: (stream: typeof LocalStreamType) => void;
+			onTrackRemoved: (stream: typeof LocalStreamType) => void;
 		},
 	) {
 		const onmessage = (event: any) => {
@@ -70,6 +71,7 @@ export default class Peer {
 
 		this.client = new Client(signal, {
 			iceServers: [{ urls: env.STUN_SERVERS_URLS.split(',') }],
+			codec: 'vp8',
 		});
 
 		/* Listen for datachannels, speakers and tracks */
@@ -99,14 +101,18 @@ export default class Peer {
 
 		/* Join when the signaling channel is ready */
 
-		signal.onopen = () => this.client.join(tableName);
+		signal.onopen = () => this.client.join(tableName, '');
 	}
 
-	publish(stream: any): void {
-		clearTimeout(this.publishedTimeout);
+	publish(stream: LocalStreamType): void {
+		if (this.publishedTimeout) {
+			clearTimeout(this.publishedTimeout);
+			this.publishedTimeout = undefined;
+		}
 
 		if (this.publishedStream) {
 			this.publishedStream.unpublish();
+			this.publishedStream = undefined;
 		}
 
 		try {

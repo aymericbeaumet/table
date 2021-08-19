@@ -1,13 +1,15 @@
+import type { LocalStream as LocalStreamType } from 'ion-sdk-js';
+
 export default class {
 	private currentAudioInput?: string;
 	private currentVideoInput?: string;
 
-	constructor(private LocalStream: any, private framerate: number) {}
+	constructor(private LocalStream: typeof LocalStreamType, private framerate: number) {}
 
 	async reset(
 		desiredAudioInput: string,
 		desiredVideoInput: string,
-	): Promise<[any, boolean, boolean] | null> {
+	): Promise<[LocalStreamType, boolean, boolean] | null> {
 		// Idempotent
 		const hasAudioChanged = desiredAudioInput !== this.currentAudioInput;
 		const hasVideoChanged = desiredVideoInput !== this.currentVideoInput;
@@ -50,11 +52,11 @@ export default class {
 		for (const device of devices) {
 			const isDefault = device.deviceId === 'default';
 			const isBuiltin = device.label.toLowerCase().includes('facetime');
-			const found =
+			const isFound =
 				(device.kind === 'audioinput' && audioInputDeviceID) ||
 				(device.kind === 'videoinput' && videoInputDeviceID);
 
-			if (isDefault || (isBuiltin && !found)) {
+			if (isDefault || (isBuiltin && !isFound)) {
 				if (device.kind === 'audioinput') {
 					audioInputDeviceID = device.deviceId;
 				} else if (device.kind === 'videoinput') {

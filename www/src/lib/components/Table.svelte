@@ -33,9 +33,9 @@
 	const avatarsByStreamID: any = {};
 	let avatars: Array<any> = [];
 
-	const entitiesByKey: any = {};
-	const entitiesByStreamID: any = {};
-	let entities: Array<any> = [];
+	const entitiesByKey: { [key: string]: Entity } = {};
+	const entitiesByStreamID: { [key: string]: Array<Entity> } = {};
+	let entities: Array<Entity> = [];
 
 	const screenSizesByStreamID: { [key: string]: { width: number; height: number } } = {};
 
@@ -110,7 +110,7 @@
 					e = entity;
 					entitiesByKey[entity.key] = entity;
 					entitiesByStreamID[streamID] = entitiesByStreamID[streamID] || [];
-					entitiesByStreamID[streamID].push(entity);
+					entitiesByStreamID[streamID]!.push(entity);
 					entities = [...entities, entity];
 				}
 				e.props = entity.props;
@@ -122,7 +122,7 @@
 				recomputeSafebox();
 			},
 
-			onSpeaker: (streamIDs: any) => {
+			onSpeaker: (streamIDs: Array<string>) => {
 				for (const avatar of avatars) {
 					avatar.active = false;
 				}
@@ -288,8 +288,8 @@
 		}
 	};
 
-	const onPaste = (event: any) => {
-		displaySmartbar(event.clipboardData.getData('text'));
+	const onPaste = (event: ClipboardEvent) => {
+		displaySmartbar(event.clipboardData?.getData('text'));
 	};
 
 	function displaySmartbar(initialValue = '') {
