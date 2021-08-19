@@ -5,6 +5,9 @@ https://www.jointable.io/*      https://jointable.io/:splat 301
 /documentation                  /doc                        302
 
 /career                         /careers                    302
+/hire                           /careers                    302
+/hires                          /careers                    302
+/hiring                         /careers                    302
 /job                            /careers                    302
 /jobs                           /careers                    302
 /position                       /careers                    302
