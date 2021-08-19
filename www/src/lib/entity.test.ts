@@ -13,6 +13,7 @@ test('entity inference', () => {
 			in: 'Listen to this https://soundcloud.com/darealartis/exclu-tiitof-bad-boy!',
 			expected: [
 				new Entity('iframe', {
+					icon: 'soundcloud',
 					src: 'https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fdarealartis%2Fexclu-tiitof-bad-boy&auto_play=false&show_artwork=true',
 				}),
 			],
