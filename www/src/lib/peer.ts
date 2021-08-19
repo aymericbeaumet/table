@@ -31,8 +31,8 @@ export default class Peer {
 			onEntity: (streamID: string, entity: Entity) => void;
 			onScreen: (streamID: string, width: number, height: number) => void;
 			onSpeaker: (streamIDs: Array<string>) => void;
-			onTrack: (stream: typeof LocalStreamType) => void;
-			onTrackRemoved: (stream: typeof LocalStreamType) => void;
+			onTrack: (stream: LocalStreamType) => void;
+			onTrackRemoved: (stream: LocalStreamType) => void;
 		},
 	) {
 		const onmessage = (event: any) => {
@@ -127,7 +127,7 @@ export default class Peer {
 	}
 
 	reliable(payload: any): void {
-		// TODO: buffer any message that couldn't be sent
+		// TODO: buffer messages that couldn't be sent
 		this.reliableDataChannel && this.reliableDataChannel.send(encode(payload));
 	}
 

@@ -38,7 +38,7 @@ func upCommands(r *gin.Engine) error {
 				Text:         "How to use the `/table` command?",
 				Attachments: []slack.Attachment{
 					{
-						Text: "This command doesn't expect any parameter. Invoking it will post the link to this channel's table.",
+						Text: "This command doesn't expect a parameter. Invoking it will post the link to this channel's table.",
 					},
 				},
 			})

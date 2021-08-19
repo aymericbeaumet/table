@@ -24,6 +24,7 @@
 	import { get } from 'svelte/store';
 	import StreamManager from '$lib/StreamManager';
 	import EntityComponent from '$lib/components/Entity.svelte';
+	import type { LocalStream as LocalStreamType } from 'ion-sdk-js';
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
@@ -44,7 +45,7 @@
 	let onMouseMove: svelte.JSX.MouseEventHandler<HTMLDivElement>;
 	let onMouseDown: svelte.JSX.MouseEventHandler<HTMLDivElement>;
 	let onMouseUp: svelte.JSX.MouseEventHandler<HTMLDivElement>;
-	let onSmartBarEntity: any;
+	let onSmartBarEntity: (entity: CustomEvent<Entity>) => void;
 
 	let modal: 'smartbar' | 'settings' | undefined;
 	let smartbarInitialValue = '';
@@ -135,7 +136,7 @@
 				avatars = avatars;
 			},
 
-			onTrack: (stream: any) => {
+			onTrack: (stream: LocalStreamType) => {
 				let avatar = avatarsByStreamID[stream.id];
 				if (!avatar) {
 					avatar = {};
@@ -148,7 +149,7 @@
 				avatars = avatars;
 			},
 
-			onTrackRemoved: (stream: any) => {
+			onTrackRemoved: (stream: LocalStreamType) => {
 				const avatarForStream = avatarsByStreamID[stream.id];
 				if (avatarForStream) {
 					delete avatarsByStreamID[stream.id];
@@ -194,7 +195,7 @@
 
 		/* Watch for mouse events */
 
-		function onMouseEvent(event: any) {
+		function onMouseEvent(event: MouseEvent) {
 			cursor.props.clientX = event.clientX;
 			cursor.props.clientY = event.clientY;
 			cursor.props.isDown = isMouseDown;
@@ -215,7 +216,7 @@
 
 		/* Watch for smartbar entities */
 
-		onSmartBarEntity = function (event: any) {
+		onSmartBarEntity = function (event: CustomEvent<Entity>) {
 			const entity = event.detail;
 			entities = [...entities, entity];
 			peer.reliable({ ENTITY: entity });
@@ -223,14 +224,19 @@
 
 		/* Watch for resize */
 
-		let screenReliable: any;
+		let screenReliableTimeout: NodeJS.Timeout | undefined;
 		ro = new ResizeObserver(
 			throttle((entries) => {
-				clearTimeout(screenReliable);
+				if (screenReliableTimeout) {
+					clearTimeout(screenReliableTimeout);
+					screenReliableTimeout = undefined;
+				}
+
 				const { width, height } = entries[0].contentRect;
 				const message = { SCREEN: { width, height } };
 				peer.unreliable(message);
-				screenReliable = setTimeout(() => peer.reliable(message), 250);
+
+				screenReliableTimeout = setTimeout(() => peer.reliable(message), 250);
 			}, 1000 / MAX_FPS),
 		);
 		ro.observe(entitiesElement);
@@ -345,8 +351,8 @@
 		{#if modal === 'smartbar'}
 			<SmartBar
 				initialValue={smartbarInitialValue}
-				on:close={() => (modal = undefined)}
 				on:entity={onSmartBarEntity}
+				on:close={() => (modal = undefined)}
 			/>
 		{:else if modal === 'settings'}
 			<Settings on:close={() => (modal = undefined)} />
