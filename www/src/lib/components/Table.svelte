@@ -441,6 +441,7 @@
 		justify-content: center;
 		flex-wrap: wrap;
 		padding: 15px;
+		min-height: 180px; /* not required, but it makes the loading phase less jumpy */
 	}
 
 	.entities {
