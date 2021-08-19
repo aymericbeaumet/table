@@ -121,9 +121,8 @@
 		color: inherit;
 		border: none;
 		border-bottom: 1px solid grey;
-		border-radius: inherit;
-		border-bottom-left-radius: 0;
-		border-bottom-right-radius: 0;
+		border-top-left-radius: inherit;
+		border-top-right-radius: inherit;
 		padding: 15px;
 		font-size: 20px;
 	}
