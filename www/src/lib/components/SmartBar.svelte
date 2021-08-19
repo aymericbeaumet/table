@@ -35,9 +35,9 @@
 	};
 
 	const onMouseMove: svelte.JSX.MouseEventHandler<HTMLUListElement> = (event) => {
-		const target = event.target as HTMLElement;
-		if (target?.nodeName === 'LI') {
-			const i = Array.prototype.indexOf.call(target.parentNode?.children, event.target);
+		const child = asDirectChildOfRoot(event.composedPath(), event.currentTarget);
+		if (child?.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(child.parentNode?.children, event.target);
 			if (i > -1) {
 				selectedIndex = i;
 			}
@@ -50,16 +50,27 @@
 		dispatch('close');
 	};
 
-	const onClick: svelte.JSX.MouseEventHandler<HTMLDivElement> = (event) => {
-		const target = event.target as HTMLElement;
-		if (target?.nodeName === 'LI') {
-			const i = Array.prototype.indexOf.call(target.parentNode?.children, event.target);
+	const onClick: svelte.JSX.MouseEventHandler<HTMLUListElement> = (event) => {
+		const child = asDirectChildOfRoot(event.composedPath(), event.currentTarget);
+		if (child?.nodeName === 'LI') {
+			const i = Array.prototype.indexOf.call(child.parentNode?.children, child);
 			if (i > -1) {
+				selectedIndex = i;
 				dispatch('entity', entities[selectedIndex]);
 				dispatch('close');
 			}
 		}
 	};
+
+	function asDirectChildOfRoot(path: Array<EventTarget>, root: HTMLElement): HTMLElement | null {
+		for (const p of path) {
+			const el = p as HTMLElement;
+			if (el.parentNode === root) {
+				return el;
+			}
+		}
+		return null;
+	}
 
 	onMount(() => {
 		inputTextElement.value = initialValue;
@@ -69,11 +80,11 @@
 </script>
 
 <Modal on:close>
-	<div on:click={onClick}>
+	<div>
 		<form on:submit={onSubmit}>
 			<input type="text" on:input={onInput} on:keydown={onKeyDown} bind:this={inputTextElement} />
 
-			<ul on:mousemove={throttle(onMouseMove, 1000 / MAX_FPS)}>
+			<ul on:click={onClick} on:mousemove={throttle(onMouseMove, 1000 / MAX_FPS)}>
 				{#each entities as entity, i}
 					<li class:selected={i === selectedIndex}>
 						<img src={getIconURL(entity)} alt={entity.kind} />
