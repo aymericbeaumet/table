@@ -8,13 +8,19 @@
 		"importsNotUsedAsValues": "remove",
 		"resolveJsonModule": true,
 
-		"strict": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"alwaysStrict": true,
 		"noFallthroughCasesInSwitch": true,
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
 		"noImplicitReturns": true,
+		"noImplicitThis": true,
 		"noPropertyAccessFromIndexSignature": true,
 		"noUncheckedIndexedAccess": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
+		"strict": true,
 
 		"paths": {
 			"$app/*": ["./.svelte-kit/dev/runtime/app/*", "./.svelte-kit/build/runtime/app/*"],
