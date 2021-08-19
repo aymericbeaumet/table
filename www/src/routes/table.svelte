@@ -15,7 +15,7 @@
 	});
 
 	function normalize(input: string): string {
-		return input.trim().toLowerCase().replace(/\s+/g, ' ');
+		return input.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\/+/, '/').replace(/\/+$/, '');
 	}
 </script>
 
