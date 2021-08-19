@@ -2,10 +2,14 @@
 
 ## Start a table
 
-https://jointable.io/choose-a-name
+[https://jointable.io/start](https://jointable.io/start)
 
-## Slack Integration
+## Integrations
 
-<a href="https://slack.com/oauth/v2/authorize?client_id=2367199992290.2367416489235&scope=commands&user_scope="><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+### Discord
 
-## Discord Integration
+[Add to Discord](https://discord.com/oauth2/authorize?client_id=874948277903196170&permissions=0&scope=bot%20applications.commands)
+
+### Slack
+
+[Add to Slack](https://slack.com/oauth/v2/authorize?client_id=2367199992290.2367416489235&scope=commands&user_scope=)

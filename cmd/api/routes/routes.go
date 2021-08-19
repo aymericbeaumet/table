@@ -9,7 +9,7 @@ func Up(r *gin.Engine) error {
 		return err
 	}
 
-	if err := upCommands(r); err != nil {
+	if err := upWebhooks(r); err != nil {
 		return err
 	}
 
