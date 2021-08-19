@@ -6,7 +6,7 @@
 		"update": "ncu --upgrade; npm install; npm install -D @sveltejs/kit@next @sveltejs/adapter-static@next",
 		"dev": "svelte-kit dev --host localhost",
 		"build": "rm -rf build && svelte-kit build && npm run build:sitemap",
-		"build:sitemap": "svelte-sitemap --domain https://jointable.io --ignore 'table' && sed -i '' -e '/This file was automatically generated/d' ./build/sitemap.xml",
+		"build:sitemap": "svelte-sitemap --domain https://jointable.io --ignore 'table' && sed -i'' '/This file was automatically generated/d' ./build/sitemap.xml",
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
 		"test": "jest",
 		"deploy": "netlify deploy --prod -d build",
