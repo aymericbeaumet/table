@@ -161,7 +161,8 @@
 		color: rgb(171, 171, 173);
 		text-align: right;
 		padding: 15px;
-		border-radius: inherit;
+		border-bottom-left-radius: inherit;
+		border-bottom-right-radius: inherit;
 		border-top-left-radius: 0;
 		border-top-right-radius: 0;
 	}
