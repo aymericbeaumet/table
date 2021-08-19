@@ -7,7 +7,7 @@
 		"dev": "svelte-kit dev --host localhost",
 		"build": "rm -rf build && svelte-kit build && npm run build:sitemap",
 		"build:sitemap": "svelte-sitemap --domain https://jointable.io --ignore 'table' && sed -i '' '/This file was automatically generated/d' ./build/sitemap.xml",
-		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && svelte-check --tsconfig ./tsconfig.json",
+		"lint": "prettier --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
 		"test": "jest",
 		"deploy": "netlify deploy --prod -d build",
 		"format": "prettier --write --plugin-search-dir=. ."
@@ -26,6 +26,7 @@
 		"@sveltejs/adapter-static": "^1.0.0-next.16",
 		"@sveltejs/kit": "^1.0.0-next.145",
 		"@tsconfig/svelte": "^2.0.1",
+		"@types/jest": "^27.0.1",
 		"@types/lodash": "^4.14.172",
 		"@typescript-eslint/eslint-plugin": "^4.29.2",
 		"@typescript-eslint/parser": "^4.29.2",

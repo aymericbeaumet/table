@@ -6,6 +6,6 @@ module.exports = {
 	plugins: ['svelte3', '@typescript-eslint'],
 	overrides: [{ files: ['*.svelte'], processor: 'svelte3/svelte3' }],
 	settings: { 'svelte3/typescript': require('typescript') },
-	env: { browser: true, es2017: true },
+	env: { browser: true, es2020: true },
 	globals: { svelte: true },
 };
