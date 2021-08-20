@@ -411,11 +411,10 @@
 		height: 48px;
 		padding: 7px;
 		border-radius: 50%;
-		border: 2px solid lightgrey;
 	}
 
-	header a:hover {
-		border: 2px solid orange;
+	header button {
+		border: 2px solid lightgrey;
 	}
 
 	header button:hover,

@@ -40,9 +40,8 @@ cd www && npm run update
 - Add border around cameras + cursors to know who each cursor belongs to
 - Stream the music as radios instead of short looping sounds
 - Save events history for a table and forward to newly connected peers
-- Persist events history in Postgres
-- /table LINK (to immediately start a table with the entity shared)
-- persist local settings in local storage
+- Persist room events history in Postgres
+- Persist local settings in local storage
 - Create webrtc data channels in the Entities svelte component, so data channels can be dynamically created/killed on demand based on whether the component is shown or not (small screens)
 - "Zoom maintains 50% excess capacity in all aspects of our infrastructure to accommodate our growing business and to meet peak usage requirements"
 - Support pasting/drag'n'dropping images/videos/docs on the table
@@ -58,37 +57,37 @@ cd www && npm run update
 - Create query parameter generator + teach people about query parameters
 - Easy switch between all the tables of a scope
 - Add descriptions to the sitemap
-- Update Slack status when you join a table
-- Discord rich presenve vizualizer https://discord.com/developers/applications/874948277903196170/rich-presence/visualizer
 - SSO: Teams, Zoom
 
 - Convey authentication mecanism through the URL:
   - https://jointable.io/slack:join-table/dylan
   - https://jointable.io/google:rekki.com/all-hands
+- Discord rich presence vizualizer https://discord.com/developers/applications/874948277903196170/rich-presence/visualizer
+- Slack status update when you join/leave a table
 
 Entities:
 
-- rss feed
-- vscode
 - file
 - image (jpg, png, gif, etc)
 - netflix
 - notes
-- podcast
 - pdf
+- podcast
 - radio
+- rss feed
 - screen sharing
 - spotify
-- video (mp4, wmv, etc)
 - twitch (live + clips: https://dev.twitch.tv/docs/embed/video-and-clips#non-interactive-inline-frames-for-live-streams-and-vods)
+- video (mp4, wmv, etc)
+- vscode
 - youtube (videos + live: https://developers.google.com/youtube/iframe_api_reference)
 
 Commands:
 
 - copy link of table
-- giffy
+- giphy
 - screenshot table
-- wizz
+- share screen
 
 Integrations:
 
