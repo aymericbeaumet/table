@@ -397,24 +397,25 @@
 		padding: 20px;
 	}
 
-	header button {
-		background: lightgrey;
-		border: none;
-		outline: none;
-		margin-left: 10px;
-	}
-
 	header a,
 	header button {
 		display: inline-block;
 		width: 48px;
 		height: 48px;
-		padding: 7px;
-		border-radius: 50%;
+	}
+
+	header a {
+		padding: 3px;
 	}
 
 	header button {
+		padding: 7px;
+		background: lightgrey;
+		border: none;
+		outline: none;
+		margin-left: 10px;
 		border: 2px solid lightgrey;
+		border-radius: 50%;
 	}
 
 	header button:hover,
