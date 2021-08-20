@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/websocket"
 	"github.com/jointable/table/pkg/ip"
 	"github.com/pion/ion-sfu/cmd/signal/json-rpc/server"
@@ -88,13 +89,30 @@ func Up(r *gin.Engine) error {
 		WriteBufferSize: 1024,
 	}
 
-	r.GET("/tables/:name", func(c *gin.Context) {
+	r.GET("/:token", func(c *gin.Context) {
+		fmt.Println("token")
+
 		var params struct {
-			SessionName string `uri:"name"`
+			Token string `uri:"token" bindings:"required,jwt"`
 		}
 		if c.BindUri(&params) != nil {
 			return
 		}
+
+		fmt.Println(params)
+
+		// Abstract this in pkg/jwt
+		type CustomClaims struct {
+			Table string `json:"tbl"`
+			jwt.StandardClaims
+		}
+		p := jwt.Parser{}
+		_, _, err := p.ParseUnverified(params.Token, &CustomClaims{}) // TODO: jwt.ParseWithClaims with public key + check audience
+		if err != nil {
+			_ = c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
+		//claims := token.Claims.(*CustomClaims)
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {

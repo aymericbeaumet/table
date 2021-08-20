@@ -41,7 +41,7 @@ deploy: build
 	scp $(NAME) api.jointable.io:/usr/local/bin/$(NAME).next
 	# prepare config
 	ssh api.jointable.io "mkdir -p /usr/local/etc/$(NAME)"
-	scp .env .env.production production.crt production.key cloudflare.crt api.jointable.io:/usr/local/etc/$(NAME)/
+	scp .env .env.production production.crt production.key cloudflare.crt private.pem public.pem api.jointable.io:/usr/local/etc/$(NAME)/
 	# (re)start service
 	ssh api.jointable.io " \
 		systemctl enable $(SYSTEMCTL_SERVICE); \

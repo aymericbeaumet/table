@@ -14,6 +14,7 @@ export default class Peer {
 
 	constructor(
 		Client: typeof ClientType,
+		signalURL: string,
 		tableName: string,
 		{
 			onAmbianceID,
@@ -63,9 +64,7 @@ export default class Peer {
 
 		/* Initialize signaling */
 
-		const signal = new IonSFUJSONRPCSignal(
-			`${env.API_BASE_URL}/tables/${encodeURIComponent(tableName)}`,
-		);
+		const signal = new IonSFUJSONRPCSignal(signalURL);
 
 		/* Create and initialize WebRTC */
 
