@@ -84,7 +84,7 @@ func Up(r *gin.Engine) error {
 	attachBroadcastChannel(s, "reliable")   // TODO: ordered=false
 	attachBroadcastChannel(s, "unreliable") // TODO: ordered=false, maxRetransmits=0
 
-	signingPublicKey, err := ecdsa.LoadPublicKey(os.Getenv("API_SIGNING_PUBLIC_KEY"))
+	apiSigningPublicKey, err := ecdsa.LoadPublicKey(os.Getenv("API_SIGNING_PUBLIC_KEY"))
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func Up(r *gin.Engine) error {
 			return
 		}
 
-		if _, err := jwt.ParseTableToken(params.Token, signingPublicKey); err != nil {
+		if _, err := jwt.ParseTableToken(params.Token, apiSigningPublicKey); err != nil {
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
