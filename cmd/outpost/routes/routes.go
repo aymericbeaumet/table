@@ -2,9 +2,6 @@ package routes
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/jointable/table/pkg/ecdsa"
 	"github.com/jointable/table/pkg/ip"
 	"github.com/jointable/table/pkg/jwt"
 	"github.com/pion/ion-sfu/cmd/signal/json-rpc/server"
@@ -86,12 +84,7 @@ func Up(r *gin.Engine) error {
 	attachBroadcastChannel(s, "reliable")   // TODO: ordered=false
 	attachBroadcastChannel(s, "unreliable") // TODO: ordered=false, maxRetransmits=0
 
-	signingPublicKeyRaw, err := os.ReadFile(os.Getenv("API_SIGNING_PUBLIC_KEY"))
-	if err != nil {
-		return err
-	}
-	signingPublicKeyBlock, _ := pem.Decode(signingPublicKeyRaw)
-	signingPublicKey, err := parseECPublicKey(signingPublicKeyBlock.Bytes)
+	signingPublicKey, err := ecdsa.LoadPublicKey(os.Getenv("API_SIGNING_PUBLIC_KEY"))
 	if err != nil {
 		return err
 	}
@@ -213,29 +206,4 @@ func attachBroadcastChannel(s *sfu.SFU, label string) {
 			}
 		}
 	})
-}
-
-// parseECPublicKey parses a single ECDSA public key from the provided data
-// https://github.com/kubernetes/client-go/blob/master/util/keyutil/key.go#L281
-func parseECPublicKey(data []byte) (*ecdsa.PublicKey, error) {
-	var err error
-
-	// Parse the key
-	var parsedKey interface{}
-	if parsedKey, err = x509.ParsePKIXPublicKey(data); err != nil {
-		if cert, err := x509.ParseCertificate(data); err == nil {
-			parsedKey = cert.PublicKey
-		} else {
-			return nil, err
-		}
-	}
-
-	// Test if parsed key is an ECDSA Public Key
-	var pubKey *ecdsa.PublicKey
-	var ok bool
-	if pubKey, ok = parsedKey.(*ecdsa.PublicKey); !ok {
-		return nil, fmt.Errorf("data doesn't contain valid ECDSA Public Key")
-	}
-
-	return pubKey, nil
 }

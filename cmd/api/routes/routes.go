@@ -1,22 +1,16 @@
 package routes
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jointable/table/pkg/ecdsa"
 	"github.com/jointable/table/pkg/jwt"
 )
 
 func Up(r *gin.Engine) error {
-	signingPrivateKeyRaw, err := os.ReadFile(os.Getenv("SIGNING_PRIVATE_KEY"))
-	if err != nil {
-		return err
-	}
-	signingPrivateKeyBlock, _ := pem.Decode(signingPrivateKeyRaw)
-	signingPrivateKey, err := x509.ParseECPrivateKey(signingPrivateKeyBlock.Bytes)
+	signingPrivateKey, err := ecdsa.LoadPrivateKey(os.Getenv("SIGNING_PRIVATE_KEY"))
 	if err != nil {
 		return err
 	}
