@@ -1,14 +1,15 @@
 ---
 
-- name: Build ./cmd/{{goservice_name}}
+- name: "Build ./cmd/{{goservice_name}}"
   local_action:
     module: ansible.builtin.shell
     chdir: "{{playbook_dir}}/.."
-    cmd: GOOS=linux GOARCH=arm64 go build -o {{goservice_name}} ./{{goservice_source}}
+    cmd: "env GOOS=linux GOARCH=amd64 go build -o {{goservice_name}} ./{{goservice_source}}"
 
 - name: Create configuration directory
   ansible.builtin.file:
     path: "/usr/local/etc/{{goservice_name}}"
+    state: directory
     mode: '0755'
 
 - name: Copy configuration files (aka hidden files)
@@ -21,23 +22,24 @@
 - name: Create systemd service
   ansible.builtin.template:
     src: service.j2
-    dest: /etc/systemd/system/{{goservice_name}}.service
+    dest: "/etc/systemd/system/{{goservice_name}}.service"
 
 - name: Copy binary
   ansible.builtin.copy:
-    src: "{{playbook_dir}}/../api"
+    src: "{{playbook_dir}}/../{{goservice_name}}"
     dest: "/usr/local/bin/{{goservice_name}}.next"
+    mode: '0755'
 
 - name: Stop and enable systemd service
   ansible.builtin.systemd:
-    name: {{goservice_name}}
+    name: "{{goservice_name}}"
     state: stopped
     enabled: yes
 
 - name: Rename binary
-  command: mv /usr/local/bin/{{goservice_name}}.next /usr/local/bin/{{goservice_name}}
+  command: "mv /usr/local/bin/{{goservice_name}}.next /usr/local/bin/{{goservice_name}}"
 
 - name: Start systemd service
   ansible.builtin.systemd:
-    name: {{goservice_name}}
+    name: "{{goservice_name}}"
     state: started
