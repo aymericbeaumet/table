@@ -1,0 +1,18 @@
+---
+
+- hosts: all
+  roles:
+
+    - caddy
+
+    - role: goservice
+      vars:
+        goservice_source: cmd/api
+        goservice_name: table-api
+        goservice_mode: production
+
+    - role: goservice
+      vars:
+        goservice_source: cmd/outpost
+        goservice_name: table-outpost
+        goservice_mode: production

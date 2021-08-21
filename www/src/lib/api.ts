@@ -12,6 +12,6 @@ export async function createTable(name: string): Promise<[string, { aud: string;
 		throw new Error(`unexpected status code ${res.status}`);
 	}
 
-	const { token } = await res.json();
+	const token = await res.text();
 	return [token, decode(token)];
 }

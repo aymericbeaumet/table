@@ -131,7 +131,7 @@ func upAuth(r *gin.Engine) error {
 		q.Set("provider", params.Provider)
 		c.Request.URL.RawQuery = q.Encode()
 
-		gothic.Logout(c.Writer, c.Request)
+		_ = gothic.Logout(c.Writer, c.Request)
 	})
 
 	return nil

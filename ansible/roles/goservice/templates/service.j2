@@ -1,0 +1,14 @@
+[Unit]
+Description={{goservice_name}} service
+After=multi-user.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/usr/local/etc/{{goservice_name}}/
+ExecStart=/usr/local/bin/{{goservice_name}}
+Environment=MODE={{goservice_mode}}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

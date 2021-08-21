@@ -1,7 +1,10 @@
-package outpost
+package routes
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,9 +12,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/websocket"
 	"github.com/jointable/table/pkg/ip"
+	"github.com/jointable/table/pkg/jwt"
 	"github.com/pion/ion-sfu/cmd/signal/json-rpc/server"
 	log "github.com/pion/ion-sfu/pkg/logger"
 	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
@@ -83,6 +86,16 @@ func Up(r *gin.Engine) error {
 	attachBroadcastChannel(s, "reliable")   // TODO: ordered=false
 	attachBroadcastChannel(s, "unreliable") // TODO: ordered=false, maxRetransmits=0
 
+	signingPublicKeyRaw, err := os.ReadFile(os.Getenv("API_SIGNING_PUBLIC_KEY"))
+	if err != nil {
+		return err
+	}
+	signingPublicKeyBlock, _ := pem.Decode(signingPublicKeyRaw)
+	signingPublicKey, err := parseECPublicKey(signingPublicKeyBlock.Bytes)
+	if err != nil {
+		return err
+	}
+
 	upgrader := websocket.Upgrader{
 		CheckOrigin:     func(r *http.Request) bool { return true },
 		ReadBufferSize:  1024,
@@ -90,8 +103,6 @@ func Up(r *gin.Engine) error {
 	}
 
 	r.GET("/:token", func(c *gin.Context) {
-		fmt.Println("token")
-
 		var params struct {
 			Token string `uri:"token" bindings:"required,jwt"`
 		}
@@ -99,20 +110,10 @@ func Up(r *gin.Engine) error {
 			return
 		}
 
-		fmt.Println(params)
-
-		// Abstract this in pkg/jwt
-		type CustomClaims struct {
-			Table string `json:"tbl"`
-			jwt.StandardClaims
-		}
-		p := jwt.Parser{}
-		_, _, err := p.ParseUnverified(params.Token, &CustomClaims{}) // TODO: jwt.ParseWithClaims with public key + check audience
-		if err != nil {
+		if _, err := jwt.ParseTableToken(params.Token, signingPublicKey); err != nil {
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
-		//claims := token.Claims.(*CustomClaims)
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -212,4 +213,29 @@ func attachBroadcastChannel(s *sfu.SFU, label string) {
 			}
 		}
 	})
+}
+
+// parseECPublicKey parses a single ECDSA public key from the provided data
+// https://github.com/kubernetes/client-go/blob/master/util/keyutil/key.go#L281
+func parseECPublicKey(data []byte) (*ecdsa.PublicKey, error) {
+	var err error
+
+	// Parse the key
+	var parsedKey interface{}
+	if parsedKey, err = x509.ParsePKIXPublicKey(data); err != nil {
+		if cert, err := x509.ParseCertificate(data); err == nil {
+			parsedKey = cert.PublicKey
+		} else {
+			return nil, err
+		}
+	}
+
+	// Test if parsed key is an ECDSA Public Key
+	var pubKey *ecdsa.PublicKey
+	var ok bool
+	if pubKey, ok = parsedKey.(*ecdsa.PublicKey); !ok {
+		return nil, fmt.Errorf("data doesn't contain valid ECDSA Public Key")
+	}
+
+	return pubKey, nil
 }
