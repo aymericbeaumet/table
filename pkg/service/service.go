@@ -1,7 +1,6 @@
 package service
 
 import (
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -20,10 +19,6 @@ func New() *gin.Engine {
 	_ = godotenv.Load(".env." + mode)
 
 	r := gin.Default()
-
-	r.GET("/health", func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
 
 	r.Use(cors.New(cors.Config{
 		AllowCredentials: false,
