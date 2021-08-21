@@ -58,6 +58,7 @@ cd www && npm run update
 - Easy switch between all the tables of a scope
 - Add descriptions to the sitemap
 - SSO: Teams, Zoom
+- Allow to pin someone’s video as an entity on the table
 
 - Convey authentication mecanism through the URL:
   - https://jointable.io/slack:join-table/dylan
