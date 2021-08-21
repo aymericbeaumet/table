@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -19,6 +20,8 @@ func New() *gin.Engine {
 	_ = godotenv.Load(".env." + mode)
 
 	r := gin.Default()
+
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	r.Use(cors.New(cors.Config{
 		AllowCredentials: false,

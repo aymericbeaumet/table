@@ -1,11 +1,9 @@
 api.jointable.io {
-  encode gzip
   header -Server
   reverse_proxy localhost:8080
 }
 
 outpost.jointable.io {
-  encode gzip
   header -Server
   reverse_proxy localhost:9090
 }

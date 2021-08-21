@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.93.3 // indirect
 	github.com/bwmarrin/discordgo v0.23.3-0.20210818201646-9d9602318a29
 	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-contrib/gzip v0.0.3
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible
