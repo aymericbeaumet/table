@@ -7,7 +7,7 @@ import (
 )
 
 func New() string {
-	a, b, c := rand.Intn(100), rand.Intn(100), rand.Intn(100)
+	a, b, c := rand.Intn(len(adjectives)), rand.Intn(len(animals)), rand.Intn(100)
 	return fmt.Sprintf("%s-%s-%02d", adjectives[a], animals[b], c)
 }
 
