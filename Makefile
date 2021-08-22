@@ -3,11 +3,11 @@ all:
 
 .PHONY: dev-api
 dev-api:
-	cd ./cmd/api && watchexec --restart --clear -e go -w . -w ../../pkg -- go run -race .
+	cd ./cmd/api && watchexec --restart --clear -w . -w ../../pkg -- go run -race .
 
 .PHONY: dev-outpost
 dev-outpost:
-	cd ./cmd/outpost && watchexec --restart --clear -e go -w . -w ../../pkg -- go run -race .
+	cd ./cmd/outpost && watchexec --restart --clear -w . -w ../../pkg -- go run -race .
 
 .PHONY: dev-www
 dev-www:
