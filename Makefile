@@ -19,7 +19,9 @@ dependencies:
 
 .PHONY: update
 update:
-	go get -u && go mod tidy
+	cd ./cmd/api && go get -u
+	cd ./cmd/outpost && go get -u
+	go mod tidy
 
 .PHONY: ci
 ci:
