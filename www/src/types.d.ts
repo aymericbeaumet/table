@@ -6,7 +6,6 @@ interface ImportMeta {
 	};
 }
 
-declare module 'human-readable-ids';
 declare module 'svelte-favicon-badge';
 
 // JPEG, MP3, PNG, SVG files are imported as urls (string)

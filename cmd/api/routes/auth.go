@@ -6,11 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
+	"github.com/jointable/table/pkg/ecdsa"
+	"github.com/jointable/table/pkg/jwt"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	discordProvider "github.com/markbates/goth/providers/discord"
@@ -21,6 +24,11 @@ import (
 )
 
 func upAuth(r *gin.Engine) error {
+	signingPrivateKey, err := ecdsa.LoadPrivateKey(os.Getenv("SIGNING_PRIVATE_KEY"))
+	if err != nil {
+		return err
+	}
+
 	store := sessions.NewCookieStore([]byte(os.Getenv("COOKIE_SESSION_SECRET")))
 	store.MaxAge(24 * 60 * 60)
 	store.Options.Path = "/"
@@ -58,6 +66,48 @@ func upAuth(r *gin.Engine) error {
 			"openid", "email", "profile",
 		),
 	)
+
+	r.GET("/auth/table/:name", func(c *gin.Context) {
+		var params struct {
+			TableName string `uri:"name" binding:"required"`
+		}
+		if c.BindUri(&params) != nil {
+			return
+		}
+
+		var query struct {
+			Origin string `form:"origin" binding:"required"`
+		}
+		if c.BindQuery(&query) != nil {
+			return
+		}
+		if query.Origin != os.Getenv("CORS_ALLOW_ORIGINS") {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		scope, id, err := normalizeTableName(params.TableName)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		var tableName string
+		if len(scope) > 0 {
+			tableName = scope + "/"
+		}
+		tableName += id
+
+		// TODO: if authentication is needed, redirect to /auth/:provider
+		token, err := jwt.NewTableToken(tableName).Sign(signingPrivateKey)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		next := fmt.Sprintf("%s/%s?token=%s", query.Origin, url.QueryEscape(tableName), url.QueryEscape(token))
+		c.Redirect(http.StatusFound, next)
+	})
 
 	r.GET("/auth/:provider", func(c *gin.Context) {
 		var params struct {
@@ -303,4 +353,40 @@ type SlackUser struct {
 	HTTPSSlackComTeamImage102 string `json:"https://slack.com/team_image_102"`
 	HTTPSSlackComTeamImage132 string `json:"https://slack.com/team_image_132"`
 	HTTPSSlackComTeamImage230 string `json:"https://slack.com/team_image_230"`
+}
+
+var forbiddenTableNames = map[string]struct{}{
+	"create": {},
+	"new":    {},
+	"rand":   {},
+	"random": {},
+	"start":  {},
+	"table":  {},
+}
+
+func normalizeTableName(input string) (scope string, id string, err error) {
+	split := strings.Split(input, "/")
+
+	switch len(split) {
+	case 1:
+		id = split[0]
+	case 2:
+		scope, id = split[0], split[1]
+	default:
+		err = fmt.Errorf("invalid table name %#v: too many slashes", input)
+		return
+	}
+
+	id = strings.ToLower(id)
+	id = strings.TrimSpace(id)
+	// TODO: double slash
+	// TODO: double space
+	// TODO: trailing slash
+
+	if len(id) == 0 {
+		err = fmt.Errorf("invalid table name %#v: empty", input)
+		return
+	}
+
+	return
 }

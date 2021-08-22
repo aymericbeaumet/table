@@ -15,10 +15,9 @@
 	"dependencies": {
 		"@msgpack/msgpack": "^2.7.0",
 		"get-video-id": "^3.2.0",
-		"human-readable-ids": "^1.0.4",
 		"ion-sdk-js": "^1.7.2",
-		"jwt-decode": "^3.1.2",
 		"lodash": "^4.17.21",
+		"query-string": "^7.0.1",
 		"svelte-favicon-badge": "^1.0.0"
 	},
 	"devDependencies": {

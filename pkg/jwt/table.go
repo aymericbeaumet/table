@@ -15,13 +15,12 @@ type TableToken struct {
 	jwt.StandardClaims
 }
 
-func NewTableToken(tableName, outpostBaseURL string) *TableToken {
+func NewTableToken(tableName string) *TableToken {
 	return &TableToken{
 		TableName: tableName,
 		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(3 * time.Minute).UTC().Unix(),
 			Subject:   tableTokenSubject,
-			Audience:  outpostBaseURL,
-			ExpiresAt: time.Now().Add(60 * time.Second).UTC().Unix(),
 		},
 	}
 }
@@ -44,8 +43,6 @@ func ParseTableToken(tokenString string, key *ecdsa.PublicKey) (*TableToken, err
 	if !ok {
 		return nil, fmt.Errorf("invalid claims type for token %#v", token)
 	}
-
-	// TODO: check claims.Audience
 
 	if claims.ExpiresAt < time.Now().UTC().Unix() {
 		return nil, fmt.Errorf("expired token %#v", token)

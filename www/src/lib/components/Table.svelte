@@ -25,12 +25,11 @@
 	import StreamManager from '$lib/StreamManager';
 	import EntityComponent from '$lib/components/Entity.svelte';
 	import type { LocalStream as LocalStreamType } from 'ion-sdk-js';
-	import { createTable } from '$lib/api';
+
+	export let token: string;
 
 	const faviconBackground = '#FF0000';
 	const faviconColor = '#FFFFFF';
-
-	export let tableName: string;
 
 	const avatarsByStreamID: any = {};
 	let avatars: Array<any> = [];
@@ -90,9 +89,7 @@
 	onMount(async function () {
 		const { Client, LocalStream } = await import('ion-sdk-js'); // TODO: top import
 
-		const [token, { aud, tbl }] = await createTable(tableName);
-
-		const peer = new Peer(Client, `${aud}/${encodeURIComponent(token)}`, tbl, {
+		const peer = new Peer(Client, token, {
 			onAmbianceID: (_streamID: string, id: string) => {
 				lastReceivedAmbianceID = id;
 				ambianceID.set(id);

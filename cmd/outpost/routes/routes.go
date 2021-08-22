@@ -103,7 +103,8 @@ func Up(r *gin.Engine) error {
 			return
 		}
 
-		if _, err := jwt.ParseTableToken(params.Token, apiSigningPublicKey); err != nil {
+		token, err := jwt.ParseTableToken(params.Token, apiSigningPublicKey)
+		if err != nil {
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
@@ -116,7 +117,10 @@ func Up(r *gin.Engine) error {
 		defer ws.Close()
 		ws.EnableWriteCompression(true)
 
-		peer := server.NewJSONSignal(sfu.NewPeer(s), logger)
+		peer := &JSONSignalAuthMiddleware{
+			token.TableName,
+			server.NewJSONSignal(sfu.NewPeer(s), logger),
+		}
 		defer peer.Close()
 
 		jc := jsonrpc2.NewConn(c, websocketjsonrpc2.NewObjectStream(ws), peer)

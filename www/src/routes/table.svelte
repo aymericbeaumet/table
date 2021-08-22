@@ -1,22 +1,30 @@
 <script>
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import queryString from 'query-string';
 	import Table from '$lib/components/Table.svelte';
-	import { hri } from 'human-readable-ids';
+	import { API_BASE_URL } from '$lib/env';
 
 	let tableName = '';
+	let token = '';
 
 	onMount(() => {
-		let normalized = normalize(decodeURIComponent(window.location.pathname.substring(1)));
-		if (!normalized || ['new', 'rand', 'random', 'start', 'create', 'table'].includes(normalized)) {
-			normalized = hri.random();
-		}
-		tableName = normalized;
-		window.history.replaceState(null, tableName, `/${tableName}`);
-	});
+		const pathname = decodeURIComponent(window.location.pathname.substring(1));
+		const queryParams = queryString.parse(window.location.search);
 
-	function normalize(input: string): string {
-		return input.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\/+/g, '/').replace(/\/+$/, '');
-	}
+		if (typeof queryParams['token'] === 'string' && queryParams['token']) {
+			tableName = pathname;
+			token = queryParams['token'];
+			window.history.replaceState(null, '', window.location.pathname);
+		} else {
+			const origin = `${window.location.protocol}//${window.location.host}`;
+			goto(
+				`${API_BASE_URL}/auth/table/${encodeURIComponent(pathname)}?origin=${encodeURIComponent(
+					origin,
+				)}`,
+			);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -25,6 +33,6 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-{#if tableName}
-	<Table {tableName} />
+{#if token}
+	<Table {token} />
 {/if}

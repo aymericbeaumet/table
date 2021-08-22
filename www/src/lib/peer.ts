@@ -3,6 +3,7 @@ import * as env from '$lib/env';
 import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl.js';
 import Entity from '$lib/entity';
 import type { Client as ClientType, LocalStream as LocalStreamType } from 'ion-sdk-js';
+import { OUTPOST_BASE_URL } from '$lib/env';
 
 export default class Peer {
 	private client: ClientType;
@@ -14,8 +15,7 @@ export default class Peer {
 
 	constructor(
 		Client: typeof ClientType,
-		signalURL: string,
-		tableName: string,
+		token: string,
 		{
 			onAmbianceID,
 			onAmbianceSoundVolume,
@@ -64,7 +64,7 @@ export default class Peer {
 
 		/* Initialize signaling */
 
-		const signal = new IonSFUJSONRPCSignal(signalURL);
+		const signal = new IonSFUJSONRPCSignal(`${OUTPOST_BASE_URL}/${encodeURIComponent(token)}`);
 
 		/* Create and initialize WebRTC */
 
@@ -98,9 +98,9 @@ export default class Peer {
 			onTrack(stream);
 		};
 
-		/* Join when the signaling channel is ready */
+		/* Join when the signaling channel is ready (__TABLE__ is overwritten server-side) */
 
-		signal.onopen = () => this.client.join(tableName, '');
+		signal.onopen = () => this.client.join('__TABLE__', '');
 	}
 
 	publish(stream: LocalStreamType): void {
