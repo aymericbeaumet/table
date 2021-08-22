@@ -8,12 +8,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/jointable/table/pkg/ecdsa"
+	"github.com/jointable/table/pkg/humanreadableid"
 	"github.com/jointable/table/pkg/jwt"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
@@ -356,7 +357,7 @@ type SlackUser struct {
 	HTTPSSlackComTeamImage230 string `json:"https://slack.com/team_image_230"`
 }
 
-var forbiddenTableNames = map[string]struct{}{
+var forbiddenUnscopedNames = map[string]struct{}{
 	"create": {},
 	"new":    {},
 	"rand":   {},
@@ -365,9 +366,16 @@ var forbiddenTableNames = map[string]struct{}{
 	"table":  {},
 }
 
-func normalizeTableName(input string) (scope string, id string, err error) {
-	split := strings.Split(input, "/")
+var multipleSlashesRegexp = regexp.MustCompile("[/]{2,}")
 
+var multipleSpacesRegexp = regexp.MustCompile("[[:space:]]{2,}")
+
+func normalizeTableName(input string) (scope string, id string, err error) {
+	cleaned := input
+	cleaned = strings.Trim(cleaned, "/")
+	cleaned = multipleSlashesRegexp.ReplaceAllString(cleaned, "/")
+
+	split := strings.Split(cleaned, "/")
 	switch len(split) {
 	case 1:
 		id = split[0]
@@ -380,13 +388,13 @@ func normalizeTableName(input string) (scope string, id string, err error) {
 
 	id = strings.ToLower(id)
 	id = strings.TrimSpace(id)
-	// TODO: double slash
-	// TODO: double space
-	// TODO: trailing slash
+	id = multipleSlashesRegexp.ReplaceAllString(id, " ")
 
-	if _, ok := forbiddenTableNames[id]; ok {
-		id = uuid.New().String()
-		return
+	if len(scope) == 0 {
+		if _, ok := forbiddenUnscopedNames[id]; ok {
+			id = humanreadableid.New()
+			return
+		}
 	}
 
 	if len(id) == 0 {
