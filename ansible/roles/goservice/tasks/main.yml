@@ -16,7 +16,7 @@
     name: "{{goservice_name}}"
     groups: "{{goservice_name}}"
     shell: /sbin/nologin
-    home: /usr/local/etc/{{goservice_name}}
+    home: "/usr/local/etc/{{goservice_name}}"
     comment: "account for the {{goservice_name}} service"
     state: present
 
