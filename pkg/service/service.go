@@ -21,8 +21,10 @@ func New() *gin.Engine {
 
 	r := gin.Default()
 
+	// TODO: move gzip/brotly encoding to the reverse proxy layer
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
+	// TODO: move cors to the reverse proxy layer
 	r.Use(cors.New(cors.Config{
 		AllowCredentials: false,
 		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
