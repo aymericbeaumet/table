@@ -1,6 +1,10 @@
 .PHONY: all
 all:
 
+.PHONY: dependencies
+dependencies:
+	brew install ansible go golangci/tap/golangci-lint watchexec
+
 .PHONY: dev-api
 dev-api:
 	cd ./cmd/api && watchexec --restart --clear -w . -w ../../pkg -- go run -race .
@@ -12,10 +16,6 @@ dev-outpost:
 .PHONY: dev-www
 dev-www:
 	cd ./www && npm run dev
-
-.PHONY: dependencies
-dependencies:
-	brew install ansible go golangci/tap/golangci-lint watchexec
 
 .PHONY: update
 update:
