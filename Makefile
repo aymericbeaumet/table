@@ -42,7 +42,7 @@ lint:
 
 .PHONY: deploy
 deploy:
-	ansible-playbook ./ansible/playbook.yml -i "./ansible/hosts"
+	ansible-playbook ./ansible/playbook.yml -i ./ansible/hosts
 
 .PHONY: format
 format:
