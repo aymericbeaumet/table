@@ -16,13 +16,7 @@ class Ambiance {
 	) {}
 }
 
-const ambiances: { [key in AmbianceID]: Ambiance } = {
-	[AmbianceID.COFFEE]: coffee(),
-	[AmbianceID.FANTASY]: fantasy(),
-};
-export default ambiances;
-
-/* Coffee */
+/* Coffee ambiance */
 
 import coffeeBackground from './coffee/background.jpeg';
 import coffeeSound from './coffee/sound.mp3';
@@ -32,20 +26,18 @@ import coffeeClick from './coffee/click.png';
 import coffeeLogin from './coffee/login.mp3';
 import coffeeLogout from './coffee/logout.mp3';
 
-function coffee() {
-	return new Ambiance(
-		'Coffee',
-		coffeeBackground,
-		coffeeSound,
-		coffeePoster,
-		coffeeCursor,
-		coffeeClick,
-		coffeeLogin,
-		coffeeLogout,
-	);
-}
+const coffee = new Ambiance(
+	'Coffee',
+	coffeeBackground,
+	coffeeSound,
+	coffeePoster,
+	coffeeCursor,
+	coffeeClick,
+	coffeeLogin,
+	coffeeLogout,
+);
 
-/* Fantasy */
+/* Fantasy ambiance */
 
 import fantasyBackground from './fantasy/background.jpeg';
 import fantasySound from './fantasy/sound.mp3';
@@ -55,15 +47,21 @@ import fantasyClick from './fantasy/click.png';
 import fantasyLogin from './fantasy/login.mp3';
 import fantasyLogout from './fantasy/logout.mp3';
 
-function fantasy() {
-	return new Ambiance(
-		'Fantasy',
-		fantasyBackground,
-		fantasySound,
-		fantasyPoster,
-		fantasyCursor,
-		fantasyClick,
-		fantasyLogin,
-		fantasyLogout,
-	);
-}
+const fantasy = new Ambiance(
+	'Fantasy',
+	fantasyBackground,
+	fantasySound,
+	fantasyPoster,
+	fantasyCursor,
+	fantasyClick,
+	fantasyLogin,
+	fantasyLogout,
+);
+
+/* Exports ambiances */
+
+const ambiances: { [key in AmbianceID]: Ambiance } = {
+	[AmbianceID.COFFEE]: coffee,
+	[AmbianceID.FANTASY]: fantasy,
+};
+export default ambiances;

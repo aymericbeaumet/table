@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/jointable/table/pkg/ecdsa"
 	"github.com/jointable/table/pkg/jwt"
@@ -382,6 +383,11 @@ func normalizeTableName(input string) (scope string, id string, err error) {
 	// TODO: double slash
 	// TODO: double space
 	// TODO: trailing slash
+
+	if _, ok := forbiddenTableNames[id]; ok {
+		id = uuid.New().String()
+		return
+	}
 
 	if len(id) == 0 {
 		err = fmt.Errorf("invalid table name %#v: empty", input)
