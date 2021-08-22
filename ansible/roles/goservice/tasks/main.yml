@@ -37,29 +37,31 @@
     owner: "{{goservice_name}}"
     group: "{{goservice_name}}"
     mode: "0700"
-  register: copybinary
 
-- name: "Create {{goservice_name}} service"
+- name: "Update {{goservice_name}} service"
   ansible.builtin.template:
     src: service.j2
     dest: "/etc/systemd/system/{{goservice_name}}.service"
     mode: "0644"
+  register: updateservice
 
-- name: "Stop {{goservice_name}} service"
+- name: "Reload systemd daemon"
   ansible.builtin.systemd:
     name: "{{goservice_name}}"
     daemon_reload: yes
     state: stopped
-  when: copybinary.changed
+  when: updateservice.changed
+
+- name: "Stop {{goservice_name}} service"
+  ansible.builtin.systemd:
+    name: "{{goservice_name}}"
+    state: stopped
 
 - name: "Overwrite {{goservice_name}} binary"
   command: "mv /usr/local/bin/{{goservice_name}}.next /usr/local/bin/{{goservice_name}}"
-  when: copybinary.changed
 
 - name: "Restart and enable {{goservice_name}} service"
   ansible.builtin.systemd:
     name: "{{goservice_name}}"
-    daemon_reload: yes
     state: restarted
     enabled: yes
-  when: copybinary.changed
