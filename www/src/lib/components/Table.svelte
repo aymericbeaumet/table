@@ -25,6 +25,7 @@
 	import StreamManager from '$lib/StreamManager';
 	import EntityComponent from '$lib/components/Entity.svelte';
 	import type { LocalStream as LocalStreamType } from 'ion-sdk-js';
+	import { AmbianceID } from '$lib/assets/ambiances';
 
 	export let token: string;
 
@@ -92,7 +93,7 @@
 		const peer = new Peer(Client, token, {
 			onAmbianceID: (_streamID: string, id: string) => {
 				lastReceivedAmbianceID = id;
-				ambianceID.set(id);
+				ambianceID.set(id as AmbianceID);
 			},
 
 			onAmbianceSoundVolume: (_streamID: string, volume: number) => {

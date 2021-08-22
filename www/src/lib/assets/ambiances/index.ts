@@ -1,3 +1,8 @@
+export enum AmbianceID {
+	COFFEE = 'coffee',
+	FANTASY = 'fantasy',
+}
+
 class Ambiance {
 	constructor(
 		public name: string,
@@ -11,30 +16,34 @@ class Ambiance {
 	) {}
 }
 
-const ambiances: { [key: string]: Ambiance } = {};
-
+const ambiances: { [key in AmbianceID]: Ambiance } = {
+	[AmbianceID.COFFEE]: coffee(),
+	[AmbianceID.FANTASY]: fantasy(),
+};
 export default ambiances;
 
-/* Office */
+/* Coffee */
 
-import officeBackground from './office/background.jpeg';
-import officeSound from './office/sound.mp3';
-import officePoster from './office/poster.png';
-import officeCursor from './office/cursor.png';
-import officeClick from './office/click.png';
-import officeLogin from './office/login.mp3';
-import officeLogout from './office/logout.mp3';
+import coffeeBackground from './coffee/background.jpeg';
+import coffeeSound from './coffee/sound.mp3';
+import coffeePoster from './coffee/poster.png';
+import coffeeCursor from './coffee/cursor.png';
+import coffeeClick from './coffee/click.png';
+import coffeeLogin from './coffee/login.mp3';
+import coffeeLogout from './coffee/logout.mp3';
 
-ambiances['office'] = new Ambiance(
-	'Office',
-	officeBackground,
-	officeSound,
-	officePoster,
-	officeCursor,
-	officeClick,
-	officeLogin,
-	officeLogout,
-);
+function coffee() {
+	return new Ambiance(
+		'Coffee',
+		coffeeBackground,
+		coffeeSound,
+		coffeePoster,
+		coffeeCursor,
+		coffeeClick,
+		coffeeLogin,
+		coffeeLogout,
+	);
+}
 
 /* Fantasy */
 
@@ -46,13 +55,15 @@ import fantasyClick from './fantasy/click.png';
 import fantasyLogin from './fantasy/login.mp3';
 import fantasyLogout from './fantasy/logout.mp3';
 
-ambiances['fantasy'] = new Ambiance(
-	'Fantasy',
-	fantasyBackground,
-	fantasySound,
-	fantasyPoster,
-	fantasyCursor,
-	fantasyClick,
-	fantasyLogin,
-	fantasyLogout,
-);
+function fantasy() {
+	return new Ambiance(
+		'Fantasy',
+		fantasyBackground,
+		fantasySound,
+		fantasyPoster,
+		fantasyCursor,
+		fantasyClick,
+		fantasyLogin,
+		fantasyLogout,
+	);
+}

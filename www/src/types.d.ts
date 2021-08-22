@@ -2,6 +2,7 @@ interface ImportMeta {
 	env: {
 		VITE_API_BASE_URL?: string;
 		VITE_MAX_FPS?: string;
+		VITE_OUTPOST_BASE_URL?: string;
 		VITE_STUN_SERVERS_URLS?: string;
 	};
 }

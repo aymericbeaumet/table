@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { AmbianceID } from '$lib/assets/ambiances';
 
 // Browser settings
 
@@ -8,7 +9,7 @@ export const videoInputDeviceID = writable(undefined as string | undefined);
 
 // Table settings
 
-export const ambianceID = writable('office');
+export const ambianceID = writable(AmbianceID.COFFEE);
 
 export const ambianceSoundVolume = writable(20); // [0; 100]
 
