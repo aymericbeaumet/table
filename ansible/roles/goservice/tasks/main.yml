@@ -1,45 +1,65 @@
 ---
 
-- name: "Build ./cmd/{{goservice_name}}"
+- name: "Build {{goservice_name}} from ./{{goservice_source}}"
   local_action:
     module: ansible.builtin.shell
     chdir: "{{playbook_dir}}/.."
     cmd: "env GOOS=linux GOARCH=amd64 go build -o {{goservice_name}} ./{{goservice_source}}"
 
-- name: Create configuration directory
-  ansible.builtin.file:
-    path: "/usr/local/etc/{{goservice_name}}"
-    state: directory
-    mode: '0755'
+- name: "Create {{goservice_name}} group"
+  ansible.builtin.group:
+    name: "{{goservice_name}}"
+    state: present
 
-- name: Copy configuration files (aka hidden files)
+- name: "Create {{goservice_name}} user"
+  ansible.builtin.user:
+    name: "{{goservice_name}}"
+    groups: "{{goservice_name}}"
+    shell: /sbin/nologin
+    home: /usr/local/etc/{{goservice_name}}
+    comment: "account for the {{goservice_name}} service"
+    state: present
+
+- name: "Upload {{goservice_name}} configuration files"
   ansible.builtin.copy:
     src: "{{item}}"
     dest: "/usr/local/etc/{{goservice_name}}/"
+    owner: "{{goservice_name}}"
+    group: "{{goservice_name}}"
+    mode: "0400"
   with_fileglob:
     - "{{playbook_dir}}/../{{goservice_source}}/.*"
 
-- name: Create systemd service
-  ansible.builtin.template:
-    src: service.j2
-    dest: "/etc/systemd/system/{{goservice_name}}.service"
-
-- name: Copy binary
+- name: "Upload {{goservice_name}} binary"
   ansible.builtin.copy:
     src: "{{playbook_dir}}/../{{goservice_name}}"
     dest: "/usr/local/bin/{{goservice_name}}.next"
-    mode: '0755'
+    owner: "{{goservice_name}}"
+    group: "{{goservice_name}}"
+    mode: "0700"
+  register: copybinary
 
-- name: Stop and enable systemd service
+- name: "Create {{goservice_name}} service"
+  ansible.builtin.template:
+    src: service.j2
+    dest: "/etc/systemd/system/{{goservice_name}}.service"
+    mode: "0644"
+
+- name: "Stop {{goservice_name}} service"
   ansible.builtin.systemd:
     name: "{{goservice_name}}"
+    daemon_reload: yes
     state: stopped
-    enabled: yes
+  when: copybinary.changed
 
-- name: Rename binary
+- name: "Overwrite {{goservice_name}} binary"
   command: "mv /usr/local/bin/{{goservice_name}}.next /usr/local/bin/{{goservice_name}}"
+  when: copybinary.changed
 
-- name: Start systemd service
+- name: "Restart and enable {{goservice_name}} service"
   ansible.builtin.systemd:
     name: "{{goservice_name}}"
-    state: started
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
+  when: copybinary.changed
