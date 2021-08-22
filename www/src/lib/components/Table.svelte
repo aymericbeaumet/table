@@ -54,7 +54,7 @@
 	const backgroundAudioPlayer = new AudioPlayer();
 	backgroundAudioPlayer.setLoop(true);
 	$: backgroundAudioPlayer.setVolume($ambianceSoundVolume);
-	$: backgroundAudioPlayer.play(ambiances[$ambianceID]?.soundURL);
+	$: backgroundAudioPlayer.play(ambiances[$ambianceID].soundURL);
 
 	const peerAudioPlayer = new AudioPlayer();
 	$: peerAudioPlayer.setVolume($ambianceEffectsVolume);
@@ -144,7 +144,7 @@
 					avatarsByStreamID[stream.id] = avatar;
 					avatars = [...avatars, avatar];
 
-					peerAudioPlayer.play(ambiances[get(ambianceID)]?.loginURL);
+					peerAudioPlayer.play(ambiances[get(ambianceID)].loginURL);
 				}
 				avatar.srcObject = stream;
 				avatars = avatars;
@@ -156,7 +156,7 @@
 					delete avatarsByStreamID[stream.id];
 					avatars = removeFromArray(avatars, avatarForStream);
 
-					peerAudioPlayer.play(ambiances[get(ambianceID)]?.logoutURL);
+					peerAudioPlayer.play(ambiances[get(ambianceID)].logoutURL);
 				}
 
 				const entitiesForStream = entitiesByStreamID[stream.id];
@@ -326,10 +326,10 @@
 	on:mousemove={onMouseMove}
 	on:mouseup={onMouseUp}
 	style="
-    background-image: url({ambiances[$ambianceID]?.backgroundURL});
+    background-image: url({ambiances[$ambianceID].backgroundURL});
     cursor: url({isMouseDown
-		? ambiances[$ambianceID]?.clickURL
-		: ambiances[$ambianceID]?.cursorURL}), auto;
+		? ambiances[$ambianceID].clickURL
+		: ambiances[$ambianceID].cursorURL}), auto;
   "
 >
 	<header>

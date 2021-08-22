@@ -9,7 +9,7 @@
 </script>
 
 <img
-	src={isDown ? ambiances[$ambianceID]?.clickURL : ambiances[$ambianceID]?.cursorURL}
+	src={isDown ? ambiances[$ambianceID].clickURL : ambiances[$ambianceID].cursorURL}
 	alt="cursor"
 	style={`
 	  z-index: 500;
