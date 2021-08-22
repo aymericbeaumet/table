@@ -10,10 +10,10 @@ require (
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/sessions v1.2.1
 	github.com/gorilla/websocket v1.4.2
+	github.com/gosimple/slug v1.10.0
 	github.com/joho/godotenv v1.3.0
 	github.com/lucsky/cuid v1.2.1 // indirect
 	github.com/markbates/going v1.0.3 // indirect

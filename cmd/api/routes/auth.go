@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
+	"github.com/gosimple/slug"
 	"github.com/jointable/table/pkg/ecdsa"
 	"github.com/jointable/table/pkg/humanreadableid"
 	"github.com/jointable/table/pkg/jwt"
@@ -368,8 +369,6 @@ var forbiddenUnscopedNames = map[string]struct{}{
 
 var multipleSlashesRegexp = regexp.MustCompile("[/]{2,}")
 
-var multipleSpacesRegexp = regexp.MustCompile("[[:space:]]{2,}")
-
 func normalizeTableName(input string) (scope string, id string, err error) {
 	cleaned := input
 	cleaned = strings.Trim(cleaned, "/")
@@ -386,9 +385,7 @@ func normalizeTableName(input string) (scope string, id string, err error) {
 		return
 	}
 
-	id = strings.ToLower(id)
-	id = strings.TrimSpace(id)
-	id = multipleSlashesRegexp.ReplaceAllString(id, " ")
+	id = slug.Make(id)
 
 	if len(scope) == 0 {
 		if _, ok := forbiddenUnscopedNames[id]; ok {
