@@ -61,6 +61,14 @@ cd www && npm run update
 - Add descriptions to the sitemap
 - SSO: Teams, Zoom
 - Allow to pin someone’s video as an entity on the table
+- Make the website responsive
+- Write tests for table normalization
+- mobile disable pull to refresh
+- disable scroll on table page
+- show table/settings icons on mobile
+- bug: sound not playing on iOS
+- bug: background foreground breaks the camera on iOS
+- ephemeral entities Cmd+Shift+K
 
 - Convey authentication mecanism through the URL:
   - https://jointable.io/slack:join-table/dylan
