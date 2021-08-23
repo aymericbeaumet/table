@@ -1,3 +1,5 @@
+// TODO: make this work on iOS. It requires for Audio.play() to be called after
+// a user interaction on the page.
 export default class AudioPlayer {
 	private audio: HTMLAudioElement;
 
@@ -22,6 +24,7 @@ export default class AudioPlayer {
 	}
 
 	play(src: string | undefined): void {
+		this.audio.pause();
 		this.audio.src = src || '';
 	}
 }

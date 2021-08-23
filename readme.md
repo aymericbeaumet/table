@@ -66,7 +66,6 @@ cd www && npm run update
 - mobile disable pull to refresh
 - disable scroll on table page
 - show table/settings icons on mobile
-- bug: sound not playing on iOS
 - bug: background foreground breaks the camera on iOS
 - ephemeral entities Cmd+Shift+K
 
