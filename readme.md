@@ -68,6 +68,7 @@ cd www && npm run update
 - show table/settings icons on mobile
 - bug: background foreground breaks the camera on iOS
 - ephemeral entities Cmd+Shift+K
+- make sure we are all green here: https://tosdr.org
 
 - Convey authentication mecanism through the URL:
   - https://jointable.io/slack:join-table/dylan
