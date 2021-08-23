@@ -7,6 +7,7 @@ export default class AudioPlayer {
 		this.audio.controls = false;
 		this.audio.loop = false;
 		this.audio.muted = false;
+		this.audio.addEventListener('canplay', () => this.audio.play());
 	}
 
 	setLoop(loop: boolean): void {
