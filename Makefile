@@ -40,10 +40,18 @@ lint:
 	gofmt -l .
 	golangci-lint run ./...
 
+.PHONY: format
+format:
+	gofmt -s -w .
+
 .PHONY: deploy
 deploy:
 	ansible-playbook ./ansible/playbook.yml -i ./ansible/hosts
 
-.PHONY: format
-format:
-	gofmt -s -w .
+.PHONY: deploy-api
+deploy-api:
+	ansible-playbook ./ansible/playbook.yml -i ./ansible/hosts --tags api
+
+.PHONY: deploy-outpost
+deploy-outpost:
+	ansible-playbook ./ansible/playbook.yml -i ./ansible/hosts --tags outpost

@@ -10,9 +10,11 @@
         goservice_source: cmd/api
         goservice_name: table-api
         goservice_mode: production
+      tags: api
 
     - role: goservice
       vars:
         goservice_source: cmd/outpost
         goservice_name: table-outpost
         goservice_mode: production
+      tags: outpost
